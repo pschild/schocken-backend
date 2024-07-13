@@ -5,4 +5,10 @@ import { BaseEntity } from './base.entity';
 export class PlayerEntity extends BaseEntity {
   @Column()
   name: string;
+
+  @Column({ type: 'timestamptz' })
+  registered: Date;
+
+  @Column({ default: true })
+  active: boolean;
 }
