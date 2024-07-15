@@ -6,7 +6,7 @@ export class PlayerEntity extends BaseEntity {
   @Column()
   name: string;
 
-  @Column({ type: 'timestamptz' })
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   registered: Date;
 
   @Column({ default: true })
