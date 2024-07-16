@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { from, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { PlayerEntity } from '../model/player.entity';
 import { CreatePlayerDto } from './create-player.dto';
@@ -13,13 +15,16 @@ export class PlayerService {
   ) {
   }
 
-  public async getAll(): Promise<PlayerDto[]> {
-    return await this.repo.find()
-      .then(entities => entities.map(e => this.toDto(e)));
+  public getAll(): Observable<PlayerDto[]> {
+    return from(this.repo.find()).pipe(
+      map(entities => entities.map(e => this.toDto(e)))
+    );
   }
 
-  public async create(dto: CreatePlayerDto): Promise<PlayerDto> {
-    return this.repo.save(dto).then(e => this.toDto(e));
+  public create(dto: CreatePlayerDto): Observable<PlayerDto> {
+    return from(this.repo.save(dto)).pipe(
+      map(e => this.toDto(e))
+    );
   }
 
   private toDto(entity: PlayerEntity): PlayerDto {
