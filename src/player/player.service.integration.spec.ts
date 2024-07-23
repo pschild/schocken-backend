@@ -5,7 +5,7 @@ import { setupDataSource } from '../database/setup-test-data-source';
 import { PlayerEntity } from '../model/player.entity';
 import { PlayerService } from './player.service';
 
-describe('PlayerService', () => {
+describe('PlayerService integration', () => {
   let service: PlayerService;
   let source: DataSource;
   let repo: Repository<PlayerEntity>;

@@ -18,7 +18,7 @@ export class PlayerController {
   }
 
   @Post()
-  public post(@Body() dto: CreatePlayerDto): Observable<PlayerDto> {
+  public create(@Body() dto: CreatePlayerDto): Observable<PlayerDto> {
     return this.service.create(dto);
   }
 
