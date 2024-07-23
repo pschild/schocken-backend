@@ -8,6 +8,9 @@ export type MockType<T> = {
   [P in keyof T]?: jest.Mock<unknown>;
 };
 
+/**
+ * Blueprint for how to test a service with a mocked repository.
+ */
 describe('PlayerService', () => {
   let service: PlayerService;
   let repositoryMock: MockType<Repository<PlayerEntity>>;

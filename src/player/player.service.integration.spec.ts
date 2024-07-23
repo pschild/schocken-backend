@@ -5,6 +5,9 @@ import { setupDataSource } from '../database/setup-test-data-source';
 import { PlayerEntity } from '../model/player.entity';
 import { PlayerService } from './player.service';
 
+/**
+ * Blueprint for how to test a service using an in-memory database in background.
+ */
 describe('PlayerService integration', () => {
   let service: PlayerService;
   let source: DataSource;
@@ -44,11 +47,11 @@ describe('PlayerService integration', () => {
   it('should find a user', async () => {
     await repo.save({ name: 'Susi' });
 
-    console.log(await repo.countBy({ name: 'Susi' }));
+    const savedUser = await repo.findOneBy({ name: 'Susi' });
+    const count = await repo.countBy({ name: 'Susi' });
 
-    const response = await repo.findOneBy({ name: 'Susi' });
-
-    expect(response).toBeTruthy();
-    expect(response.name).toBe('Susi');
+    expect(savedUser).toBeTruthy();
+    expect(savedUser.name).toBe('Susi');
+    expect(count).toBe(1);
   });
 });

@@ -4,6 +4,9 @@ import { Test } from '@nestjs/testing';
 import { PlayerController } from './player.controller';
 import { PlayerService } from './player.service';
 
+/**
+ * Blueprint for how to test a controller with fake http requests.
+ */
 describe('PlayerController e2e', () => {
   let app: INestApplication;
   const playerService = {
