@@ -1,0 +1,36 @@
+version: '3.9'
+
+name: schocken
+
+networks:
+  schocken:
+    name: schocken
+
+volumes:
+  schocken-pgdata:
+    name: schocken-pgdata
+
+services:
+  postgres:
+    image: postgres:15.7
+    restart: always
+    container_name: schocken-postgres
+    networks:
+      - schocken
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: rootPW
+      HOPTIMISTEN_DATABASE_NAME: hoptimisten
+      HOPTIMISTEN_SCHEMA_NAME: hoptimisten
+      HOPTIMISTEN_SCHEMA_USER_NAME: hoptimisten_db_user
+      HOPTIMISTEN_SCHEMA_USER_PW: hoptimisten_db_user_pw
+    ports:
+      - 5439:5432
+    volumes:
+      - ./db/schemas.sh:/docker-entrypoint-initdb.d/schemas.sh
+      - schocken-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5

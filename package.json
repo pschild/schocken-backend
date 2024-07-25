@@ -22,7 +22,7 @@
     "typeorm:cache": "npx typeorm-ts-node-commonjs cache:clear",
     "schema:drop": "npx typeorm-ts-node-commonjs -d ./src/database/data-source.ts",
     "migration:create": "typeorm migration:create ./src/migration/schema-update",
-    "migration:generate": "npx typeorm-ts-node-commonjs migration:generate ./src/migration/schema-update -d ./src/database/data-source.ts",
+    "migration:generate": "npm run build && npx typeorm-ts-node-commonjs migration:generate ./src/migration/schema-update -d ./src/database/data-source.ts",
     "migration:show": "npx typeorm-ts-node-commonjs migration:show -d ./src/database/data-source.ts",
     "migration:run": "npx typeorm-ts-node-commonjs migration:run -d  ./src/database/data-source.ts",
     "migration:revert": "npx typeorm-ts-node-commonjs migration:revert -d ./src/database/data-source.ts"

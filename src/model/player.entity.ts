@@ -3,10 +3,10 @@ import { BaseEntity } from './base.entity';
 
 @Entity({ name: 'player' })
 export class PlayerEntity extends BaseEntity {
-  @Column()
+  @Column({ unique: true, length: 32 })
   name: string;
 
-  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP', update: false })
   registered: Date;
 
   @Column({ default: true })
