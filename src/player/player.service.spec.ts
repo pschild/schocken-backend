@@ -2,11 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PlayerEntity } from '../model/player.entity';
+import { MockType } from '../test.utils';
 import { PlayerService } from './player.service';
-
-export type MockType<T> = {
-  [P in keyof T]?: jest.Mock<unknown>;
-};
 
 /**
  * Blueprint for how to test a service with a mocked repository.

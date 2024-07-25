@@ -10,7 +10,7 @@ import { PlayerService } from './player.service';
 describe('PlayerController e2e', () => {
   let app: INestApplication;
   const playerService = {
-    create: () => {}
+    create: jest.fn(),
   };
 
   beforeAll(async () => {
