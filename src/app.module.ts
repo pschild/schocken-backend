@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PlayerModule } from './player/player.module';
+import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
+import * as winston from 'winston';
 
 @Module({
   imports: [
@@ -21,6 +23,27 @@ import { PlayerModule } from './player/player.module';
         database: configService.get<string>('DATABASE_DB'),
         schema: configService.get<string>('DATABASE_SCHEMA'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      }),
+      inject: [ConfigService],
+    }),
+    WinstonModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        transports: [
+          new winston.transports.File({
+            filename: `${process.cwd()}/${configService.get('LOG_PATH')}`,
+            level: 'error',
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.json(),
+            )
+          }),
+          new winston.transports.Console({
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              nestWinstonModuleUtilities.format.nestLike(),
+            ),
+          }),
+        ],
       }),
       inject: [ConfigService],
     }),

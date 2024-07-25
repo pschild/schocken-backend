@@ -3,6 +3,7 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
 import { setupDataSource } from '../database/setup-test-data-source';
+import { DuplicateUsernameException } from './exception/duplicate-username.exception';
 import { PlayerEntity } from '../model/player.entity';
 import { RANDOM_UUID, UUID_V4_REGEX } from '../test.utils';
 import { PlayerService } from './player.service';
@@ -60,6 +61,12 @@ describe('PlayerService integration', () => {
     expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(100);
     expect(differenceInMilliseconds(new Date(), new Date(result.registered))).toBeLessThan(100);
     expect(result.active).toBe(true);
+  });
+
+  it('should fail if a user with given name already exists', async () => {
+    await firstValueFrom(service.create({ name: 'John' }));
+
+    await expect(firstValueFrom(service.create({ name: 'John' }))).rejects.toThrowError(new DuplicateUsernameException());
   });
 
   it('should find a user', async () => {

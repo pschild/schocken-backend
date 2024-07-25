@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { from, Observable, switchMap } from 'rxjs';
+import { from, Observable, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
+import { DuplicateUsernameException } from './exception/duplicate-username.exception';
 import { PlayerEntity } from '../model/player.entity';
 import { PlayerDto } from './player.dto';
 import { CreatePlayerDto } from './create-player.dto';
@@ -17,7 +18,11 @@ export class PlayerService {
   }
 
   public create(dto: Partial<CreatePlayerDto>): Observable<PlayerDto> {
-    return from(this.repo.save(dto)).pipe(
+    return from(this.repo.findOneBy({ name: dto.name })).pipe(
+      switchMap(found => found
+        ? throwError(() => new DuplicateUsernameException())
+        : from(this.repo.save(dto))
+      ),
       map(e => this.toDto(e))
     );
   }
