@@ -11,6 +11,7 @@ describe('PlayerController e2e', () => {
   let app: INestApplication;
   const playerService = {
     create: jest.fn(),
+    findOne: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -34,7 +35,7 @@ describe('PlayerController e2e', () => {
     [null,                                                                  400, ['name must be a string']],
     [{ name: 'Susi' },                                                      201, undefined],
     [{ name: 'Susi', registered: new Date().toISOString(), active: false }, 201, undefined],
-  ])('request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
+  ])('create request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
     let response;
     if (body) {
       response = await request(app.getHttpServer()).post('/player').send(body);
