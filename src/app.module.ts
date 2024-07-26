@@ -9,23 +9,23 @@ import * as winston from 'winston';
 
 @Module({
   imports: [
-    // ConfigModule.forRoot({
-    //   isGlobal: true,
-    // }),
-    // TypeOrmModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   useFactory: (configService: ConfigService) => ({
-    //     type: 'postgres',
-    //     host: configService.get<string>('DATABASE_HOST'),
-    //     port: +configService.get<string>('DATABASE_PORT'),
-    //     username: configService.get<string>('DATABASE_USER'),
-    //     password: configService.get<string>('DATABASE_PASSWORD'),
-    //     database: configService.get<string>('DATABASE_DB'),
-    //     schema: configService.get<string>('DATABASE_SCHEMA'),
-    //     entities: [__dirname + '/**/*.entity{.ts,.js}'],
-    //   }),
-    //   inject: [ConfigService],
-    // }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DATABASE_HOST'),
+        port: +configService.get<string>('DATABASE_PORT'),
+        username: configService.get<string>('DATABASE_USER'),
+        password: configService.get<string>('DATABASE_PASSWORD'),
+        database: configService.get<string>('DATABASE_DB'),
+        schema: configService.get<string>('DATABASE_SCHEMA'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      }),
+      inject: [ConfigService],
+    }),
     WinstonModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         transports: [
@@ -47,7 +47,7 @@ import * as winston from 'winston';
       }),
       inject: [ConfigService],
     }),
-    // PlayerModule,
+    PlayerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
