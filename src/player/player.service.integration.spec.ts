@@ -86,7 +86,7 @@ describe('PlayerService integration', () => {
     await repo.save({ name: 'John' });
     await repo.save({ name: 'Jane' });
 
-    const result = await firstValueFrom(service.getAll());
+    const result = await firstValueFrom(service.findAll());
     expect(result).toBeTruthy();
     expect(result.length).toBe(2);
     expect(result[0].name).toBe('John');
@@ -94,7 +94,7 @@ describe('PlayerService integration', () => {
   });
 
   it('should return empty array if no users found', async () => {
-    const result = await firstValueFrom(service.getAll());
+    const result = await firstValueFrom(service.findAll());
     expect(result).toStrictEqual([]);
   });
 
@@ -103,7 +103,7 @@ describe('PlayerService integration', () => {
     await repo.save({ name: 'Jane' });
     await repo.save({ name: 'Jack', active: false });
 
-    const result = await firstValueFrom(service.getAllActive());
+    const result = await firstValueFrom(service.findAllActive());
     expect(result).toBeTruthy();
     expect(result.length).toBe(2);
     expect(result[0].name).toBe('John');
@@ -122,6 +122,7 @@ describe('PlayerService integration', () => {
     expect(updateResult).toBeTruthy();
     expect(updateResult.name).toBe('John New');
     expect(updateResult.active).toBe(false);
+    expect(new Date(updateResult.registered).getTime()).toBe(new Date(findResult.registered).getTime());
   });
 
   it('should return null when user to update is not found', async () => {

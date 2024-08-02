@@ -36,7 +36,7 @@ describe('PlayerService', () => {
     const user = {name: 'Alni', id: '123'};
     repositoryMock.find.mockReturnValue([user]);
 
-    service.getAll().subscribe(response => {
+    service.findAll().subscribe(response => {
       expect(response).toEqual(user);
       expect(repositoryMock.find).toHaveBeenCalled();
     });

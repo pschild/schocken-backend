@@ -1,11 +1,11 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Observable } from 'rxjs';
 import { Logger } from 'winston';
-import { CreatePlayerDto } from './create-player.dto';
-import { PlayerDto } from './player.dto';
+import { CreatePlayerDto } from './dto/create-player.dto';
+import { PlayerDto } from './dto/player.dto';
 import { PlayerService } from './player.service';
-import { UpdatePlayerDto } from './update-player.dto';
+import { UpdatePlayerDto } from './dto/update-player.dto';
 
 @Controller('player')
 export class PlayerController {
@@ -27,17 +27,17 @@ export class PlayerController {
   }
 
   @Get()
-  public getAll(): Observable<PlayerDto[]> {
-    return this.service.getAll();
+  public findAll(): Observable<PlayerDto[]> {
+    return this.service.findAll();
   }
 
   @Get('active')
   public getAllActive(): Observable<PlayerDto[]> {
-    return this.service.getAllActive();
+    return this.service.findAllActive();
   }
 
-  @Put(':id')
-  public update(@Param('id') id: string, @Body() dto: Partial<UpdatePlayerDto>): Observable<PlayerDto> {
+  @Patch(':id')
+  public update(@Param('id') id: string, @Body() dto: UpdatePlayerDto): Observable<PlayerDto> {
     this.logger.warn('updating', { context: PlayerController.name });
     return this.service.update(id, dto);
   }

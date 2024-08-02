@@ -3,11 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { from, Observable, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
-import { DuplicateUsernameException } from './exception/duplicate-username.exception';
 import { PlayerEntity } from '../model/player.entity';
-import { PlayerDto } from './player.dto';
-import { CreatePlayerDto } from './create-player.dto';
-import { UpdatePlayerDto } from './update-player.dto';
+import { CreatePlayerDto } from './dto/create-player.dto';
+import { PlayerDto } from './dto/player.dto';
+import { UpdatePlayerDto } from './dto/update-player.dto';
+import { DuplicateUsernameException } from './exception/duplicate-username.exception';
 
 @Injectable()
 export class PlayerService {
@@ -33,19 +33,19 @@ export class PlayerService {
     );
   }
 
-  public getAll(): Observable<PlayerDto[]> {
+  public findAll(): Observable<PlayerDto[]> {
     return from(this.repo.find()).pipe(
       map(entities => entities.map(e => this.toDto(e)))
     );
   }
 
-  public getAllActive(): Observable<PlayerDto[]> {
+  public findAllActive(): Observable<PlayerDto[]> {
     return from(this.repo.findBy({ active: true })).pipe(
       map(entities => entities.map(e => this.toDto(e)))
     );
   }
 
-  public update(id: string, dto: Partial<UpdatePlayerDto>): Observable<PlayerDto> {
+  public update(id: string, dto: UpdatePlayerDto): Observable<PlayerDto> {
     return from(this.repo.update(id, dto)).pipe(
       switchMap(() => this.findOne(id)),
     );

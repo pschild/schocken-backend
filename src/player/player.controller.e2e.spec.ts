@@ -1,3 +1,4 @@
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import * as request from 'supertest';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -17,7 +18,10 @@ describe('PlayerController e2e', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [PlayerController],
-      providers: [PlayerService]
+      providers: [
+        PlayerService,
+        { provide: WINSTON_MODULE_PROVIDER, useValue: { warn: jest.fn() } }
+      ]
     })
       .overrideProvider(PlayerService)
       .useValue(playerService)
