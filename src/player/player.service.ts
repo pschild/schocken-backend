@@ -17,7 +17,7 @@ export class PlayerService {
   ) {
   }
 
-  public create(dto: Partial<CreatePlayerDto>): Observable<PlayerDto> {
+  public create(dto: CreatePlayerDto): Observable<PlayerDto> {
     return from(this.repo.findOneBy({ name: dto.name })).pipe(
       switchMap(found => found
         ? throwError(() => new DuplicateUsernameException())
