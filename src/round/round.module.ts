@@ -1,0 +1,12 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Round } from '../model/round.entity';
+import { RoundService } from './round.service';
+import { RoundController } from './round.controller';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Round])],
+  controllers: [RoundController],
+  providers: [RoundService],
+})
+export class RoundModule {}

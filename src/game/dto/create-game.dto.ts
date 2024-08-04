@@ -1,14 +1,11 @@
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
-export class CreatePlayerDto {
-  @IsString()
-  name: string;
-
+export class CreateGameDto {
   @IsOptional()
   @IsString()
-  registered?: string;
+  datetime?: string;
 
   @IsOptional()
   @IsBoolean()
-  active?: boolean;
+  completed?: boolean;
 }

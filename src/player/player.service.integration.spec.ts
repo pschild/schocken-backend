@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
-import { setupDataSource } from '../database/setup-test-data-source';
+import { setupDataSource, truncateAllTables } from '../database/setup-test-data-source';
 import { DuplicateUsernameException } from './exception/duplicate-username.exception';
 import { PlayerEntity } from '../model/player.entity';
 import { RANDOM_UUID, UUID_V4_REGEX } from '../test.utils';
@@ -41,7 +41,7 @@ describe('PlayerService integration', () => {
   });
 
   afterEach(async () => {
-    await repo.clear();
+    await truncateAllTables(source);
   })
 
   afterAll(async () => {

@@ -1,4 +1,5 @@
 import { DataType, newDb } from 'pg-mem';
+import { DataSource } from 'typeorm';
 import { v4 } from 'uuid';
 
 /**
@@ -59,4 +60,11 @@ export const setupDataSource = async (entities: unknown[], withMigration = false
   }
 
   return source;
+};
+
+export const truncateAllTables = async (source: DataSource) => {
+  const entities = source.entityMetadatas;
+  const tableNames = entities.map(entity => `"${entity.tableName}"`);
+  await Promise.all(tableNames.map(name => source.query(`TRUNCATE ${name} CASCADE;`)));
+  console.log("[TEST DATABASE]: Clean");
 };

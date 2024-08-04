@@ -23,25 +23,25 @@ export class PlayerService {
         ? throwError(() => new DuplicateUsernameException())
         : from(this.repo.save(dto))
       ),
-      map(e => this.toDto(e))
+      switchMap(({ id }) => this.findOne(id)),
     );
   }
 
   public findOne(id: string): Observable<PlayerDto> {
     return from(this.repo.findOneBy({ id })).pipe(
-      map(e => this.toDto(e))
+      map(PlayerDto.fromEntity)
     );
   }
 
   public findAll(): Observable<PlayerDto[]> {
     return from(this.repo.find()).pipe(
-      map(entities => entities.map(e => this.toDto(e)))
+      map(PlayerDto.fromEntities)
     );
   }
 
   public findAllActive(): Observable<PlayerDto[]> {
     return from(this.repo.findBy({ active: true })).pipe(
-      map(entities => entities.map(e => this.toDto(e)))
+      map(PlayerDto.fromEntities)
     );
   }
 
@@ -55,18 +55,5 @@ export class PlayerService {
     return from(this.repo.delete(id)).pipe(
       map(() => id)
     );
-  }
-
-  private toDto(entity: PlayerEntity): PlayerDto {
-    return !entity
-      ? null
-      : {
-        id: entity.id,
-        createDateTime: entity.createDateTime.toISOString(),
-        lastChangedDateTime: entity.lastChangedDateTime.toISOString(),
-        name: entity.name,
-        registered: entity.registered.toISOString(),
-        active: entity.active,
-      };
   }
 }

@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PlayerModule } from './player/player.module';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
+import { RoundModule } from './round/round.module';
+import { GameModule } from './game/game.module';
 import * as winston from 'winston';
 
 @Module({
@@ -48,6 +50,8 @@ import * as winston from 'winston';
       inject: [ConfigService],
     }),
     PlayerModule,
+    RoundModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [AppService],
