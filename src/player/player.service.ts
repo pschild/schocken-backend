@@ -52,7 +52,8 @@ export class PlayerService {
   }
 
   public remove(id: string): Observable<string> {
-    return from(this.repo.delete(id)).pipe(
+    // SOFT delete!
+    return from(this.repo.softDelete(id)).pipe(
       map(() => id)
     );
   }
