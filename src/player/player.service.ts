@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { from, Observable, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
-import { PlayerEntity } from '../model/player.entity';
+import { Player } from '../model/player.entity';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { PlayerDto } from './dto/player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
@@ -13,7 +13,7 @@ import { DuplicateUsernameException } from './exception/duplicate-username.excep
 export class PlayerService {
 
   constructor(
-    @InjectRepository(PlayerEntity) private readonly repo: Repository<PlayerEntity>
+    @InjectRepository(Player) private readonly repo: Repository<Player>
   ) {
   }
 

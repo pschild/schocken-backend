@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PlayerEntity } from '../model/player.entity';
+import { Player } from '../model/player.entity';
 import { MockType } from '../test.utils';
 import { PlayerService } from './player.service';
 
@@ -10,9 +10,9 @@ import { PlayerService } from './player.service';
  */
 describe('PlayerService', () => {
   let service: PlayerService;
-  let repositoryMock: MockType<Repository<PlayerEntity>>;
+  let repositoryMock: MockType<Repository<Player>>;
 
-  const repositoryMockFactory: () => MockType<Repository<PlayerEntity>> = jest.fn(() => ({
+  const repositoryMockFactory: () => MockType<Repository<Player>> = jest.fn(() => ({
     find: jest.fn(entity => entity),
   }));
 
@@ -20,12 +20,12 @@ describe('PlayerService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PlayerService,
-        { provide: getRepositoryToken(PlayerEntity), useFactory: repositoryMockFactory },
+        { provide: getRepositoryToken(Player), useFactory: repositoryMockFactory },
       ],
     }).compile();
 
     service = module.get(PlayerService);
-    repositoryMock = module.get(getRepositoryToken(PlayerEntity));
+    repositoryMock = module.get(getRepositoryToken(Player));
   });
 
   it('should be defined', () => {

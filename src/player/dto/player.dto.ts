@@ -1,4 +1,4 @@
-import { PlayerEntity } from '../../model/player.entity';
+import { Player } from '../../model/player.entity';
 
 export class PlayerDto {
   id: string;
@@ -8,7 +8,7 @@ export class PlayerDto {
   registered: string;
   active: boolean;
 
-  static fromEntity(entity: PlayerEntity): PlayerDto {
+  static fromEntity(entity: Player): PlayerDto {
     return entity ? {
       id: entity.id,
       createDateTime: entity.createDateTime.toISOString(),
@@ -19,7 +19,7 @@ export class PlayerDto {
     } : null;
   }
 
-  static fromEntities(entities: PlayerEntity[]): PlayerDto[] {
+  static fromEntities(entities: Player[]): PlayerDto[] {
     return entities.map(e => PlayerDto.fromEntity(e));
   }
 }

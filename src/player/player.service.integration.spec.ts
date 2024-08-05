@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
 import { setupDataSource, truncateAllTables } from '../database/setup-test-data-source';
 import { DuplicateUsernameException } from './exception/duplicate-username.exception';
-import { PlayerEntity } from '../model/player.entity';
+import { Player } from '../model/player.entity';
 import { RANDOM_UUID, UUID_V4_REGEX } from '../test.utils';
 import { PlayerService } from './player.service';
 import { differenceInMilliseconds } from 'date-fns';
@@ -15,10 +15,10 @@ import { differenceInMilliseconds } from 'date-fns';
 describe('PlayerService integration', () => {
   let service: PlayerService;
   let source: DataSource;
-  let repo: Repository<PlayerEntity>;
+  let repo: Repository<Player>;
 
   beforeAll(async () => {
-    source = await setupDataSource([PlayerEntity]);
+    source = await setupDataSource([Player]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -27,8 +27,8 @@ describe('PlayerService integration', () => {
       providers: [
         PlayerService,
         {
-          provide: getRepositoryToken(PlayerEntity),
-          useValue: source.getRepository(PlayerEntity),
+          provide: getRepositoryToken(Player),
+          useValue: source.getRepository(Player),
         }
       ],
     })
@@ -37,7 +37,7 @@ describe('PlayerService integration', () => {
       .compile();
 
     service = moduleRef.get(PlayerService);
-    repo = moduleRef.get<Repository<PlayerEntity>>(getRepositoryToken(PlayerEntity));
+    repo = moduleRef.get<Repository<Player>>(getRepositoryToken(Player));
   });
 
   afterEach(async () => {
