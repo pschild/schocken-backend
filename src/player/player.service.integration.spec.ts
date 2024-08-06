@@ -145,5 +145,6 @@ describe('PlayerService integration', () => {
 
     expect(await repo.findOneBy({ id: response.id })).toBeNull();
     expect(await repo.count()).toBe(1);
+    expect(await repo.count({ withDeleted: true })).toBe(2);
   });
 });

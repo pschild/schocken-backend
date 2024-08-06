@@ -33,4 +33,21 @@ export class RoundController {
   remove(@Param('id') id: string): Observable<string> {
     return this.service.remove(id);
   }
+
+  @Patch('attendance/:roundId/:playerId')
+  addAttendance(
+    @Param('roundId') roundId: string,
+    @Param('playerId') playerId: string,
+  ): Observable<RoundDto> {
+    return this.service.addAttendance(roundId, playerId);
+  }
+
+  @Delete('attendance/:roundId/:playerId')
+  removeAttendance(
+    @Param('roundId') roundId: string,
+    @Param('playerId') playerId: string,
+  ): Observable<RoundDto> {
+    return this.service.removeAttendance(roundId, playerId);
+  }
+
 }

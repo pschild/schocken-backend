@@ -28,14 +28,8 @@ export class RoundService {
     );
   }
 
-  findAllWithGame(): Observable<RoundDto[]> {
-    return from(this.repo.find({ relations: ['game'] })).pipe(
-      map(RoundDto.fromEntities)
-    );
-  }
-
   findOne(id: string): Observable<RoundDto> {
-    return from(this.repo.findOne({ where: { id }, relations: ['game'] })).pipe(
+    return from(this.repo.findOne({ where: { id }, relations: ['game', 'attendees'] })).pipe(
       map(RoundDto.fromEntity)
     );
   }
@@ -49,6 +43,22 @@ export class RoundService {
   remove(id: string): Observable<string> {
     return from(this.repo.delete(id)).pipe(
       map(() => id)
+    );
+  }
+
+  addAttendance(roundId: string, playerId: string): Observable<RoundDto> {
+    return from(this.repo.findOne({ where: { id: roundId }, relations: ['attendees'] })).pipe(
+      map(round => ({ ...round, attendees: [...round.attendees, { id: playerId }] })),
+      switchMap(round => this.repo.save(round)),
+      switchMap(({ id }) => this.findOne(id)),
+    );
+  }
+
+  removeAttendance(roundId: string, playerId: string): Observable<RoundDto> {
+    return from(this.repo.findOne({ where: { id: roundId }, relations: ['attendees'] })).pipe(
+      map(round => ({ ...round, attendees: round.attendees.filter(at => at.id !== playerId) })),
+      switchMap(round => this.repo.save(round)),
+      switchMap(({ id }) => this.findOne(id)),
     );
   }
 }

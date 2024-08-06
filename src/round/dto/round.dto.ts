@@ -1,5 +1,6 @@
 import { GameDto } from '../../game/dto/game.dto';
 import { Round } from '../../model/round.entity';
+import { PlayerDto } from '../../player/dto/player.dto';
 
 export class RoundDto {
   id: string;
@@ -8,6 +9,7 @@ export class RoundDto {
   datetime: string;
   game?: GameDto;
   gameId: string;
+  attendees?: PlayerDto[];
 
   static fromEntity(entity: Round): RoundDto {
     return entity ? {
@@ -16,6 +18,7 @@ export class RoundDto {
       lastChangedDateTime: entity.lastChangedDateTime.toISOString(),
       datetime: entity.datetime.toISOString(),
       gameId: entity.gameId,
+      ...(entity.attendees ? { attendees: PlayerDto.fromEntities(entity.attendees) } : {}),
       ...(entity.game ? { game: GameDto.fromEntity(entity.game) } : {}),
     } : null;
   }
