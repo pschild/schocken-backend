@@ -66,5 +66,4 @@ export const truncateAllTables = async (source: DataSource) => {
   const entities = source.entityMetadatas;
   const tableNames = entities.map(entity => `"${entity.tableName}"`);
   await Promise.all(tableNames.map(name => source.query(`TRUNCATE ${name} CASCADE;`)));
-  console.log("[TEST DATABASE]: Clean");
 };
