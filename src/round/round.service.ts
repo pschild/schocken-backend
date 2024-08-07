@@ -29,7 +29,7 @@ export class RoundService {
   }
 
   findOne(id: string): Observable<RoundDto> {
-    return from(this.repo.findOne({ where: { id }, relations: ['game', 'attendees'] })).pipe(
+    return from(this.repo.findOne({ where: { id }, relations: ['game', 'attendees', 'finalists'] })).pipe(
       map(RoundDto.fromEntity)
     );
   }
@@ -46,17 +46,33 @@ export class RoundService {
     );
   }
 
-  addAttendance(roundId: string, playerId: string): Observable<RoundDto> {
-    return from(this.repo.findOne({ where: { id: roundId }, relations: ['attendees'] })).pipe(
-      map(round => ({ ...round, attendees: [...round.attendees, { id: playerId }] })),
+  addAttendee(roundId: string, playerId: string): Observable<RoundDto> {
+    return this.addToRelation(roundId, playerId, 'attendees');
+  }
+
+  removeAttendee(roundId: string, playerId: string): Observable<RoundDto> {
+    return this.removeFromRelation(roundId, playerId, 'attendees');
+  }
+
+  addFinalist(roundId: string, playerId: string): Observable<RoundDto> {
+    return this.addToRelation(roundId, playerId, 'finalists');
+  }
+
+  removeFinalist(roundId: string, playerId: string): Observable<RoundDto> {
+    return this.removeFromRelation(roundId, playerId, 'finalists');
+  }
+
+  private addToRelation(roundId: string, playerId: string, relation: string): Observable<RoundDto> {
+    return from(this.repo.findOne({ where: { id: roundId }, relations: [relation] })).pipe(
+      map(round => ({ ...round, [relation]: [...round[relation], { id: playerId }] })),
       switchMap(round => this.repo.save(round)),
       switchMap(({ id }) => this.findOne(id)),
     );
   }
 
-  removeAttendance(roundId: string, playerId: string): Observable<RoundDto> {
-    return from(this.repo.findOne({ where: { id: roundId }, relations: ['attendees'] })).pipe(
-      map(round => ({ ...round, attendees: round.attendees.filter(at => at.id !== playerId) })),
+  private removeFromRelation(roundId: string, playerId: string, relation: string): Observable<RoundDto> {
+    return from(this.repo.findOne({ where: { id: roundId }, relations: [relation] })).pipe(
+      map(round => ({ ...round, [relation]: round[relation].filter(player => player.id !== playerId) })),
       switchMap(round => this.repo.save(round)),
       switchMap(({ id }) => this.findOne(id)),
     );

@@ -2,10 +2,9 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
-import { setupDataSource, truncateAllTables } from '../database/setup-test-data-source';
 import { DuplicateUsernameException } from './exception/duplicate-username.exception';
 import { Player } from '../model/player.entity';
-import { RANDOM_UUID, UUID_V4_REGEX } from '../test.utils';
+import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
 import { PlayerService } from './player.service';
 import { differenceInMilliseconds } from 'date-fns';
 

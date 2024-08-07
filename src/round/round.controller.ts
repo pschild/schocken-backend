@@ -34,20 +34,36 @@ export class RoundController {
     return this.service.remove(id);
   }
 
-  @Patch('attendance/:roundId/:playerId')
+  @Patch(':roundId/attendees/:playerId')
   addAttendance(
     @Param('roundId') roundId: string,
     @Param('playerId') playerId: string,
   ): Observable<RoundDto> {
-    return this.service.addAttendance(roundId, playerId);
+    return this.service.addAttendee(roundId, playerId);
   }
 
-  @Delete('attendance/:roundId/:playerId')
+  @Delete(':roundId/attendees/:playerId')
   removeAttendance(
     @Param('roundId') roundId: string,
     @Param('playerId') playerId: string,
   ): Observable<RoundDto> {
-    return this.service.removeAttendance(roundId, playerId);
+    return this.service.removeAttendee(roundId, playerId);
+  }
+
+  @Patch(':roundId/finalists/:playerId')
+  addFinalist(
+    @Param('roundId') roundId: string,
+    @Param('playerId') playerId: string,
+  ): Observable<RoundDto> {
+    return this.service.addFinalist(roundId, playerId);
+  }
+
+  @Delete(':roundId/finalists/:playerId')
+  removeFinalist(
+    @Param('roundId') roundId: string,
+    @Param('playerId') playerId: string,
+  ): Observable<RoundDto> {
+    return this.service.removeFinalist(roundId, playerId);
   }
 
 }

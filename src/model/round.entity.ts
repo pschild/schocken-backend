@@ -26,4 +26,11 @@ export class Round extends BaseEntity {
   )
   @JoinTable({ name: 'attendances' })
   attendees: Player[];
+
+  @ManyToMany(
+    () => Player,
+    // { eager: true } // always load finalists when loading round
+  )
+  @JoinTable({ name: 'finals' })
+  finalists: Player[];
 }

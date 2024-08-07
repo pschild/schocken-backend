@@ -10,6 +10,7 @@ export class RoundDto {
   game?: GameDto;
   gameId: string;
   attendees?: PlayerDto[];
+  finalists?: PlayerDto[];
 
   static fromEntity(entity: Round): RoundDto {
     return entity ? {
@@ -19,6 +20,7 @@ export class RoundDto {
       datetime: entity.datetime.toISOString(),
       gameId: entity.gameId,
       ...(entity.attendees ? { attendees: PlayerDto.fromEntities(entity.attendees) } : {}),
+      ...(entity.finalists ? { finalists: PlayerDto.fromEntities(entity.finalists) } : {}),
       ...(entity.game ? { game: GameDto.fromEntity(entity.game) } : {}),
     } : null;
   }

@@ -3,13 +3,12 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
 import { differenceInMilliseconds } from 'date-fns';
-import { setupDataSource, truncateAllTables } from '../../src/database/setup-test-data-source';
 import { GameService } from '../../src/game/game.service';
 import { Player } from '../../src/model/player.entity';
 import { Round } from '../../src/model/round.entity';
 import { Game } from '../../src/model/game.entity';
 import { RoundService } from '../../src/round/round.service';
-import { RANDOM_UUID, UUID_V4_REGEX } from '../../src/test.utils';
+import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../../src/test.utils';
 
 describe('Rounds', () => {
   let gameService: GameService;
