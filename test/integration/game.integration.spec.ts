@@ -3,19 +3,23 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
 import { differenceInMilliseconds } from 'date-fns';
+import { PlaceType } from '../../src/game/dto/place.dto';
 import { GameService } from '../../src/game/game.service';
 import { Player } from '../../src/model/player.entity';
 import { Round } from '../../src/model/round.entity';
 import { Game } from '../../src/model/game.entity';
+import { PlayerService } from '../../src/player/player.service';
 import { RoundService } from '../../src/round/round.service';
-import { setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../../src/test.utils';
+import { RANDOM_STRING, RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../../src/test.utils';
 
 describe('Games', () => {
   let gameService: GameService;
   let roundService: RoundService;
+  let playerService: PlayerService;
   let source: DataSource;
   let gameRepo: Repository<Game>;
   let roundRepo: Repository<Round>;
+  let playerRepo: Repository<Player>;
 
   beforeAll(async () => {
     source = await setupDataSource([Game, Round, Player]);
@@ -27,6 +31,7 @@ describe('Games', () => {
       providers: [
         GameService,
         RoundService,
+        PlayerService,
         {
           provide: getRepositoryToken(Game),
           useValue: source.getRepository(Game),
@@ -35,6 +40,10 @@ describe('Games', () => {
           provide: getRepositoryToken(Round),
           useValue: source.getRepository(Round),
         },
+        {
+          provide: getRepositoryToken(Player),
+          useValue: source.getRepository(Player),
+        }
       ],
     })
       .overrideProvider(DataSource)
@@ -43,8 +52,10 @@ describe('Games', () => {
 
     gameService = moduleRef.get(GameService);
     roundService = moduleRef.get(RoundService);
+    playerService = moduleRef.get(PlayerService);
     gameRepo = moduleRef.get<Repository<Game>>(getRepositoryToken(Game));
     roundRepo = moduleRef.get<Repository<Round>>(getRepositoryToken(Round));
+    playerRepo = moduleRef.get<Repository<Player>>(getRepositoryToken(Player));
   });
 
   afterEach(async () => {
@@ -55,14 +66,38 @@ describe('Games', () => {
     await source.destroy();
   });
 
-  it('should be created', async () => {
-    const result = await firstValueFrom(gameService.create({}));
-    expect(result).toBeTruthy();
-    expect(result.id).toMatch(UUID_V4_REGEX);
-    expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(100);
-    expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(100);
-    expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(100);
-    expect(result.completed).toBe(false);
+  describe('should be created', () => {
+    it('without place', async () => {
+      const result = await firstValueFrom(gameService.create({}));
+      expect(result).toBeTruthy();
+      expect(result.id).toMatch(UUID_V4_REGEX);
+      expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(100);
+      expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(100);
+      expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(100);
+      expect(result.completed).toBe(false);
+      expect(result.place).toBeNull();
+    });
+
+    it('with away place', async () => {
+      const result = await firstValueFrom(gameService.create({ placeOfAwayGame: 'anywhere' }));
+      expect(result.place).toEqual({ type: PlaceType.AWAY, name: 'anywhere' });
+    });
+
+    it('with home place', async () => {
+      const createdPlayer = await playerRepo.save({ name: 'John' });
+      const result = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
+      expect(result.place).toEqual({ type: PlaceType.HOME, name: 'John' });
+    });
+  });
+
+  describe('should not be created', () => {
+    it('with too long place name', async () => {
+      await expect(firstValueFrom(gameService.create({ placeOfAwayGame: RANDOM_STRING(65) }))).rejects.toThrowError(/value too long for type character/);
+    });
+
+    it('with both hostedById and placeOfAwayGame given', async () => {
+      await expect(async () => await firstValueFrom(gameService.create({ hostedById: RANDOM_UUID, placeOfAwayGame: 'anywhere' }))).rejects.toThrowError('Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.');
+    });
   });
 
   it('should be updated', async () => {
@@ -100,5 +135,39 @@ describe('Games', () => {
 
     await expect(firstValueFrom(gameService.findAll())).resolves.toEqual([]);
     await expect(firstValueFrom(roundService.findAll())).resolves.toEqual([]);
+  });
+
+  it('should be removed when related to a player', async () => {
+    const createdPlayer = await playerRepo.save({ name: 'John' });
+    const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
+
+    const result = await firstValueFrom(roundService.remove(createdGame.id));
+    expect(result).toEqual(createdGame.id);
+
+    // player should still exist
+    const player = await firstValueFrom(playerService.findOne(createdPlayer.id));
+    expect(player).toBeDefined();
+  });
+
+  it('should set place to null if player was deleted', async () => {
+    const createdPlayer = await playerRepo.save({ name: 'John' });
+    const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
+
+    const result = await playerRepo.delete(createdPlayer.id);
+    expect(result.affected).toEqual(1);
+
+    const game = await firstValueFrom(gameService.findOne(createdGame.id));
+    expect(game.place).toBeNull();
+  });
+
+  it('should load place even if player was softly deleted', async () => {
+    const createdPlayer = await playerRepo.save({ name: 'John' });
+    const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
+
+    const result = await firstValueFrom(playerService.remove(createdPlayer.id));
+    expect(result).toEqual(createdPlayer.id);
+
+    const game = await firstValueFrom(gameService.findOne(createdGame.id));
+    expect(game.place).toEqual({ type: PlaceType.HOME, name: 'John' });
   });
 });

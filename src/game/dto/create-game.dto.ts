@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class CreateGameDto {
   @IsOptional()
@@ -8,4 +8,13 @@ export class CreateGameDto {
   @IsOptional()
   @IsBoolean()
   completed?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  hostedById?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  placeOfAwayGame?: string;
 }

@@ -1,5 +1,6 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { Game } from './game.entity';
 
 @Entity({ name: 'player' })
 export class Player extends BaseEntity {
@@ -11,4 +12,7 @@ export class Player extends BaseEntity {
 
   @Column({ default: true })
   active: boolean;
+
+  @OneToMany(() => Game, game => game.hostedBy)
+  hostedGames: Game[];
 }

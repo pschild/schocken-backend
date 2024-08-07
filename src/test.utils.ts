@@ -9,6 +9,8 @@ export type MockType<T> = {
 export const UUID_V4_REGEX = /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
 export const RANDOM_UUID = v4();
 
+export const RANDOM_STRING = (length: number) => [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+
 /**
  * Setup a data source for in-memory postgres used by integration tests.
  * @param entities Pass your entities

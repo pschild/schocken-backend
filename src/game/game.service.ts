@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { from, Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -17,19 +17,27 @@ export class GameService {
   }
 
   create(createGameDto: CreateGameDto): Observable<GameDto> {
-    return from(this.repo.save(createGameDto)).pipe(
+    if (createGameDto.hostedById && createGameDto.placeOfAwayGame) {
+      throw new BadRequestException('Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.');
+    }
+
+    const dto = {
+      ...createGameDto,
+      hostedBy: { id: createGameDto.hostedById }
+    };
+    return from(this.repo.save(dto)).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
 
   findAll(): Observable<GameDto[]> {
-    return from(this.repo.find({ relations: ['rounds'] })).pipe(
+    return from(this.repo.find({ relations: ['rounds', 'hostedBy'] })).pipe(
       map(GameDto.fromEntities)
     );
   }
 
   findOne(id: string): Observable<GameDto> {
-    return from(this.repo.findOne({ where: { id }, relations: ['rounds'] })).pipe(
+    return from(this.repo.findOne({ where: { id }, relations: ['rounds', 'hostedBy'], withDeleted: true })).pipe(
       map(GameDto.fromEntity)
     );
   }

@@ -1,5 +1,6 @@
 import { Game } from '../../model/game.entity';
 import { RoundDto } from '../../round/dto/round.dto';
+import { PlaceDto } from './place.dto';
 
 export class GameDto {
   id: string;
@@ -7,6 +8,7 @@ export class GameDto {
   lastChangedDateTime: string;
   datetime: string;
   completed: boolean;
+  place?: PlaceDto;
   rounds?: RoundDto[];
 
   static fromEntity(entity: Game): GameDto {
@@ -16,6 +18,7 @@ export class GameDto {
       lastChangedDateTime: entity.lastChangedDateTime.toISOString(),
       datetime: entity.datetime.toISOString(),
       completed: entity.completed,
+      place: PlaceDto.fromEntity(entity),
       ...(entity.rounds ? { rounds: RoundDto.fromEntities(entity.rounds) } : {}),
     } : null;
   }
