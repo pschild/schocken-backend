@@ -1,9 +1,10 @@
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Check, Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Player } from './player.entity';
 import { Round } from './round.entity';
 
 @Entity({ name: 'game' })
+@Check('NOT ("placeOfAwayGame" IS NOT NULL AND "hostedById" is NOT NULL)')
 export class Game extends BaseEntity {
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   datetime: Date;
