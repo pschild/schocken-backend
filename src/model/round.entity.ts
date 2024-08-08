@@ -17,9 +17,6 @@ export class Round extends BaseEntity {
   )
   game: Game;
 
-  @Column()
-  gameId: string; // @ManyToOne also creates this column, but we need it explicitly to create a new round and passing only an existing game's id here. (https://github.com/typeorm/typeorm/issues/447#issuecomment-298896602)
-
   @ManyToMany(
     () => Player,
     // { eager: true } // always load attendances when loading round

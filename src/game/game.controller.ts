@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, BadRequestException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { GameDto } from './dto/game.dto';
 import { GameService } from './game.service';
@@ -11,6 +11,10 @@ export class GameController {
 
   @Post()
   create(@Body() createGameDto: CreateGameDto): Observable<GameDto> {
+    if (createGameDto.hostedById && createGameDto.placeOfAwayGame) {
+      throw new BadRequestException('Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.');
+    }
+
     return this.service.create(createGameDto);
   }
 
@@ -26,6 +30,10 @@ export class GameController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateGameDto: UpdateGameDto): Observable<GameDto> {
+    if (updateGameDto.hostedById && updateGameDto.placeOfAwayGame) {
+      throw new BadRequestException('Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.');
+    }
+
     return this.service.update(id, updateGameDto);
   }
 

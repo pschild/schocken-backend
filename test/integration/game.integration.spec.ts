@@ -17,8 +17,6 @@ describe('Games', () => {
   let roundService: RoundService;
   let playerService: PlayerService;
   let source: DataSource;
-  let gameRepo: Repository<Game>;
-  let roundRepo: Repository<Round>;
   let playerRepo: Repository<Player>;
 
   beforeAll(async () => {
@@ -53,8 +51,6 @@ describe('Games', () => {
     gameService = moduleRef.get(GameService);
     roundService = moduleRef.get(RoundService);
     playerService = moduleRef.get(PlayerService);
-    gameRepo = moduleRef.get<Repository<Game>>(getRepositoryToken(Game));
-    roundRepo = moduleRef.get<Repository<Round>>(getRepositoryToken(Round));
     playerRepo = moduleRef.get<Repository<Player>>(getRepositoryToken(Player));
   });
 
@@ -84,7 +80,7 @@ describe('Games', () => {
     });
 
     it('with home place', async () => {
-      const createdPlayer = await playerRepo.save({ name: 'John' });
+      const createdPlayer = await firstValueFrom(playerService.create({name: 'John'}));
       const result = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
       expect(result.place).toEqual({ type: PlaceType.HOME, name: 'John' });
     });
@@ -95,15 +91,21 @@ describe('Games', () => {
       await expect(firstValueFrom(gameService.create({ placeOfAwayGame: RANDOM_STRING(65) }))).rejects.toThrowError(/value too long for type character/);
     });
 
+    it('with unknown player given', async () => {
+      await expect(firstValueFrom(gameService.create({ hostedById: RANDOM_UUID }))).rejects.toThrowError(/violates foreign key constraint/);
+    });
+
     it('with both hostedById and placeOfAwayGame given', async () => {
-      await expect(async () => await firstValueFrom(gameService.create({ hostedById: RANDOM_UUID, placeOfAwayGame: 'anywhere' }))).rejects.toThrowError('Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.');
+      const createdPlayer = await firstValueFrom(playerService.create({name: 'John'}));
+      await expect(firstValueFrom(gameService.create({ hostedById: createdPlayer.id, placeOfAwayGame: 'anywhere' }))).rejects.toThrowError(/check constraint .+ is violated by some row/);
     });
   });
 
   it('should be updated', async () => {
-    const createdGame = await gameRepo.save({});
-    const createdRound1 = await roundRepo.save({ gameId: createdGame.id });
-    const createdRound2 = await roundRepo.save({ gameId: createdGame.id });
+    const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+    const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
+    const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+    const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
     let result;
     result = await firstValueFrom(gameService.findOne(createdGame.id));
@@ -111,6 +113,7 @@ describe('Games', () => {
     expect(result.completed).toBe(false);
     expect(result.rounds[0].id).toEqual(createdRound1.id);
     expect(result.rounds[1].id).toEqual(createdRound2.id);
+    expect(result.place).toEqual({ type: PlaceType.HOME, name: createdPlayer.name });
 
     await firstValueFrom(gameService.update(createdGame.id, { completed: true }));
 
@@ -119,12 +122,13 @@ describe('Games', () => {
     expect(result.completed).toBe(true);
     expect(result.rounds[0].id).toEqual(createdRound1.id);
     expect(result.rounds[1].id).toEqual(createdRound2.id);
+    expect(result.place).toEqual({ type: PlaceType.HOME, name: createdPlayer.name });
   });
 
   it('should be removed including all referring rounds', async () => {
-    const createdGame = await gameRepo.save({});
-    const createdRound1 = await roundRepo.save({ gameId: createdGame.id });
-    const createdRound2 = await roundRepo.save({ gameId: createdGame.id });
+    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+    const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
     const result = await firstValueFrom(gameService.findOne(createdGame.id));
     expect(result.rounds.length).toBe(2);
@@ -138,7 +142,7 @@ describe('Games', () => {
   });
 
   it('should be removed when related to a player', async () => {
-    const createdPlayer = await playerRepo.save({ name: 'John' });
+    const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
 
     const result = await firstValueFrom(roundService.remove(createdGame.id));
@@ -150,7 +154,7 @@ describe('Games', () => {
   });
 
   it('should set place to null if player was deleted', async () => {
-    const createdPlayer = await playerRepo.save({ name: 'John' });
+    const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
 
     const result = await playerRepo.delete(createdPlayer.id);
@@ -161,7 +165,7 @@ describe('Games', () => {
   });
 
   it('should load place even if player was softly deleted', async () => {
-    const createdPlayer = await playerRepo.save({ name: 'John' });
+    const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
 
     const result = await firstValueFrom(playerService.remove(createdPlayer.id));

@@ -8,7 +8,6 @@ export class RoundDto {
   lastChangedDateTime: string;
   datetime: string;
   game?: GameDto;
-  gameId: string;
   attendees?: PlayerDto[];
   finalists?: PlayerDto[];
 
@@ -18,7 +17,6 @@ export class RoundDto {
       createDateTime: entity.createDateTime.toISOString(),
       lastChangedDateTime: entity.lastChangedDateTime.toISOString(),
       datetime: entity.datetime.toISOString(),
-      gameId: entity.gameId,
       ...(entity.attendees ? { attendees: PlayerDto.fromEntities(entity.attendees) } : {}),
       ...(entity.finalists ? { finalists: PlayerDto.fromEntities(entity.finalists) } : {}),
       ...(entity.game ? { game: GameDto.fromEntity(entity.game) } : {}),

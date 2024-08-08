@@ -36,8 +36,8 @@ describe('PlayerController e2e', () => {
   });
 
   it.each([
-    [null,                                                                  400, ['name must be a string']],
-    [{ name: 'Susi' },                                                      201, undefined],
+    [null, 400, ['name must be shorter than or equal to 32 characters', 'name must be a string']],
+    [{ name: 'Susi' }, 201, undefined],
     [{ name: 'Susi', registered: new Date().toISOString(), active: false }, 201, undefined],
   ])('create request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
     let response;

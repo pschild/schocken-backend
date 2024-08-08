@@ -17,10 +17,6 @@ export class GameService {
   }
 
   create(createGameDto: CreateGameDto): Observable<GameDto> {
-    if (createGameDto.hostedById && createGameDto.placeOfAwayGame) {
-      throw new BadRequestException('Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.');
-    }
-
     const dto = {
       ...createGameDto,
       hostedBy: { id: createGameDto.hostedById }

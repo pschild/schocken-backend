@@ -6,13 +6,15 @@ import { GameService } from '../../src/game/game.service';
 import { Player } from '../../src/model/player.entity';
 import { Round } from '../../src/model/round.entity';
 import { Game } from '../../src/model/game.entity';
+import { PlayerService } from '../../src/player/player.service';
 import { RoundService } from '../../src/round/round.service';
 import { RANDOM_UUID, setupDataSource, truncateAllTables } from '../../src/test.utils';
 
 describe('Attendances', () => {
+  let gameService: GameService;
   let roundService: RoundService;
+  let playerService: PlayerService;
   let source: DataSource;
-  let gameRepo: Repository<Game>;
   let playerRepo: Repository<Player>;
 
   beforeAll(async () => {
@@ -25,6 +27,7 @@ describe('Attendances', () => {
       providers: [
         GameService,
         RoundService,
+        PlayerService,
         {
           provide: getRepositoryToken(Game),
           useValue: source.getRepository(Game),
@@ -43,8 +46,9 @@ describe('Attendances', () => {
       .useValue(source)
       .compile();
 
+    gameService = moduleRef.get(GameService);
     roundService = moduleRef.get(RoundService);
-    gameRepo = moduleRef.get<Repository<Game>>(getRepositoryToken(Game));
+    playerService = moduleRef.get(PlayerService);
     playerRepo = moduleRef.get<Repository<Player>>(getRepositoryToken(Player));
   });
 
@@ -57,7 +61,7 @@ describe('Attendances', () => {
   });
 
   it('should be empty when not specified', async () => {
-    const createdGame = await gameRepo.save({});
+    const createdGame = await firstValueFrom(gameService.create({}));
 
     const result = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     expect(result).toBeTruthy();
@@ -65,9 +69,9 @@ describe('Attendances', () => {
   });
 
   it('should be added and removed for an existing round', async () => {
-    const createdPlayer1 = await playerRepo.save({ name: 'John' });
-    const createdPlayer2 = await playerRepo.save({ name: 'Jake' });
-    const createdGame = await gameRepo.save({});
+    const createdPlayer1 = await firstValueFrom(playerService.create({ name: 'John' }));
+    const createdPlayer2 = await firstValueFrom(playerService.create({ name: 'Jake' }));
+    const createdGame = await firstValueFrom(gameService.create({}));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer1.id));
@@ -84,27 +88,27 @@ describe('Attendances', () => {
   });
 
   it('should not be updated with an unknown playerId', async () => {
-    const createdGame = await gameRepo.save({});
+    const createdGame = await firstValueFrom(gameService.create({}));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
     await expect(firstValueFrom(roundService.addAttendee(createdRound.id, RANDOM_UUID))).rejects.toThrowError(/violates foreign key constraint/);
   });
 
   it('should not remove player when round is removed', async () => {
-    const createdPlayer = await playerRepo.save({ name: 'John' });
-    const createdGame = await gameRepo.save({});
+    const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+    const createdGame = await firstValueFrom(gameService.create({}));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
 
     await firstValueFrom(roundService.remove(createdRound.id));
 
-    const result = await playerRepo.findOne({ where: { id: createdPlayer.id } });
+    const result = await firstValueFrom(playerService.findOne(createdPlayer.id));
     expect(result).toBeDefined();
   });
 
   it('should remove attendance if round is deleted', async () => {
-    const createdPlayer = await playerRepo.save({ name: 'John' });
-    const createdGame = await gameRepo.save({});
+    const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+    const createdGame = await firstValueFrom(gameService.create({}));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
 
@@ -122,8 +126,8 @@ describe('Attendances', () => {
   });
 
   it('should remove attendance if player is deleted', async () => {
-    const createdPlayer = await playerRepo.save({ name: 'John' });
-    const createdGame = await gameRepo.save({});
+    const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+    const createdGame = await firstValueFrom(gameService.create({}));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
 
@@ -148,8 +152,8 @@ describe('Attendances', () => {
   });
 
   it('should not remove attendance if player is softly deleted', async () => {
-    const createdPlayer = await playerRepo.save({ name: 'John' });
-    const createdGame = await gameRepo.save({});
+    const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+    const createdGame = await firstValueFrom(gameService.create({}));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
 
@@ -164,7 +168,7 @@ describe('Attendances', () => {
       playerId: createdPlayer.id,
     }]);
 
-    await playerRepo.softDelete(createdPlayer.id);
+    await firstValueFrom(playerService.remove(createdPlayer.id));
 
     result = await firstValueFrom(roundService.findOne(createdRound.id));
     expect(result.attendees.length).toBe(0);

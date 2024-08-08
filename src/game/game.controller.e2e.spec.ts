@@ -1,7 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
-import { RANDOM_STRING } from '../test.utils';
+import { RANDOM_STRING, RANDOM_UUID } from '../test.utils';
 import { GameController } from './game.controller';
 import { GameService } from './game.service';
 
@@ -9,6 +9,7 @@ describe('GameController e2e', () => {
   let app: INestApplication;
   const gameService = {
     create: jest.fn(),
+    update: jest.fn(),
     findOne: jest.fn(),
   };
 
@@ -32,16 +33,34 @@ describe('GameController e2e', () => {
   });
 
   it.each([
-    [null,                                                                  201, undefined],
-    [{},                                                                    201, undefined],
-    [{ placeOfAwayGame: RANDOM_STRING(64) },                         201, undefined],
-    [{ placeOfAwayGame: RANDOM_STRING(65) },                         400, ['placeOfAwayGame must be shorter than or equal to 64 characters']],
+    [null, 201, undefined],
+    [{}, 201, undefined],
+    [{ placeOfAwayGame: RANDOM_STRING(64) }, 201, undefined],
+    [{ placeOfAwayGame: RANDOM_STRING(65) }, 400, ['placeOfAwayGame must be shorter than or equal to 64 characters']],
+    [{ placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, 'Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.'],
   ])('create request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
     let response;
     if (body) {
       response = await request(app.getHttpServer()).post('/game').send(body);
     } else {
       response = await request(app.getHttpServer()).post('/game');
+    }
+    expect(response.status).toEqual(status);
+    expect(response.body.message).toEqual(errors);
+  });
+
+  it.each([
+    [null, 200, undefined],
+    [{}, 200, undefined],
+    [{ placeOfAwayGame: RANDOM_STRING(64) }, 200, undefined],
+    [{ placeOfAwayGame: RANDOM_STRING(65) }, 400, ['placeOfAwayGame must be shorter than or equal to 64 characters']],
+    [{ placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, 'Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.'],
+  ])('update request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
+    let response;
+    if (body) {
+      response = await request(app.getHttpServer()).patch(`/game/${RANDOM_UUID}`).send(body);
+    } else {
+      response = await request(app.getHttpServer()).patch(`/game/${RANDOM_UUID}`);
     }
     expect(response.status).toEqual(status);
     expect(response.body.message).toEqual(errors);
