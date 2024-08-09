@@ -37,7 +37,7 @@ describe('GameController e2e', () => {
     [{}, 201, undefined],
     [{ placeOfAwayGame: RANDOM_STRING(64) }, 201, undefined],
     [{ placeOfAwayGame: RANDOM_STRING(65) }, 400, ['placeOfAwayGame must be shorter than or equal to 64 characters']],
-    [{ placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, 'Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.'],
+    [{ placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, ['only one property of [hostedById, placeOfAwayGame] can be defined simultaneously', 'only one property of [placeOfAwayGame, hostedById] can be defined simultaneously']],
   ])('create request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
     let response;
     if (body) {
@@ -54,7 +54,7 @@ describe('GameController e2e', () => {
     [{}, 200, undefined],
     [{ placeOfAwayGame: RANDOM_STRING(64) }, 200, undefined],
     [{ placeOfAwayGame: RANDOM_STRING(65) }, 400, ['placeOfAwayGame must be shorter than or equal to 64 characters']],
-    [{ placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, 'Properties `hostedById` and `placeOfAwayGame` must not be defined simultaneously.'],
+    [{ placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, ['only one property of [hostedById, placeOfAwayGame] can be defined simultaneously', 'only one property of [placeOfAwayGame, hostedById] can be defined simultaneously']],
   ])('update request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
     let response;
     if (body) {

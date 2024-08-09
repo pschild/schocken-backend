@@ -16,8 +16,12 @@ export class RoundService {
   ) {
   }
 
-  create(createRoundDto: CreateRoundDto): Observable<RoundDto> {
-    return from(this.repo.save(createRoundDto)).pipe(
+  create(dto: CreateRoundDto): Observable<RoundDto> {
+    const mappedDto = {
+      ...dto,
+      game: { id: dto.gameId }
+    };
+    return from(this.repo.save(mappedDto)).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
@@ -34,8 +38,12 @@ export class RoundService {
     );
   }
 
-  update(id: string, updateRoundDto: UpdateRoundDto): Observable<RoundDto> {
-    return from(this.repo.update(id, updateRoundDto)).pipe(
+  update(id: string, dto: UpdateRoundDto): Observable<RoundDto> {
+    const mappedDto = {
+      ...dto,
+      ...(dto.gameId ? { game: { id: dto.gameId } } : {}),
+    };
+    return from(this.repo.update(id, mappedDto)).pipe(
       switchMap(() => this.findOne(id)),
     );
   }

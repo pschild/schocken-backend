@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { from, Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -16,12 +16,12 @@ export class GameService {
   ) {
   }
 
-  create(createGameDto: CreateGameDto): Observable<GameDto> {
-    const dto = {
-      ...createGameDto,
-      hostedBy: { id: createGameDto.hostedById }
+  create(dto: CreateGameDto): Observable<GameDto> {
+    const mappedDto = {
+      ...dto,
+      hostedBy: { id: dto.hostedById }
     };
-    return from(this.repo.save(dto)).pipe(
+    return from(this.repo.save(mappedDto)).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
@@ -38,8 +38,12 @@ export class GameService {
     );
   }
 
-  update(id: string, updateGameDto: UpdateGameDto): Observable<GameDto> {
-    return from(this.repo.update(id, updateGameDto)).pipe(
+  update(id: string, dto: UpdateGameDto): Observable<GameDto> {
+    const mappedDto = {
+      ...dto,
+      ...(dto.hostedById ? { hostedBy: { id: dto.hostedById } } : {}),
+    };
+    return from(this.repo.update(id, mappedDto)).pipe(
       switchMap(() => this.findOne(id)),
     );
   }
