@@ -10,8 +10,8 @@ export class GameController {
   constructor(private readonly service: GameService) {}
 
   @Post()
-  create(@Body() createGameDto: CreateGameDto): Observable<GameDto> {
-    return this.service.create(createGameDto);
+  create(@Body() dto: CreateGameDto): Observable<GameDto> {
+    return this.service.create(dto);
   }
 
   @Get()
@@ -25,8 +25,8 @@ export class GameController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGameDto: UpdateGameDto): Observable<GameDto> {
-    return this.service.update(id, updateGameDto);
+  update(@Param('id') id: string, @Body() dto: UpdateGameDto): Observable<GameDto> {
+    return this.service.update(id, dto);
   }
 
   @Delete(':id')

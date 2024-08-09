@@ -12,6 +12,7 @@ export class Round extends BaseEntity {
     () => Game,
       game => game.rounds,
     {
+      nullable: false,
       onDelete: 'CASCADE' // remove orphan rounds when referring game is deleted
     }
   )

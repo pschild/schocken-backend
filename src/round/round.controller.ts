@@ -10,8 +10,8 @@ export class RoundController {
   constructor(private readonly service: RoundService) {}
 
   @Post()
-  create(@Body() createRoundDto: CreateRoundDto): Observable<RoundDto> {
-    return this.service.create(createRoundDto);
+  create(@Body() dto: CreateRoundDto): Observable<RoundDto> {
+    return this.service.create(dto);
   }
 
   @Get()
@@ -25,8 +25,8 @@ export class RoundController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRoundDto: UpdateRoundDto): Observable<RoundDto> {
-    return this.service.update(id, updateRoundDto);
+  update(@Param('id') id: string, @Body() dto: UpdateRoundDto): Observable<RoundDto> {
+    return this.service.update(id, dto);
   }
 
   @Delete(':id')
