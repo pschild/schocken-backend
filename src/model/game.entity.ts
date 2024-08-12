@@ -1,5 +1,6 @@
 import { Check, Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { GameEvent } from './game-event.entity';
 import { Player } from './player.entity';
 import { Round } from './round.entity';
 
@@ -20,4 +21,7 @@ export class Game extends BaseEntity {
 
   @OneToMany(() => Round, round => round.game)
   rounds: Round[];
+
+  @OneToMany(() => GameEvent, event => event.game)
+  events: GameEvent[];
 }

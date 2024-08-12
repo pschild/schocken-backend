@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
+import { GameEvent } from '../model/game-event.entity';
 import { Game } from '../model/game.entity';
 import { Round } from '../model/round.entity';
 import { DuplicateUsernameException } from './exception/duplicate-username.exception';
@@ -19,7 +20,7 @@ describe('PlayerService integration', () => {
   let repo: Repository<Player>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player]);
+    source = await setupDataSource([Game, Round, Player, GameEvent]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [

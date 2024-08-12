@@ -7,6 +7,8 @@ import { PlayerModule } from './player/player.module';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import { RoundModule } from './round/round.module';
 import { GameModule } from './game/game.module';
+import { GameEventModule } from './game-event/game-event.module';
+import { EventTypeModule } from './event-type/event-type.module';
 import * as winston from 'winston';
 
 @Module({
@@ -52,6 +54,8 @@ import * as winston from 'winston';
     PlayerModule,
     RoundModule,
     GameModule,
+    GameEventModule,
+    EventTypeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

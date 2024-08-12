@@ -3,6 +3,8 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
 import { GameService } from '../../src/game/game.service';
+import { EventType } from '../../src/model/event-type.entity';
+import { GameEvent } from '../../src/model/game-event.entity';
 import { Player } from '../../src/model/player.entity';
 import { Round } from '../../src/model/round.entity';
 import { Game } from '../../src/model/game.entity';
@@ -18,7 +20,7 @@ describe('Attendances', () => {
   let playerRepo: Repository<Player>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player]);
+    source = await setupDataSource([Game, Round, Player, GameEvent, EventType]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [
