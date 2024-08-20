@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { DataSource } from 'typeorm';
 import { differenceInMilliseconds } from 'date-fns';
 import { GameService } from '../../src/game/game.service';
+import { EventTypeRevision } from '../../src/model/event-type-revision.entity';
 import { EventType } from '../../src/model/event-type.entity';
 import { GameEvent } from '../../src/model/game-event.entity';
 import { Player } from '../../src/model/player.entity';
@@ -18,7 +19,7 @@ describe('Rounds', () => {
   let source: DataSource;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, GameEvent, EventType]);
+    source = await setupDataSource([Game, Round, Player, GameEvent, EventType, EventTypeRevision]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [

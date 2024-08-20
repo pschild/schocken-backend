@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
+import { EventTypeRevision } from '../model/event-type-revision.entity';
 import { EventType } from '../model/event-type.entity';
 import { GameEvent } from '../model/game-event.entity';
 import { Game } from '../model/game.entity';
@@ -21,7 +22,7 @@ describe('PlayerService integration', () => {
   let repo: Repository<Player>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, GameEvent, EventType]);
+    source = await setupDataSource([Game, Round, Player, GameEvent, EventType, EventTypeRevision]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -129,8 +130,7 @@ describe('PlayerService integration', () => {
   });
 
   it('should return null when user to update is not found', async () => {
-    const updateResult = await firstValueFrom(service.update(RANDOM_UUID, { name: 'John New' }));
-    expect(updateResult).toBeNull();
+    await expect(firstValueFrom(service.update(RANDOM_UUID, { name: 'John New' }))).rejects.toThrowError('Not Found');
   });
 
   it('should remove a user', async () => {

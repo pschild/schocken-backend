@@ -1,0 +1,45 @@
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { EventTypeRevision } from '../../model/event-type-revision.entity';
+import { EventTypeContext } from '../enum/event-type-context.enum';
+import { EventTypeRevisionType } from '../enum/event-type-revision-type.enum';
+import { EventTypeTrigger } from '../enum/event-type-trigger.enum';
+
+export class CreateEventTypeRevisionDto {
+  @IsEnum(EventTypeRevisionType)
+  type: EventTypeRevisionType;
+
+  @IsString()
+  @MaxLength(64)
+  description: string;
+
+  @IsEnum(EventTypeContext)
+  context: EventTypeContext;
+
+  @IsOptional()
+  @IsEnum(EventTypeTrigger)
+  trigger?: EventTypeTrigger;
+
+  // TODO: penalty
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  multiplicatorUnit?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasComment?: boolean;
+
+  @IsNumber()
+  order: number;
+
+  @IsUUID()
+  eventTypeId: string;
+
+  static mapForeignKeys(dto: CreateEventTypeRevisionDto): EventTypeRevision {
+    return {
+      ...dto,
+      eventType: { id: dto.eventTypeId }
+    } as unknown as EventTypeRevision;
+  }
+}

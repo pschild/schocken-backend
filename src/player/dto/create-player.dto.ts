@@ -1,4 +1,5 @@
 import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Player } from '../../model/player.entity';
 
 export class CreatePlayerDto {
   @IsString()
@@ -12,4 +13,10 @@ export class CreatePlayerDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  static mapForeignKeys(dto: CreatePlayerDto): Player {
+    return {
+      ...dto
+    } as unknown as Player;
+  }
 }

@@ -5,6 +5,7 @@ import { DataSource, Repository } from 'typeorm';
 import { differenceInMilliseconds } from 'date-fns';
 import { PlaceType } from '../../src/game/dto/place.dto';
 import { GameService } from '../../src/game/game.service';
+import { EventTypeRevision } from '../../src/model/event-type-revision.entity';
 import { EventType } from '../../src/model/event-type.entity';
 import { GameEvent } from '../../src/model/game-event.entity';
 import { Player } from '../../src/model/player.entity';
@@ -22,7 +23,7 @@ describe('Games', () => {
   let playerRepo: Repository<Player>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, GameEvent, EventType]);
+    source = await setupDataSource([Game, Round, Player, GameEvent, EventType, EventTypeRevision]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -147,7 +148,7 @@ describe('Games', () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
 
-    const result = await firstValueFrom(roundService.remove(createdGame.id));
+    const result = await firstValueFrom(gameService.remove(createdGame.id));
     expect(result).toEqual(createdGame.id);
 
     // player should still exist

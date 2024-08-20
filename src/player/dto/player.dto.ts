@@ -1,3 +1,4 @@
+import { GameDto } from '../../game/dto/game.dto';
 import { Player } from '../../model/player.entity';
 
 export class PlayerDto {
@@ -7,6 +8,7 @@ export class PlayerDto {
   name: string;
   registered: string;
   active: boolean;
+  hostedGames?: GameDto[];
 
   static fromEntity(entity: Player): PlayerDto {
     return entity ? {
@@ -16,6 +18,7 @@ export class PlayerDto {
       name: entity.name,
       registered: entity.registered.toISOString(),
       active: entity.active,
+      ...(entity.hostedGames ? { hostedGames: GameDto.fromEntities(entity.hostedGames) } : {}),
     } : null;
   }
 

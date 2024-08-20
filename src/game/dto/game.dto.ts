@@ -1,3 +1,4 @@
+import { GameEventDto } from '../../game-event/dto/game-event.dto';
 import { Game } from '../../model/game.entity';
 import { RoundDto } from '../../round/dto/round.dto';
 import { PlaceDto } from './place.dto';
@@ -10,6 +11,7 @@ export class GameDto {
   completed: boolean;
   place?: PlaceDto;
   rounds?: RoundDto[];
+  events?: GameEventDto[];
 
   static fromEntity(entity: Game): GameDto {
     return entity ? {
@@ -20,6 +22,7 @@ export class GameDto {
       completed: entity.completed,
       place: PlaceDto.fromEntity(entity),
       ...(entity.rounds ? { rounds: RoundDto.fromEntities(entity.rounds) } : {}),
+      ...(entity.events ? { events: GameEventDto.fromEntities(entity.events) } : {}),
     } : null;
   }
 

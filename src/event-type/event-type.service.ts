@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { from, Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
+import { ensureExistence } from '../ensure-existence.operator';
 import { EventType } from '../model/event-type.entity';
 import { CreateEventTypeDto } from './dto/create-event-type.dto';
 import { EventTypeDto } from './dto/event-type.dto';
@@ -17,7 +18,7 @@ export class EventTypeService {
   }
 
   create(dto: CreateEventTypeDto): Observable<EventTypeDto> {
-    return from(this.repo.save(dto)).pipe(
+    return from(this.repo.save(CreateEventTypeDto.mapForeignKeys(dto))).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
@@ -35,14 +36,17 @@ export class EventTypeService {
   }
 
   update(id: string, dto: UpdateEventTypeDto): Observable<EventTypeDto> {
-    return from(this.repo.update(id, dto)).pipe(
+    return from(this.repo.preload({ id, ...UpdateEventTypeDto.mapForeignKeys(dto) })).pipe(
+      ensureExistence(),
+      switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),
     );
   }
 
   remove(id: string): Observable<string> {
-    // SOFT delete!
-    return from(this.repo.softDelete(id)).pipe(
+    return from(this.repo.findOneByOrFail({ id })).pipe(
+      // use softRemove over softDelete so that subscriber's hook `afterSoftRemove` is called
+      switchMap(entity => from(this.repo.softRemove(entity))), // SOFT remove!
       map(() => id)
     );
   }

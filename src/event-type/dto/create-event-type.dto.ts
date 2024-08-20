@@ -1,4 +1,5 @@
 import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { EventType } from '../../model/event-type.entity';
 import { EventTypeContext } from '../enum/event-type-context.enum';
 import { EventTypeTrigger } from '../enum/event-type-trigger.enum';
 
@@ -15,7 +16,6 @@ export class CreateEventTypeDto {
   trigger?: EventTypeTrigger;
 
   // TODO: penalty
-  // TODO: history
 
   @IsOptional()
   @IsString()
@@ -28,4 +28,10 @@ export class CreateEventTypeDto {
 
   @IsNumber()
   order: number;
+
+  static mapForeignKeys(dto: CreateEventTypeDto): EventType {
+    return {
+      ...dto,
+    } as unknown as EventType;
+  }
 }

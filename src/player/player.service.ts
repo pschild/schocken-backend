@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { from, Observable, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
+import { ensureExistence } from '../ensure-existence.operator';
 import { Player } from '../model/player.entity';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { PlayerDto } from './dto/player.dto';
@@ -21,7 +22,7 @@ export class PlayerService {
     return from(this.repo.findOneBy({ name: dto.name })).pipe(
       switchMap(found => found
         ? throwError(() => new DuplicateUsernameException())
-        : from(this.repo.save(dto))
+        : from(this.repo.save(CreatePlayerDto.mapForeignKeys(dto)))
       ),
       switchMap(({ id }) => this.findOne(id)),
     );
@@ -46,14 +47,16 @@ export class PlayerService {
   }
 
   public update(id: string, dto: UpdatePlayerDto): Observable<PlayerDto> {
-    return from(this.repo.update(id, dto)).pipe(
+    return from(this.repo.preload({ id, ...UpdatePlayerDto.mapForeignKeys(dto) })).pipe(
+      ensureExistence(),
+      switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),
     );
   }
 
   public remove(id: string): Observable<string> {
-    // SOFT delete!
-    return from(this.repo.softDelete(id)).pipe(
+    return from(this.repo.findOneByOrFail({ id })).pipe(
+      switchMap(entity => from(this.repo.softRemove(entity))), // SOFT remove!
       map(() => id)
     );
   }

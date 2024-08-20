@@ -1,4 +1,5 @@
 import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { Game } from '../../model/game.entity';
 import { IsExclusivelyDefined } from '../../validators/IsExclusivelyDefined';
 
 export class CreateGameDto {
@@ -20,4 +21,11 @@ export class CreateGameDto {
   @MaxLength(64)
   @IsExclusivelyDefined(['hostedById'])
   placeOfAwayGame?: string;
+
+  static mapForeignKeys(dto: CreateGameDto): Game {
+    return {
+      ...dto,
+      hostedBy: { id: dto.hostedById }
+    } as unknown as Game;
+  }
 }

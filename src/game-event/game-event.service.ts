@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { from, Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
+import { ensureExistence } from '../ensure-existence.operator';
 import { GameEvent } from '../model/game-event.entity';
 import { CreateGameEventDto } from './dto/create-game-event.dto';
 import { GameEventDto } from './dto/game-event.dto';
@@ -17,12 +18,7 @@ export class GameEventService {
   }
 
   create(dto: CreateGameEventDto): Observable<GameEventDto> {
-    const mappedDto = {
-      ...dto,
-      game: { id: dto.gameId },
-      player: { id: dto.playerId },
-    };
-    return from(this.repo.save(mappedDto)).pipe(
+    return from(this.repo.save(CreateGameEventDto.mapForeignKeys(dto))).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
@@ -40,18 +36,16 @@ export class GameEventService {
   }
 
   update(id: string, dto: UpdateGameEventDto): Observable<GameEventDto> {
-    const mappedDto = {
-      ...dto,
-      ...(dto.gameId ? { game: { id: dto.gameId } } : {}),
-      ...(dto.playerId ? { player: { id: dto.playerId } } : {}),
-    };
-    return from(this.repo.update(id, mappedDto)).pipe(
+    return from(this.repo.preload({ id, ...UpdateGameEventDto.mapForeignKeys(dto) })).pipe(
+      ensureExistence(),
+      switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),
     );
   }
 
   remove(id: string): Observable<string> {
-    return from(this.repo.delete(id)).pipe(
+    return from(this.repo.findOneByOrFail({ id })).pipe(
+      switchMap(entity => from(this.repo.remove(entity))),
       map(() => id)
     );
   }

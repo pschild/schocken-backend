@@ -1,11 +1,15 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 import { EventTypeContext } from '../event-type/enum/event-type-context.enum';
+import { EventTypeRevisionType } from '../event-type/enum/event-type-revision-type.enum';
 import { EventTypeTrigger } from '../event-type/enum/event-type-trigger.enum';
 import { BaseEntity } from './base.entity';
-import { EventTypeRevision } from './event-type-revision.entity';
+import { EventType } from './event-type.entity';
 
-@Entity({ name: 'event_type' })
-export class EventType extends BaseEntity {
+@Entity({ name: 'event_type_revision' })
+export class EventTypeRevision extends BaseEntity {
+  @Column({ type: 'enum', enum: EventTypeRevisionType })
+  type: EventTypeRevisionType;
+
   @Column({ length: 64 })
   description: string;
 
@@ -17,9 +21,6 @@ export class EventType extends BaseEntity {
 
   // TODO: penalty
 
-  @OneToMany(() => EventTypeRevision, revision => revision.eventType)
-  revisions: EventTypeRevision[];
-
   @Column({ nullable: true, length: 32 })
   multiplicatorUnit: string;
 
@@ -28,4 +29,14 @@ export class EventType extends BaseEntity {
 
   @Column()
   order: number;
+
+  @ManyToOne(
+    () => EventType,
+    eventType => eventType.revisions,
+    {
+      nullable: false,
+      onDelete: 'CASCADE' // remove orphan revisions when referring event type is deleted
+    }
+  )
+  eventType: EventType;
 }

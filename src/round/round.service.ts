@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { from, Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
+import { ensureExistence } from '../ensure-existence.operator';
 import { Round } from '../model/round.entity';
 import { CreateRoundDto } from './dto/create-round.dto';
 import { RoundDto } from './dto/round.dto';
@@ -17,11 +18,7 @@ export class RoundService {
   }
 
   create(dto: CreateRoundDto): Observable<RoundDto> {
-    const mappedDto = {
-      ...dto,
-      game: { id: dto.gameId }
-    };
-    return from(this.repo.save(mappedDto)).pipe(
+    return from(this.repo.save(CreateRoundDto.mapForeignKeys(dto))).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
@@ -39,17 +36,16 @@ export class RoundService {
   }
 
   update(id: string, dto: UpdateRoundDto): Observable<RoundDto> {
-    const mappedDto = {
-      ...dto,
-      ...(dto.gameId ? { game: { id: dto.gameId } } : {}),
-    };
-    return from(this.repo.update(id, mappedDto)).pipe(
+    return from(this.repo.preload({ id, ...UpdateRoundDto.mapForeignKeys(dto) })).pipe(
+      ensureExistence(),
+      switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),
     );
   }
 
   remove(id: string): Observable<string> {
-    return from(this.repo.delete(id)).pipe(
+    return from(this.repo.findOneByOrFail({ id })).pipe(
+      switchMap(entity => from(this.repo.remove(entity))),
       map(() => id)
     );
   }

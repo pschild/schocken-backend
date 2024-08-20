@@ -1,3 +1,4 @@
+import { EventTypeDto } from '../../event-type/dto/event-type.dto';
 import { GameDto } from '../../game/dto/game.dto';
 import { GameEvent } from '../../model/game-event.entity';
 import { PlayerDto } from '../../player/dto/player.dto';
@@ -11,6 +12,7 @@ export class GameEventDto {
   comment: string;
   game: GameDto;
   player: PlayerDto;
+  eventType: EventTypeDto;
 
   static fromEntity(entity: GameEvent): GameEventDto {
     return entity ? {
@@ -22,6 +24,7 @@ export class GameEventDto {
       comment: entity.comment,
       game: GameDto.fromEntity(entity.game),
       player: PlayerDto.fromEntity(entity.player),
+      eventType: EventTypeDto.fromEntity(entity.eventType),
     } : null;
   }
 
