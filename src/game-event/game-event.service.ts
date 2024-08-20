@@ -30,7 +30,7 @@ export class GameEventService {
   }
 
   findOne(id: string): Observable<GameEventDto> {
-    return from(this.repo.findOne({ where: { id } })).pipe(
+    return from(this.repo.findOne({ where: { id }, relations: ['player', 'eventType'], withDeleted: true })).pipe(
       map(GameEventDto.fromEntity)
     );
   }

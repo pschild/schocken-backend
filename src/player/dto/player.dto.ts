@@ -5,6 +5,7 @@ export class PlayerDto {
   id: string;
   createDateTime: string;
   lastChangedDateTime: string;
+  isDeleted: boolean;
   name: string;
   registered: string;
   active: boolean;
@@ -15,6 +16,7 @@ export class PlayerDto {
       id: entity.id,
       createDateTime: entity.createDateTime.toISOString(),
       lastChangedDateTime: entity.lastChangedDateTime.toISOString(),
+      isDeleted: !!entity.deletedDateTime,
       name: entity.name,
       registered: entity.registered.toISOString(),
       active: entity.active,

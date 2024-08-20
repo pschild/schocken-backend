@@ -7,6 +7,7 @@ export class EventTypeDto {
   id: string;
   createDateTime: string;
   lastChangedDateTime: string;
+  isDeleted: boolean;
   description: string;
   context: EventTypeContext;
   trigger?: EventTypeTrigger;
@@ -21,6 +22,7 @@ export class EventTypeDto {
       id: entity.id,
       createDateTime: entity.createDateTime.toISOString(),
       lastChangedDateTime: entity.lastChangedDateTime.toISOString(),
+      isDeleted: !!entity.deletedDateTime,
       description: entity.description,
       context: entity.context,
       trigger: entity.trigger,
