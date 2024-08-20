@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { RANDOM_STRING, RANDOM_UUID } from '../test.utils';
+import { PlaceType } from './enum/place-type.enum';
 import { GameController } from './game.controller';
 import { GameService } from './game.service';
 
@@ -33,11 +34,11 @@ describe('GameController e2e', () => {
   });
 
   it.each([
-    [null, 201, undefined],
-    [{}, 201, undefined],
-    [{ placeOfAwayGame: RANDOM_STRING(64) }, 201, undefined],
-    [{ placeOfAwayGame: RANDOM_STRING(65) }, 400, ['placeOfAwayGame must be shorter than or equal to 64 characters']],
-    [{ placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, ['only one property of [hostedById, placeOfAwayGame] can be defined simultaneously', 'only one property of [placeOfAwayGame, hostedById] can be defined simultaneously']],
+    [null, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame', 'placeType must be one of the following values: HOME, AWAY, REMOTE']],
+    [{}, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame', 'placeType must be one of the following values: HOME, AWAY, REMOTE']],
+    [{ placeType: PlaceType.AWAY, placeOfAwayGame: RANDOM_STRING(64) }, 201, undefined],
+    [{ placeType: PlaceType.AWAY, placeOfAwayGame: RANDOM_STRING(65) }, 400, ['placeOfAwayGame must be shorter than or equal to 64 characters']],
+    [{ placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, ['only one property of [hostedById, placeOfAwayGame] can be defined simultaneously', 'only one property of [placeOfAwayGame, hostedById] can be defined simultaneously']],
   ])('create request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
     let response;
     if (body) {

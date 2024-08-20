@@ -1,6 +1,8 @@
-import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { Game } from '../../model/game.entity';
 import { IsExclusivelyDefined } from '../../validators/IsExclusivelyDefined';
+import { PlaceValidation } from '../../validators/PlaceValidation';
+import { PlaceType } from '../enum/place-type.enum';
 
 export class CreateGameDto {
   @IsOptional()
@@ -10,6 +12,10 @@ export class CreateGameDto {
   @IsOptional()
   @IsBoolean()
   completed?: boolean;
+
+  @IsEnum(PlaceType)
+  @PlaceValidation()
+  placeType: PlaceType;
 
   @IsOptional()
   @IsUUID()

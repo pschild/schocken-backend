@@ -1,15 +1,16 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { differenceInMilliseconds } from 'date-fns';
 import { firstValueFrom } from 'rxjs';
 import { DataSource } from 'typeorm';
-import { differenceInMilliseconds } from 'date-fns';
+import { PlaceType } from '../../src/game/enum/place-type.enum';
 import { GameService } from '../../src/game/game.service';
 import { EventTypeRevision } from '../../src/model/event-type-revision.entity';
 import { EventType } from '../../src/model/event-type.entity';
 import { GameEvent } from '../../src/model/game-event.entity';
+import { Game } from '../../src/model/game.entity';
 import { Player } from '../../src/model/player.entity';
 import { Round } from '../../src/model/round.entity';
-import { Game } from '../../src/model/game.entity';
 import { RoundService } from '../../src/round/round.service';
 import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../../src/test.utils';
 
@@ -55,7 +56,7 @@ describe('Rounds', () => {
   });
 
   it('should be created with an existing gameId', async () => {
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
 
     const result = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     expect(result).toBeTruthy();
@@ -71,7 +72,7 @@ describe('Rounds', () => {
   });
 
   it('should be updated', async () => {
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
@@ -90,7 +91,7 @@ describe('Rounds', () => {
   });
 
   it('should be queried including its game', async () => {
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
     const result = await firstValueFrom(roundService.findOne(createdRound.id));
@@ -101,7 +102,7 @@ describe('Rounds', () => {
   });
 
   it('should be removed', async () => {
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 

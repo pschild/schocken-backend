@@ -1,16 +1,16 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { differenceInMilliseconds } from 'date-fns';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
-import { differenceInMilliseconds } from 'date-fns';
-import { PlaceType } from '../../src/game/dto/place.dto';
+import { PlaceType } from '../../src/game/enum/place-type.enum';
 import { GameService } from '../../src/game/game.service';
 import { EventTypeRevision } from '../../src/model/event-type-revision.entity';
 import { EventType } from '../../src/model/event-type.entity';
 import { GameEvent } from '../../src/model/game-event.entity';
+import { Game } from '../../src/model/game.entity';
 import { Player } from '../../src/model/player.entity';
 import { Round } from '../../src/model/round.entity';
-import { Game } from '../../src/model/game.entity';
 import { PlayerService } from '../../src/player/player.service';
 import { RoundService } from '../../src/round/round.service';
 import { RANDOM_STRING, RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../../src/test.utils';
@@ -66,47 +66,47 @@ describe('Games', () => {
   });
 
   describe('should be created', () => {
-    it('without place', async () => {
-      const result = await firstValueFrom(gameService.create({}));
+    it('with remote place', async () => {
+      const result = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       expect(result).toBeTruthy();
       expect(result.id).toMatch(UUID_V4_REGEX);
       expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(100);
       expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(100);
       expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(100);
       expect(result.completed).toBe(false);
-      expect(result.place).toBeNull();
+      expect(result.place).toEqual({ type: PlaceType.REMOTE, location: null });
     });
 
     it('with away place', async () => {
-      const result = await firstValueFrom(gameService.create({ placeOfAwayGame: 'anywhere' }));
-      expect(result.place).toEqual({ type: PlaceType.AWAY, name: 'anywhere' });
+      const result = await firstValueFrom(gameService.create({ placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere' }));
+      expect(result.place).toEqual({ type: PlaceType.AWAY, location: 'anywhere' });
     });
 
     it('with home place', async () => {
       const createdPlayer = await firstValueFrom(playerService.create({name: 'John'}));
-      const result = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
-      expect(result.place).toEqual({ type: PlaceType.HOME, name: 'John' });
+      const result = await firstValueFrom(gameService.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id }));
+      expect(result.place).toEqual({ type: PlaceType.HOME, location: 'John' });
     });
   });
 
   describe('should not be created', () => {
     it('with too long place name', async () => {
-      await expect(firstValueFrom(gameService.create({ placeOfAwayGame: RANDOM_STRING(65) }))).rejects.toThrowError(/value too long for type character/);
+      await expect(firstValueFrom(gameService.create({ placeType: PlaceType.AWAY, placeOfAwayGame: RANDOM_STRING(65) }))).rejects.toThrowError(/value too long for type character/);
     });
 
     it('with unknown player given', async () => {
-      await expect(firstValueFrom(gameService.create({ hostedById: RANDOM_UUID }))).rejects.toThrowError(/violates foreign key constraint/);
+      await expect(firstValueFrom(gameService.create({ placeType: PlaceType.HOME, hostedById: RANDOM_UUID }))).rejects.toThrowError(/violates foreign key constraint/);
     });
 
     it('with both hostedById and placeOfAwayGame given', async () => {
       const createdPlayer = await firstValueFrom(playerService.create({name: 'John'}));
-      await expect(firstValueFrom(gameService.create({ hostedById: createdPlayer.id, placeOfAwayGame: 'anywhere' }))).rejects.toThrowError(/check constraint .+ is violated by some row/);
+      await expect(firstValueFrom(gameService.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id, placeOfAwayGame: 'anywhere' }))).rejects.toThrowError(/check constraint .+ is violated by some row/);
     });
   });
 
   it('should be updated', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-    const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id }));
     const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
@@ -116,7 +116,7 @@ describe('Games', () => {
     expect(result.completed).toBe(false);
     expect(result.rounds[0].id).toEqual(createdRound1.id);
     expect(result.rounds[1].id).toEqual(createdRound2.id);
-    expect(result.place).toEqual({ type: PlaceType.HOME, name: createdPlayer.name });
+    expect(result.place).toEqual({ type: PlaceType.HOME, location: createdPlayer.name });
 
     await firstValueFrom(gameService.update(createdGame.id, { completed: true }));
 
@@ -125,11 +125,11 @@ describe('Games', () => {
     expect(result.completed).toBe(true);
     expect(result.rounds[0].id).toEqual(createdRound1.id);
     expect(result.rounds[1].id).toEqual(createdRound2.id);
-    expect(result.place).toEqual({ type: PlaceType.HOME, name: createdPlayer.name });
+    expect(result.place).toEqual({ type: PlaceType.HOME, location: createdPlayer.name });
   });
 
   it('should be removed including all referring rounds', async () => {
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
@@ -146,7 +146,7 @@ describe('Games', () => {
 
   it('should be removed when related to a player', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-    const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id }));
 
     const result = await firstValueFrom(gameService.remove(createdGame.id));
     expect(result).toEqual(createdGame.id);
@@ -156,25 +156,25 @@ describe('Games', () => {
     expect(player).toBeDefined();
   });
 
-  it('should set place to null if player was deleted', async () => {
+  it('should set location to undefined if player was deleted', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-    const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id }));
 
     const result = await playerRepo.delete(createdPlayer.id);
     expect(result.affected).toEqual(1);
 
     const game = await firstValueFrom(gameService.findOne(createdGame.id));
-    expect(game.place).toBeNull();
+    expect(game.place).toEqual({ type: PlaceType.HOME, location: undefined });
   });
 
   it('should load place even if player was softly deleted', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-    const createdGame = await firstValueFrom(gameService.create({ hostedById: createdPlayer.id }));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id }));
 
     const result = await firstValueFrom(playerService.remove(createdPlayer.id));
     expect(result).toEqual(createdPlayer.id);
 
     const game = await firstValueFrom(gameService.findOne(createdGame.id));
-    expect(game.place).toEqual({ type: PlaceType.HOME, name: 'John' });
+    expect(game.place).toEqual({ type: PlaceType.HOME, location: 'John' });
   });
 });

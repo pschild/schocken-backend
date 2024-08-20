@@ -1,4 +1,5 @@
 import { Check, Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { PlaceType } from '../game/enum/place-type.enum';
 import { BaseEntity } from './base.entity';
 import { GameEvent } from './game-event.entity';
 import { Player } from './player.entity';
@@ -12,6 +13,9 @@ export class Game extends BaseEntity {
 
   @Column({ default: false })
   completed: boolean;
+
+  @Column({ type: 'enum', enum: PlaceType })
+  placeType: PlaceType;
 
   @ManyToOne(() => Player, player => player.hostedGames, { nullable: true, onDelete: 'SET NULL' })
   hostedBy: Player;

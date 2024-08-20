@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
+import { PlaceType } from '../../src/game/enum/place-type.enum';
 import { GameService } from '../../src/game/game.service';
 import { EventTypeRevision } from '../../src/model/event-type-revision.entity';
 import { EventType } from '../../src/model/event-type.entity';
@@ -64,7 +65,7 @@ describe('Attendances', () => {
   });
 
   it('should be empty when not specified', async () => {
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
 
     const result = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     expect(result).toBeTruthy();
@@ -74,7 +75,7 @@ describe('Attendances', () => {
   it('should be added and removed for an existing round', async () => {
     const createdPlayer1 = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdPlayer2 = await firstValueFrom(playerService.create({ name: 'Jake' }));
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer1.id));
@@ -91,7 +92,7 @@ describe('Attendances', () => {
   });
 
   it('should not be updated with an unknown playerId', async () => {
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
     await expect(firstValueFrom(roundService.addAttendee(createdRound.id, RANDOM_UUID))).rejects.toThrowError(/violates foreign key constraint/);
@@ -99,7 +100,7 @@ describe('Attendances', () => {
 
   it('should not remove player when round is removed', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
 
@@ -111,7 +112,7 @@ describe('Attendances', () => {
 
   it('should remove attendance if round is deleted', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
 
@@ -130,7 +131,7 @@ describe('Attendances', () => {
 
   it('should remove attendance if player is deleted', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
 
@@ -156,7 +157,7 @@ describe('Attendances', () => {
 
   it('should not remove attendance if player is softly deleted', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-    const createdGame = await firstValueFrom(gameService.create({}));
+    const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
     await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
 
