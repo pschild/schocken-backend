@@ -10,6 +10,7 @@ export class GameDto {
   lastChangedDateTime: string;
   datetime: string;
   completed: boolean;
+  excludeFromStatistics: boolean;
   place?: { type: PlaceType; location?: string };
   rounds?: RoundDto[];
   events?: GameEventDto[];
@@ -21,6 +22,7 @@ export class GameDto {
       lastChangedDateTime: entity.lastChangedDateTime.toISOString(),
       datetime: entity.datetime.toISOString(),
       completed: entity.completed,
+      excludeFromStatistics: entity.excludeFromStatistics,
       place: GameDto.mapPlace(entity),
       ...(entity.rounds ? { rounds: RoundDto.fromEntities(entity.rounds) } : {}),
       ...(entity.events ? { events: GameEventDto.fromEntities(entity.events) } : {}),

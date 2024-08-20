@@ -14,6 +14,9 @@ export class Game extends BaseEntity {
   @Column({ default: false })
   completed: boolean;
 
+  @Column({ default: false })
+  excludeFromStatistics: boolean;
+
   @Column({ type: 'enum', enum: PlaceType })
   placeType: PlaceType;
 
