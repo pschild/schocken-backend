@@ -39,6 +39,10 @@ describe('GameController e2e', () => {
     [{ placeType: PlaceType.AWAY, placeOfAwayGame: RANDOM_STRING(64) }, 201, undefined],
     [{ placeType: PlaceType.AWAY, placeOfAwayGame: RANDOM_STRING(65) }, 400, ['placeOfAwayGame must be shorter than or equal to 64 characters']],
     [{ placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, ['only one property of [hostedById, placeOfAwayGame] can be defined simultaneously', 'only one property of [placeOfAwayGame, hostedById] can be defined simultaneously']],
+    [{ placeType: PlaceType.HOME, placeOfAwayGame: 'anywhere' }, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame']],
+    [{ placeType: PlaceType.AWAY, hostedById: RANDOM_UUID }, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame']],
+    [{ placeType: PlaceType.REMOTE, placeOfAwayGame: 'anywhere' }, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame']],
+    [{ placeType: PlaceType.REMOTE, hostedById: RANDOM_UUID }, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame']],
   ])('create request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
     let response;
     if (body) {
@@ -56,6 +60,10 @@ describe('GameController e2e', () => {
     [{ placeOfAwayGame: RANDOM_STRING(64) }, 200, undefined],
     [{ placeOfAwayGame: RANDOM_STRING(65) }, 400, ['placeOfAwayGame must be shorter than or equal to 64 characters']],
     [{ placeOfAwayGame: 'anywhere', hostedById: RANDOM_UUID }, 400, ['only one property of [hostedById, placeOfAwayGame] can be defined simultaneously', 'only one property of [placeOfAwayGame, hostedById] can be defined simultaneously']],
+    [{ placeType: PlaceType.HOME, placeOfAwayGame: 'anywhere' }, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame']],
+    [{ placeType: PlaceType.AWAY, hostedById: RANDOM_UUID }, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame']],
+    [{ placeType: PlaceType.REMOTE, placeOfAwayGame: 'anywhere' }, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame']],
+    [{ placeType: PlaceType.REMOTE, hostedById: RANDOM_UUID }, 400, ['placeType is not valid in combination with hostedById, placeOfAwayGame']],
   ])('update request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
     let response;
     if (body) {

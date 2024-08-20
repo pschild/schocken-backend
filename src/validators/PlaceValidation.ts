@@ -21,7 +21,7 @@ export function PlaceValidation(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: string, args: ValidationArguments) {
           const body = args.object as { placeType: string; hostedById?: string; placeOfAwayGame?: string };
-          return (value === PlaceType.REMOTE && !body.hostedById) ||
+          return (value === PlaceType.REMOTE && !body.hostedById && !body.placeOfAwayGame) ||
             (value === PlaceType.HOME && !!body.hostedById) ||
             (value === PlaceType.AWAY && !!body.placeOfAwayGame);
         },
