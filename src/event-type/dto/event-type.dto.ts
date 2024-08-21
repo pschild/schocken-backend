@@ -1,6 +1,7 @@
 import { EventType } from '../../model/event-type.entity';
 import { EventTypeContext } from '../enum/event-type-context.enum';
 import { EventTypeTrigger } from '../enum/event-type-trigger.enum';
+import { PenaltyUnit } from '../enum/penalty-unit.enum';
 import { EventTypeRevisionDto } from './event-type-revision.dto';
 
 export class EventTypeDto {
@@ -11,7 +12,8 @@ export class EventTypeDto {
   description: string;
   context: EventTypeContext;
   trigger?: EventTypeTrigger;
-  // TODO: penalty
+  penaltyValue?: number;
+  penaltyUnit?: PenaltyUnit;
   revisions?: EventTypeRevisionDto[];
   multiplicatorUnit?: string;
   hasComment: boolean;
@@ -26,6 +28,8 @@ export class EventTypeDto {
       description: entity.description,
       context: entity.context,
       trigger: entity.trigger,
+      penaltyValue: entity.penaltyValue,
+      penaltyUnit: entity.penaltyUnit,
       ...(entity.revisions ? { revisions: EventTypeRevisionDto.fromEntities(entity.revisions) } : {}),
       multiplicatorUnit: entity.multiplicatorUnit,
       hasComment: entity.hasComment,

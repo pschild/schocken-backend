@@ -1,8 +1,9 @@
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min, ValidateIf } from 'class-validator';
 import { EventTypeRevision } from '../../model/event-type-revision.entity';
 import { EventTypeContext } from '../enum/event-type-context.enum';
 import { EventTypeRevisionType } from '../enum/event-type-revision-type.enum';
 import { EventTypeTrigger } from '../enum/event-type-trigger.enum';
+import { PenaltyUnit } from '../enum/penalty-unit.enum';
 
 export class CreateEventTypeRevisionDto {
   @IsEnum(EventTypeRevisionType)
@@ -19,7 +20,14 @@ export class CreateEventTypeRevisionDto {
   @IsEnum(EventTypeTrigger)
   trigger?: EventTypeTrigger;
 
-  // TODO: penalty
+  @ValidateIf(entity => !!entity.penaltyUnit)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  penaltyValue: number;
+
+  @ValidateIf(entity => !!entity.penaltyValue)
+  @IsEnum(PenaltyUnit)
+  penaltyUnit: PenaltyUnit;
 
   @IsOptional()
   @IsString()

@@ -44,7 +44,7 @@ export class EventTypeRevisionSubscriber implements EntitySubscriberInterface {
   }
 
   private createEntity(entity: EventType, type: EventTypeRevisionType): CreateEventTypeRevisionDto {
-    const originalEntity = entity;
+    const originalEntity = { ...entity };
     const eventTypeId = originalEntity.id.toString();
     delete originalEntity.id;
     delete originalEntity.createDateTime;
