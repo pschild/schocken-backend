@@ -7,7 +7,7 @@ import { EventTypeRevision } from './event-type-revision.entity';
 
 @Entity({ name: 'event_type' })
 export class EventType extends BaseEntity {
-  @Column({ length: 64 })
+  @Column({ unique: true, length: 64 })
   description: string;
 
   @Column({ type: 'enum', enum: EventTypeContext })

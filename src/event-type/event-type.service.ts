@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { from, Observable, switchMap } from 'rxjs';
+import { from, Observable, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
@@ -8,6 +8,7 @@ import { EventType } from '../model/event-type.entity';
 import { CreateEventTypeDto } from './dto/create-event-type.dto';
 import { EventTypeDto } from './dto/event-type.dto';
 import { UpdateEventTypeDto } from './dto/update-event-type.dto';
+import { DuplicateEventTypeNameException } from './exception/duplicate-event-type-name.exception';
 
 @Injectable()
 export class EventTypeService {
@@ -18,7 +19,11 @@ export class EventTypeService {
   }
 
   create(dto: CreateEventTypeDto): Observable<EventTypeDto> {
-    return from(this.repo.save(CreateEventTypeDto.mapForeignKeys(dto))).pipe(
+    return from(this.repo.findOneBy({ description: dto.description })).pipe(
+      switchMap(found => found
+        ? throwError(() => new DuplicateEventTypeNameException())
+        : from(this.repo.save(CreateEventTypeDto.mapForeignKeys(dto)))
+      ),
       switchMap(({ id }) => this.findOne(id)),
     );
   }
@@ -36,7 +41,11 @@ export class EventTypeService {
   }
 
   update(id: string, dto: UpdateEventTypeDto): Observable<EventTypeDto> {
-    return from(this.repo.preload({ id, ...UpdateEventTypeDto.mapForeignKeys(dto) })).pipe(
+    return from(this.repo.findOneBy({ description: dto.description })).pipe(
+      switchMap(found => found
+        ? throwError(() => new DuplicateEventTypeNameException())
+        : from(this.repo.preload({ id, ...UpdateEventTypeDto.mapForeignKeys(dto) }))
+      ),
       ensureExistence(),
       switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),

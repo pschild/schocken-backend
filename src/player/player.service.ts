@@ -47,7 +47,11 @@ export class PlayerService {
   }
 
   public update(id: string, dto: UpdatePlayerDto): Observable<PlayerDto> {
-    return from(this.repo.preload({ id, ...UpdatePlayerDto.mapForeignKeys(dto) })).pipe(
+    return from(this.repo.findOneBy({ name: dto.name })).pipe(
+      switchMap(found => found
+        ? throwError(() => new DuplicateUsernameException())
+        : from(this.repo.preload({ id, ...UpdatePlayerDto.mapForeignKeys(dto) }))
+      ),
       ensureExistence(),
       switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),
