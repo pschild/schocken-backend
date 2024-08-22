@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Round } from '../model/round.entity';
+import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { CreateRoundDto } from './dto/create-round.dto';
 import { RoundDto } from './dto/round.dto';
 import { UpdateRoundDto } from './dto/update-round.dto';
@@ -50,33 +51,25 @@ export class RoundService {
     );
   }
 
-  addAttendee(roundId: string, playerId: string): Observable<RoundDto> {
-    return this.addToRelation(roundId, playerId, 'attendees');
-  }
-
-  removeAttendee(roundId: string, playerId: string): Observable<RoundDto> {
-    return this.removeFromRelation(roundId, playerId, 'attendees');
-  }
-
-  addFinalist(roundId: string, playerId: string): Observable<RoundDto> {
-    return this.addToRelation(roundId, playerId, 'finalists');
-  }
-
-  removeFinalist(roundId: string, playerId: string): Observable<RoundDto> {
-    return this.removeFromRelation(roundId, playerId, 'finalists');
-  }
-
-  private addToRelation(roundId: string, playerId: string, relation: string): Observable<RoundDto> {
-    return from(this.repo.findOne({ where: { id: roundId }, relations: [relation] })).pipe(
-      map(round => ({ ...round, [relation]: [...round[relation], { id: playerId }] })),
+  updateAttendees(roundId: string, dto: UpdateAttendanceDto): Observable<RoundDto> {
+    return from(this.repo.findOne({ where: { id: roundId }, relations: ['attendees'] })).pipe(
+      map(round => ({ ...round, attendees: dto.playerIds.map(id => ({ id })) })),
       switchMap(round => this.repo.save(round)),
       switchMap(({ id }) => this.findOne(id)),
     );
   }
 
-  private removeFromRelation(roundId: string, playerId: string, relation: string): Observable<RoundDto> {
-    return from(this.repo.findOne({ where: { id: roundId }, relations: [relation] })).pipe(
-      map(round => ({ ...round, [relation]: round[relation].filter(player => player.id !== playerId) })),
+  addFinalist(roundId: string, playerId: string): Observable<RoundDto> {
+    return from(this.repo.findOne({ where: { id: roundId }, relations: ['finalists'] })).pipe(
+      map(round => ({ ...round, finalists: [...round.finalists, { id: playerId }] })),
+      switchMap(round => this.repo.save(round)),
+      switchMap(({ id }) => this.findOne(id)),
+    );
+  }
+
+  removeFinalist(roundId: string, playerId: string): Observable<RoundDto> {
+    return from(this.repo.findOne({ where: { id: roundId }, relations: ['finalists'] })).pipe(
+      map(round => ({ ...round, finalists: round.finalists.filter(player => player.id !== playerId) })),
       switchMap(round => this.repo.save(round)),
       switchMap(({ id }) => this.findOne(id)),
     );

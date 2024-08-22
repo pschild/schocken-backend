@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { from, Observable, switchMap, throwError } from 'rxjs';
+import { from, iif, Observable, of, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Player } from '../model/player.entity';
 import { CreatePlayerDto } from './dto/create-player.dto';
@@ -47,7 +47,15 @@ export class PlayerService {
   }
 
   public update(id: string, dto: UpdatePlayerDto): Observable<PlayerDto> {
-    return from(this.repo.findOneBy({ name: dto.name })).pipe(
+    // If `name` is provided, try to find an existing entity with this value and a _different_ id.
+    // If found, we need to throw DuplicateException.
+    const findByUniqueValue$ = iif(
+      () => !!dto.name,
+      from(this.repo.findOne({ where: { id: Not(id), name: dto.name } })),
+      of(false)
+    );
+
+    return findByUniqueValue$.pipe(
       switchMap(found => found
         ? throwError(() => new DuplicateUsernameException())
         : from(this.repo.preload({ id, ...UpdatePlayerDto.mapForeignKeys(dto) }))

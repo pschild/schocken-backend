@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { Observable } from 'rxjs';
+import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { RoundDto } from './dto/round.dto';
 import { RoundService } from './round.service';
 import { CreateRoundDto } from './dto/create-round.dto';
@@ -34,20 +35,9 @@ export class RoundController {
     return this.service.remove(id);
   }
 
-  @Patch(':roundId/attendees/:playerId')
-  addAttendance(
-    @Param('roundId') roundId: string,
-    @Param('playerId') playerId: string,
-  ): Observable<RoundDto> {
-    return this.service.addAttendee(roundId, playerId);
-  }
-
-  @Delete(':roundId/attendees/:playerId')
-  removeAttendance(
-    @Param('roundId') roundId: string,
-    @Param('playerId') playerId: string,
-  ): Observable<RoundDto> {
-    return this.service.removeAttendee(roundId, playerId);
+  @Patch(':id/attendees')
+  updateAttendees(@Param('id') id: string, @Body() dto: UpdateAttendanceDto): Observable<RoundDto> {
+    return this.service.updateAttendees(id, dto);
   }
 
   @Patch(':roundId/finalists/:playerId')

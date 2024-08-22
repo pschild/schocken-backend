@@ -2,6 +2,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import * as request from 'supertest';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { RANDOM_STRING, RANDOM_UUID } from '../test.utils';
 import { PlayerController } from './player.controller';
 import { PlayerService } from './player.service';
 
@@ -13,6 +14,9 @@ describe('PlayerController e2e', () => {
   const playerService = {
     create: jest.fn(),
     findOne: jest.fn(),
+    findAll: jest.fn(),
+    update: jest.fn(),
+    remove: jest.fn(),
   };
 
   beforeAll(async () => {
@@ -35,18 +39,67 @@ describe('PlayerController e2e', () => {
     await app.close();
   });
 
-  it.each([
-    [null, 400, ['name must be shorter than or equal to 32 characters', 'name must be a string']],
-    [{ name: 'Susi' }, 201, undefined],
-    [{ name: 'Susi', registered: new Date().toISOString(), active: false }, 201, undefined],
-  ])('create request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
-    let response;
-    if (body) {
-      response = await request(app.getHttpServer()).post('/player').send(body);
-    } else {
-      response = await request(app.getHttpServer()).post('/player');
-    }
-    expect(response.status).toEqual(status);
-    expect(response.body.message).toEqual(errors);
+  describe('create', () => {
+    it.each([
+      [null, 400, ['name must be shorter than or equal to 32 characters', 'name must be a string']],
+      [{ name: RANDOM_STRING(32) }, 201, undefined],
+      [{ name: RANDOM_STRING(33) }, 400, ['name must be shorter than or equal to 32 characters']],
+      [{ name: RANDOM_STRING(32), registered: new Date().toISOString(), active: false }, 201, undefined],
+    ])('request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
+      let response;
+      if (body) {
+        response = await request(app.getHttpServer()).post('/player').send(body);
+      } else {
+        response = await request(app.getHttpServer()).post('/player');
+      }
+      expect(response.status).toEqual(status);
+      expect(response.body.message).toEqual(errors);
+    });
+  });
+
+  describe('get', () => {
+    it.each([
+      [200, undefined],
+    ])('findOne request should return status=%p', async (status: number, errors: string[]) => {
+      const response = await request(app.getHttpServer()).get(`/player/${RANDOM_UUID}`);
+      expect(response.status).toEqual(status);
+      expect(response.body.message).toEqual(errors);
+    });
+
+    it.each([
+      [200, undefined],
+    ])('findAll request should return status=%p', async (status: number, errors: string[]) => {
+      const response = await request(app.getHttpServer()).get(`/player`);
+      expect(response.status).toEqual(status);
+      expect(response.body.message).toEqual(errors);
+    });
+  });
+
+  describe('update', () => {
+    it.each([
+      [null, 200, undefined],
+      [{ name: RANDOM_STRING(32) }, 200, undefined],
+      [{ name: RANDOM_STRING(33) }, 400, ['name must be shorter than or equal to 32 characters']],
+      [{ name: RANDOM_STRING(32), registered: new Date().toISOString(), active: false }, 200, undefined],
+    ])('request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
+      let response;
+      if (body) {
+        response = await request(app.getHttpServer()).patch(`/player/${RANDOM_UUID}`).send(body);
+      } else {
+        response = await request(app.getHttpServer()).patch(`/player/${RANDOM_UUID}`);
+      }
+      expect(response.status).toEqual(status);
+      expect(response.body.message).toEqual(errors);
+    });
+  });
+
+  describe('delete', () => {
+    it.each([
+      [200, undefined],
+    ])('request should return status=%p', async (status: number, errors: string[]) => {
+      const response = await request(app.getHttpServer()).delete(`/player/${RANDOM_UUID}`);
+      expect(response.status).toEqual(status);
+      expect(response.body.message).toEqual(errors);
+    });
   });
 });

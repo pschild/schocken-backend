@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { from, Observable, switchMap, throwError } from 'rxjs';
+import { from, iif, Observable, of, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { EventType } from '../model/event-type.entity';
 import { CreateEventTypeDto } from './dto/create-event-type.dto';
@@ -41,7 +41,15 @@ export class EventTypeService {
   }
 
   update(id: string, dto: UpdateEventTypeDto): Observable<EventTypeDto> {
-    return from(this.repo.findOneBy({ description: dto.description })).pipe(
+    // If `description` is provided, try to find an existing entity with this value and a _different_ id.
+    // If found, we need to throw DuplicateException.
+    const findByUniqueValue$ = iif(
+      () => !!dto.description,
+      from(this.repo.findOne({ where: { id: Not(id), description: dto.description } })),
+      of(false)
+    );
+
+    return findByUniqueValue$.pipe(
       switchMap(found => found
         ? throwError(() => new DuplicateEventTypeNameException())
         : from(this.repo.preload({ id, ...UpdateEventTypeDto.mapForeignKeys(dto) }))
