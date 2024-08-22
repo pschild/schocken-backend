@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PlayerModule } from './player/player.module';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import { RoundModule } from './round/round.module';
@@ -57,7 +55,5 @@ import * as winston from 'winston';
     GameEventModule,
     EventTypeModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
