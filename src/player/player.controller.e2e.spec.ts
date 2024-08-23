@@ -61,7 +61,7 @@ describe('PlayerController e2e', () => {
     it.each([
       [200, undefined],
     ])('findOne request should return status=%p', async (status: number, errors: string[]) => {
-      const response = await request(app.getHttpServer()).get(`/player/${RANDOM_UUID}`);
+      const response = await request(app.getHttpServer()).get(`/player/${RANDOM_UUID()}`);
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
     });
@@ -84,9 +84,9 @@ describe('PlayerController e2e', () => {
     ])('request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
       let response;
       if (body) {
-        response = await request(app.getHttpServer()).patch(`/player/${RANDOM_UUID}`).send(body);
+        response = await request(app.getHttpServer()).patch(`/player/${RANDOM_UUID()}`).send(body);
       } else {
-        response = await request(app.getHttpServer()).patch(`/player/${RANDOM_UUID}`);
+        response = await request(app.getHttpServer()).patch(`/player/${RANDOM_UUID()}`);
       }
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
@@ -97,7 +97,7 @@ describe('PlayerController e2e', () => {
     it.each([
       [200, undefined],
     ])('request should return status=%p', async (status: number, errors: string[]) => {
-      const response = await request(app.getHttpServer()).delete(`/player/${RANDOM_UUID}`);
+      const response = await request(app.getHttpServer()).delete(`/player/${RANDOM_UUID()}`);
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
     });

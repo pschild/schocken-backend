@@ -42,7 +42,7 @@ describe('RoundController e2e', () => {
       [null, 400, ['gameId must be a UUID']],
       [{}, 400, ['gameId must be a UUID']],
       [{ gameId: 'invalid-uuid' }, 400, ['gameId must be a UUID']],
-      [{ gameId: RANDOM_UUID }, 201, undefined],
+      [{ gameId: RANDOM_UUID() }, 201, undefined],
     ])('request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
       let response;
       if (body) {
@@ -59,7 +59,7 @@ describe('RoundController e2e', () => {
     it.each([
       [200, undefined],
     ])('findOne request should return status=%p', async (status: number, errors: string[]) => {
-      const response = await request(app.getHttpServer()).get(`/round/${RANDOM_UUID}`);
+      const response = await request(app.getHttpServer()).get(`/round/${RANDOM_UUID()}`);
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
     });
@@ -78,13 +78,13 @@ describe('RoundController e2e', () => {
       [null, 200, undefined],
       [{}, 200, undefined],
       [{ gameId: 'invalid-uuid' }, 400, ['gameId must be a UUID']],
-      [{ gameId: RANDOM_UUID }, 200, undefined],
+      [{ gameId: RANDOM_UUID() }, 200, undefined],
     ])('update request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
       let response;
       if (body) {
-        response = await request(app.getHttpServer()).patch(`/round/${RANDOM_UUID}`).send(body);
+        response = await request(app.getHttpServer()).patch(`/round/${RANDOM_UUID()}`).send(body);
       } else {
-        response = await request(app.getHttpServer()).patch(`/round/${RANDOM_UUID}`);
+        response = await request(app.getHttpServer()).patch(`/round/${RANDOM_UUID()}`);
       }
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
@@ -95,7 +95,7 @@ describe('RoundController e2e', () => {
     it.each([
       [200, undefined],
     ])('request should return status=%p', async (status: number, errors: string[]) => {
-      const response = await request(app.getHttpServer()).delete(`/round/${RANDOM_UUID}`);
+      const response = await request(app.getHttpServer()).delete(`/round/${RANDOM_UUID()}`);
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
     });
@@ -105,14 +105,14 @@ describe('RoundController e2e', () => {
     it.each([
       [null, 400, ['each value in playerIds must be a UUID', 'playerIds must be an array']],
       [{ playerIds: 'no-array' }, 400, ['each value in playerIds must be a UUID', 'playerIds must be an array']],
-      [{ playerIds: [RANDOM_UUID, 'invalid-uuid'] }, 400, ['each value in playerIds must be a UUID']],
-      [{ playerIds: [RANDOM_UUID, RANDOM_UUID] }, 200, undefined],
+      [{ playerIds: [RANDOM_UUID(), 'invalid-uuid'] }, 400, ['each value in playerIds must be a UUID']],
+      [{ playerIds: [RANDOM_UUID(), RANDOM_UUID()] }, 200, undefined],
     ])('request with with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
       let response;
       if (body) {
-        response = await request(app.getHttpServer()).patch(`/round/${RANDOM_UUID}/attendees`).send(body);
+        response = await request(app.getHttpServer()).patch(`/round/${RANDOM_UUID()}/attendees`).send(body);
       } else {
-        response = await request(app.getHttpServer()).patch(`/round/${RANDOM_UUID}/attendees`);
+        response = await request(app.getHttpServer()).patch(`/round/${RANDOM_UUID()}/attendees`);
       }
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
@@ -121,7 +121,7 @@ describe('RoundController e2e', () => {
 
   describe('addFinalist', () => {
     it.each([
-      [RANDOM_UUID, RANDOM_UUID, 200, undefined],
+      [RANDOM_UUID(), RANDOM_UUID(), 200, undefined],
     ])('request with roundId %p and playerId %p should return status=%p and errors=%p', async (roundId: string, playerId: string, status: number, errors: string[]) => {
       const response = await request(app.getHttpServer()).patch(`/round/${roundId}/finalists/${playerId}`);
       expect(response.status).toEqual(status);
@@ -131,7 +131,7 @@ describe('RoundController e2e', () => {
 
   describe('removeFinalist', () => {
     it.each([
-      [RANDOM_UUID, RANDOM_UUID, 200, undefined],
+      [RANDOM_UUID(), RANDOM_UUID(), 200, undefined],
     ])('request with roundId %p and playerId %p should return status=%p and errors=%p', async (roundId: string, playerId: string, status: number, errors: string[]) => {
       const response = await request(app.getHttpServer()).delete(`/round/${roundId}/finalists/${playerId}`);
       expect(response.status).toEqual(status);

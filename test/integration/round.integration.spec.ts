@@ -68,7 +68,7 @@ describe('Rounds', () => {
   });
 
   it('should not be created with an unknown gameId', async () => {
-    await expect(firstValueFrom(roundService.create({gameId: RANDOM_UUID}))).rejects.toThrowError(/violates foreign key constraint/);
+    await expect(firstValueFrom(roundService.create({gameId: RANDOM_UUID()}))).rejects.toThrowError(/violates foreign key constraint/);
   });
 
   it('should be updated', async () => {

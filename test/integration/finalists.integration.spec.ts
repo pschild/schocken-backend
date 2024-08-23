@@ -95,7 +95,7 @@ describe('Finalists', () => {
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
-    await expect(firstValueFrom(roundService.addFinalist(createdRound.id, RANDOM_UUID))).rejects.toThrowError(/violates foreign key constraint/);
+    await expect(firstValueFrom(roundService.addFinalist(createdRound.id, RANDOM_UUID()))).rejects.toThrowError(/violates foreign key constraint/);
   });
 
   it('should not remove player when round is removed', async () => {

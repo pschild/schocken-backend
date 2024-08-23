@@ -95,7 +95,7 @@ describe('Games', () => {
     });
 
     it('with unknown player given', async () => {
-      await expect(firstValueFrom(gameService.create({ placeType: PlaceType.HOME, hostedById: RANDOM_UUID }))).rejects.toThrowError(/violates foreign key constraint/);
+      await expect(firstValueFrom(gameService.create({ placeType: PlaceType.HOME, hostedById: RANDOM_UUID() }))).rejects.toThrowError(/violates foreign key constraint/);
     });
 
     it('with both hostedById and placeOfAwayGame given', async () => {

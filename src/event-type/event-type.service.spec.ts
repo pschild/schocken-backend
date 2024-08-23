@@ -2,20 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
-import { Player } from '../model/player.entity';
+import { EventType } from '../model/event-type.entity';
 import { MockType, RANDOM_UUID, TestData } from '../test.utils';
-import { PlayerDto } from './dto/player.dto';
-import { DuplicateUsernameException } from './exception/duplicate-username.exception';
-import { PlayerService } from './player.service';
+import { EventTypeDto } from './dto/event-type.dto';
+import { EventTypeContext } from './enum/event-type-context.enum';
+import { EventTypeService } from './event-type.service';
+import { DuplicateEventTypeNameException } from './exception/duplicate-event-type-name.exception';
 
-/**
- * Blueprint for how to test a service with a mocked repository.
- */
-describe('PlayerService', () => {
-  let service: PlayerService;
-  let repositoryMock: MockType<Repository<Player>>;
+describe('EventTypeService', () => {
+  let service: EventTypeService;
+  let repositoryMock: MockType<Repository<EventType>>;
 
-  const repositoryMockFactory: () => MockType<Repository<Player>> = jest.fn(() => ({
+  const repositoryMockFactory: () => MockType<Repository<EventType>> = jest.fn(() => ({
     findOneBy: jest.fn(),
     findOne: jest.fn(),
     findOneByOrFail: jest.fn(),
@@ -28,13 +26,13 @@ describe('PlayerService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        PlayerService,
-        { provide: getRepositoryToken(Player), useFactory: repositoryMockFactory },
+        EventTypeService,
+        { provide: getRepositoryToken(EventType), useFactory: repositoryMockFactory },
       ],
     }).compile();
 
-    service = module.get(PlayerService);
-    repositoryMock = module.get(getRepositoryToken(Player));
+    service = module.get(EventTypeService);
+    repositoryMock = module.get(getRepositoryToken(EventType));
   });
 
   it('should be defined', () => {
@@ -43,63 +41,63 @@ describe('PlayerService', () => {
 
   describe('create', () => {
     it('should fail on duplicate entity name', async () => {
-      repositoryMock.findOneBy.mockReturnValue(Promise.resolve( { id: RANDOM_UUID(), name: 'John' }));
-      await expect(firstValueFrom(service.create({ name: 'John' }))).rejects.toThrowError(new DuplicateUsernameException());
+      repositoryMock.findOneBy.mockReturnValue(Promise.resolve( { id: RANDOM_UUID(), description: 'some event' }));
+      await expect(firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event', order: 0 }))).rejects.toThrowError(new DuplicateEventTypeNameException());
     });
 
     it('should create a new entity successfully', async () => {
-      const entity = TestData.activePlayer();
+      const entity = TestData.eventType();
       repositoryMock.findOneBy
         .mockReturnValueOnce(Promise.resolve(null))
         .mockReturnValueOnce(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
-      const result = await firstValueFrom(service.create({ name: 'John' }));
-      expect(result).toEqual(PlayerDto.fromEntity(entity));
+      const result = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event', order: 0 }));
+      expect(result).toEqual(EventTypeDto.fromEntity(entity));
       expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(2);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
   });
 
   it('should find one entity', async () => {
-    const entity = TestData.activePlayer();
+    const entity = TestData.eventType();
     repositoryMock.findOneBy.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.findOne(entity.id));
-    expect(result).toEqual(PlayerDto.fromEntity(entity));
+    expect(result).toEqual(EventTypeDto.fromEntity(entity));
     expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);
   });
 
   it('should find all entities', async () => {
-    const entity = TestData.activePlayer();
+    const entity = TestData.eventType();
     repositoryMock.find.mockReturnValue(Promise.resolve([entity]));
 
     const result = await firstValueFrom(service.findAll());
-    expect(result).toEqual(PlayerDto.fromEntities([entity]));
+    expect(result).toEqual(EventTypeDto.fromEntities([entity]));
     expect(repositoryMock.find).toHaveBeenCalledTimes(1);
   });
 
   describe('update', () => {
     it('should fail on duplicate entity name', async () => {
       repositoryMock.findOne.mockReturnValue(Promise.resolve( { id: RANDOM_UUID(), name: 'John' }));
-      await expect(firstValueFrom(service.update(RANDOM_UUID(), { name: 'John' }))).rejects.toThrowError(new DuplicateUsernameException());
+      await expect(firstValueFrom(service.update(RANDOM_UUID(), { context: EventTypeContext.GAME, description: 'some event', order: 0 }))).rejects.toThrowError(new DuplicateEventTypeNameException());
     });
 
     it('should fail on entity not found by id', async () => {
       repositoryMock.findOne.mockReturnValue(Promise.resolve( null));
       repositoryMock.preload.mockReturnValue(Promise.resolve(null));
-      await expect(firstValueFrom(service.update(RANDOM_UUID(), { name: 'John' }))).rejects.toThrowError(/Not Found/);
+      await expect(firstValueFrom(service.update(RANDOM_UUID(), { context: EventTypeContext.GAME, description: 'some event', order: 0 }))).rejects.toThrowError(/Not Found/);
     });
 
     it('should update an entity successfully', async () => {
-      const entity = TestData.activePlayer();
+      const entity = TestData.eventType();
       repositoryMock.findOne.mockReturnValue(Promise.resolve( null))
       repositoryMock.findOneBy.mockReturnValue(Promise.resolve( entity))
       repositoryMock.preload.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
-      const result = await firstValueFrom(service.update(entity.id, { name: 'John' }));
-      expect(result).toEqual(PlayerDto.fromEntity(entity));
+      const result = await firstValueFrom(service.update(entity.id, { context: EventTypeContext.GAME, description: 'some event', order: 0 }));
+      expect(result).toEqual(EventTypeDto.fromEntity(entity));
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
@@ -117,7 +115,7 @@ describe('PlayerService', () => {
     });
 
     it('should remove an entity successfully', async () => {
-      const entity = TestData.activePlayer();
+      const entity = TestData.eventType();
       repositoryMock.findOneByOrFail.mockReturnValue(Promise.resolve(entity));
       repositoryMock.softRemove.mockReturnValue(Promise.resolve(entity));
 

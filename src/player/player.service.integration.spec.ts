@@ -82,7 +82,7 @@ describe('PlayerService integration', () => {
   });
 
   it('should return null if user not found', async () => {
-    const result = await firstValueFrom(service.findOne(RANDOM_UUID));
+    const result = await firstValueFrom(service.findOne(RANDOM_UUID()));
     expect(result).toBeNull();
   });
 
@@ -130,7 +130,7 @@ describe('PlayerService integration', () => {
   });
 
   it('should return null when user to update is not found', async () => {
-    await expect(firstValueFrom(service.update(RANDOM_UUID, { name: 'John New' }))).rejects.toThrowError('Not Found');
+    await expect(firstValueFrom(service.update(RANDOM_UUID(), { name: 'John New' }))).rejects.toThrowError('Not Found');
   });
 
   it('should remove a user', async () => {
