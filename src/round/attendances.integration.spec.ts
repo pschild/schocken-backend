@@ -2,17 +2,17 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
-import { PlaceType } from '../../src/game/enum/place-type.enum';
-import { GameService } from '../../src/game/game.service';
-import { EventTypeRevision } from '../../src/model/event-type-revision.entity';
-import { EventType } from '../../src/model/event-type.entity';
-import { GameEvent } from '../../src/model/game-event.entity';
-import { Player } from '../../src/model/player.entity';
-import { Round } from '../../src/model/round.entity';
-import { Game } from '../../src/model/game.entity';
-import { PlayerService } from '../../src/player/player.service';
-import { RoundService } from '../../src/round/round.service';
-import { RANDOM_UUID, setupDataSource, truncateAllTables } from '../../src/test.utils';
+import { PlaceType } from '../game/enum/place-type.enum';
+import { GameService } from '../game/game.service';
+import { EventTypeRevision } from '../model/event-type-revision.entity';
+import { EventType } from '../model/event-type.entity';
+import { GameEvent } from '../model/game-event.entity';
+import { Player } from '../model/player.entity';
+import { Round } from '../model/round.entity';
+import { Game } from '../model/game.entity';
+import { PlayerService } from '../player/player.service';
+import { RoundService } from './round.service';
+import { RANDOM_UUID, setupDataSource, truncateAllTables } from '../test.utils';
 
 describe('Attendances', () => {
   let gameService: GameService;
@@ -72,21 +72,19 @@ describe('Attendances', () => {
     expect(result.attendees).toEqual([]);
   });
 
-  it('should be added and removed for an existing round', async () => {
+  it('should be updated for an existing round', async () => {
     const createdPlayer1 = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdPlayer2 = await firstValueFrom(playerService.create({ name: 'Jake' }));
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
-    await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer1.id));
-
     let result;
-    result = await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer2.id));
+    result = await firstValueFrom(roundService.updateAttendees(createdRound.id, { playerIds: [createdPlayer1.id, createdPlayer2.id] }));
     expect(result.attendees.length).toBe(2);
     expect(result.attendees[0].id).toEqual(createdPlayer1.id);
     expect(result.attendees[1].id).toEqual(createdPlayer2.id);
 
-    result = await firstValueFrom(roundService.removeAttendee(createdRound.id, createdPlayer1.id));
+    result = await firstValueFrom(roundService.updateAttendees(createdRound.id, { playerIds: [createdPlayer2.id] }));
     expect(result.attendees.length).toBe(1);
     expect(result.attendees[0].id).toEqual(createdPlayer2.id);
   });
@@ -95,14 +93,14 @@ describe('Attendances', () => {
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
-    await expect(firstValueFrom(roundService.addAttendee(createdRound.id, RANDOM_UUID()))).rejects.toThrowError(/violates foreign key constraint/);
+    await expect(firstValueFrom(roundService.updateAttendees(createdRound.id, { playerIds: [RANDOM_UUID()] }))).rejects.toThrowError(/violates foreign key constraint/);
   });
 
   it('should not remove player when round is removed', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-    await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
+    await firstValueFrom(roundService.updateAttendees(createdRound.id, { playerIds: [createdPlayer.id] }));
 
     await firstValueFrom(roundService.remove(createdRound.id));
 
@@ -114,7 +112,7 @@ describe('Attendances', () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-    await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
+    await firstValueFrom(roundService.updateAttendees(createdRound.id, { playerIds: [createdPlayer.id] }));
 
     let queryResult;
     queryResult = await source.manager.query(`SELECT * FROM attendances`);
@@ -133,7 +131,7 @@ describe('Attendances', () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-    await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
+    await firstValueFrom(roundService.updateAttendees(createdRound.id, { playerIds: [createdPlayer.id] }));
 
     let result;
     result = await firstValueFrom(roundService.findOne(createdRound.id));
@@ -159,7 +157,7 @@ describe('Attendances', () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-    await firstValueFrom(roundService.addAttendee(createdRound.id, createdPlayer.id));
+    await firstValueFrom(roundService.updateAttendees(createdRound.id, { playerIds: [createdPlayer.id] }));
 
     let result;
     result = await firstValueFrom(roundService.findOne(createdRound.id));

@@ -2,17 +2,17 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
-import { PlaceType } from '../../src/game/enum/place-type.enum';
-import { GameService } from '../../src/game/game.service';
-import { EventTypeRevision } from '../../src/model/event-type-revision.entity';
-import { EventType } from '../../src/model/event-type.entity';
-import { GameEvent } from '../../src/model/game-event.entity';
-import { Player } from '../../src/model/player.entity';
-import { Round } from '../../src/model/round.entity';
-import { Game } from '../../src/model/game.entity';
-import { PlayerService } from '../../src/player/player.service';
-import { RoundService } from '../../src/round/round.service';
-import { RANDOM_UUID, setupDataSource, truncateAllTables } from '../../src/test.utils';
+import { PlaceType } from '../game/enum/place-type.enum';
+import { GameService } from '../game/game.service';
+import { EventTypeRevision } from '../model/event-type-revision.entity';
+import { EventType } from '../model/event-type.entity';
+import { GameEvent } from '../model/game-event.entity';
+import { Player } from '../model/player.entity';
+import { Round } from '../model/round.entity';
+import { Game } from '../model/game.entity';
+import { PlayerService } from '../player/player.service';
+import { RoundService } from './round.service';
+import { RANDOM_UUID, setupDataSource, truncateAllTables } from '../test.utils';
 
 describe('Finalists', () => {
   let gameService: GameService;

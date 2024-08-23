@@ -1,0 +1,158 @@
+import { Test } from '@nestjs/testing';
+import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { differenceInMilliseconds } from 'date-fns';
+import { firstValueFrom } from 'rxjs';
+import { DataSource } from 'typeorm';
+import { PlaceType } from '../game/enum/place-type.enum';
+import { GameService } from '../game/game.service';
+import { EventTypeRevision } from '../model/event-type-revision.entity';
+import { EventType } from '../model/event-type.entity';
+import { GameEvent } from '../model/game-event.entity';
+import { Game } from '../model/game.entity';
+import { Player } from '../model/player.entity';
+import { Round } from '../model/round.entity';
+import { RoundService } from './round.service';
+import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
+
+describe('Rounds', () => {
+  let gameService: GameService;
+  let roundService: RoundService;
+  let source: DataSource;
+
+  beforeAll(async () => {
+    source = await setupDataSource([Game, Round, Player, GameEvent, EventType, EventTypeRevision]);
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot(),
+      ],
+      providers: [
+        GameService,
+        RoundService,
+        {
+          provide: getRepositoryToken(Game),
+          useValue: source.getRepository(Game),
+        },
+        {
+          provide: getRepositoryToken(Round),
+          useValue: source.getRepository(Round),
+        },
+      ],
+    })
+      .overrideProvider(DataSource)
+      .useValue(source)
+      .compile();
+
+    gameService = moduleRef.get(GameService);
+    roundService = moduleRef.get(RoundService);
+  });
+
+  afterEach(async () => {
+    await truncateAllTables(source);
+  })
+
+  afterAll(async () => {
+    await source.destroy();
+  });
+
+  describe('creation', () => {
+    it('should be created with an existing gameId', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+
+      const result = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      expect(result).toBeTruthy();
+      expect(result.id).toMatch(UUID_V4_REGEX);
+      expect(result.game.id).toEqual(createdGame.id);
+      expect(result.attendees).toEqual([]);
+      expect(result.finalists).toEqual([]);
+      expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(500);
+    });
+
+    it('should fail with an unknown gameId', async () => {
+      await expect(firstValueFrom(roundService.create({gameId: RANDOM_UUID()}))).rejects.toThrowError(/violates foreign key constraint/);
+    });
+  });
+
+  describe('query', () => {
+    it('should find a round including its game', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+
+      const result = await firstValueFrom(roundService.findOne(createdRound.id));
+      expect(result.id).toMatch(UUID_V4_REGEX);
+      expect(result.game.id).toEqual(createdGame.id);
+      expect(result.game.datetime).toEqual(createdGame.datetime);
+      expect(result.game.completed).toEqual(createdGame.completed);
+    });
+
+    it('should return null if round not found', async () => {
+      const result = await firstValueFrom(roundService.findOne(RANDOM_UUID()));
+      expect(result).toBeNull();
+    });
+
+    it('should find all rounds', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+
+      const result = await firstValueFrom(roundService.findAll());
+      expect(result).toBeTruthy();
+      expect(result.length).toBe(2);
+      expect(result[0].id).toEqual(createdRound1.id);
+      expect(result[1].id).toEqual(createdRound2.id);
+    });
+
+    it('should return empty array if no rounds found', async () => {
+      const result = await firstValueFrom(roundService.findAll());
+      expect(result).toStrictEqual([]);
+    });
+  });
+
+  describe('update', () => {
+    it('should update a round', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+
+      let result;
+      result = await firstValueFrom(gameService.findOne(createdGame.id));
+      expect(result.rounds.length).toBe(2);
+      expect(result.rounds[0].id).toEqual(createdRound1.id);
+      expect(result.rounds[1].id).toEqual(createdRound2.id);
+
+      await firstValueFrom(roundService.update(createdRound2.id, { datetime: new Date().toISOString() }));
+
+      result = await firstValueFrom(gameService.findOne(createdGame.id));
+      expect(result.rounds.length).toBe(2);
+      expect(result.rounds[0].id).toEqual(createdRound1.id);
+      expect(result.rounds[1].id).toEqual(createdRound2.id);
+    });
+
+    it('should fail if round with given id not found', async () => {
+      await expect(firstValueFrom(roundService.update(RANDOM_UUID(), { gameId: RANDOM_UUID() }))).rejects.toThrowError('Not Found');
+    });
+  });
+
+  describe('removal', () => {
+    it('should remove a round', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+
+      let result;
+      result = await firstValueFrom(gameService.findOne(createdGame.id));
+      expect(result.rounds.length).toBe(2);
+
+      await firstValueFrom(roundService.remove(createdRound2.id));
+
+      result = await firstValueFrom(gameService.findOne(createdGame.id));
+      expect(result.rounds.length).toBe(1);
+    });
+
+    it('should fail if round to remove not exists', async () => {
+      await expect(firstValueFrom(roundService.remove(RANDOM_UUID()))).rejects.toThrowError(/Could not find any entity/);
+    });
+  });
+});
