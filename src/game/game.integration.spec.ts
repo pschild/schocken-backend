@@ -3,6 +3,9 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { differenceInMilliseconds } from 'date-fns';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
+import { EventTypeContext } from '../event-type/enum/event-type-context.enum';
+import { EventTypeService } from '../event-type/event-type.service';
+import { GameEventService } from '../game-event/game-event.service';
 import { PlaceType } from './enum/place-type.enum';
 import { GameService } from './game.service';
 import { EventTypeRevision } from '../model/event-type-revision.entity';
@@ -19,6 +22,8 @@ describe('Games', () => {
   let service: GameService;
   let roundService: RoundService;
   let playerService: PlayerService;
+  let gameEventService: GameEventService;
+  let eventTypeService: EventTypeService;
   let source: DataSource;
   let playerRepo: Repository<Player>;
 
@@ -33,6 +38,8 @@ describe('Games', () => {
         GameService,
         RoundService,
         PlayerService,
+        GameEventService,
+        EventTypeService,
         {
           provide: getRepositoryToken(Game),
           useValue: source.getRepository(Game),
@@ -44,6 +51,14 @@ describe('Games', () => {
         {
           provide: getRepositoryToken(Player),
           useValue: source.getRepository(Player),
+        },
+        {
+          provide: getRepositoryToken(GameEvent),
+          useValue: source.getRepository(GameEvent),
+        },
+        {
+          provide: getRepositoryToken(EventType),
+          useValue: source.getRepository(EventType),
         }
       ],
     })
@@ -54,6 +69,8 @@ describe('Games', () => {
     service = moduleRef.get(GameService);
     roundService = moduleRef.get(RoundService);
     playerService = moduleRef.get(PlayerService);
+    gameEventService = moduleRef.get(GameEventService);
+    eventTypeService = moduleRef.get(EventTypeService);
     playerRepo = moduleRef.get<Repository<Player>>(getRepositoryToken(Player));
   });
 
@@ -155,20 +172,26 @@ describe('Games', () => {
   });
 
   describe('removal', () => {
-    it('should be removed including all referring rounds', async () => {
+    it('should be removed including all referring rounds and events', async () => {
       const createdGame = await firstValueFrom(service.create({ placeType: PlaceType.REMOTE }));
       const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
       const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      await firstValueFrom(gameEventService.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       const result = await firstValueFrom(service.findOne(createdGame.id));
       expect(result.rounds.length).toBe(2);
       expect(result.rounds[0].id).toEqual(createdRound1.id);
       expect(result.rounds[1].id).toEqual(createdRound2.id);
+      expect(result.events).toBeUndefined();
 
       await firstValueFrom(service.remove(createdGame.id));
 
       await expect(firstValueFrom(service.findAll())).resolves.toEqual([]);
       await expect(firstValueFrom(roundService.findAll())).resolves.toEqual([]);
+      await expect(firstValueFrom(gameEventService.findAll())).resolves.toEqual([]);
     });
 
     it('should be removed when related to a player', async () => {
@@ -183,15 +206,11 @@ describe('Games', () => {
       expect(player).toBeDefined();
     });
 
-    it('should set location to undefined if player was deleted', async () => {
+    it('should fail if a related player should be deleted (hard)', async () => {
       const createdPlayer = await playerRepo.save({ name: 'John' });
-      const createdGame = await firstValueFrom(service.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id }));
+      await firstValueFrom(service.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id }));
 
-      const result = await playerRepo.delete(createdPlayer.id);
-      expect(result.affected).toEqual(1);
-
-      const game = await firstValueFrom(service.findOne(createdGame.id));
-      expect(game.place).toEqual({ type: PlaceType.HOME, location: undefined });
+      await expect(playerRepo.delete(createdPlayer.id)).rejects.toThrowError(/violates foreign key constraint/);
     });
 
     it('should load place even if player was softly deleted', async () => {

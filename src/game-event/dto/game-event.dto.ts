@@ -8,7 +8,7 @@ export class GameEventDto {
   createDateTime: string;
   lastChangedDateTime: string;
   datetime: string;
-  multiplicatorValue: string;
+  multiplicatorValue: number;
   comment: string;
   game: GameDto;
   player: PlayerDto;
@@ -20,7 +20,7 @@ export class GameEventDto {
       createDateTime: entity.createDateTime.toISOString(),
       lastChangedDateTime: entity.lastChangedDateTime.toISOString(),
       datetime: entity.datetime.toISOString(),
-      multiplicatorValue: entity.multiplicatorValue,
+      multiplicatorValue: +entity.multiplicatorValue,
       comment: entity.comment,
       game: GameDto.fromEntity(entity.game),
       player: PlayerDto.fromEntity(entity.player),

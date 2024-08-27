@@ -167,7 +167,7 @@ export namespace TestData {
       game: null,
       player: null,
       comment: 'some comment',
-      multiplicatorValue: 'some value'
+      multiplicatorValue: 2
     };
   }
 }

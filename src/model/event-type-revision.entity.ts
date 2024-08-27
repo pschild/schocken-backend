@@ -20,7 +20,7 @@ export class EventTypeRevision extends BaseEntity {
   @Column({ type: 'enum', enum: EventTypeTrigger, nullable: true })
   trigger: EventTypeTrigger;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ type: 'numeric', nullable: true })
   penaltyValue: number;
 
   @Column({ type: 'enum', enum: PenaltyUnit, nullable: true })

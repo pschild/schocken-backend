@@ -28,12 +28,12 @@ export class EventTypeDto {
       description: entity.description,
       context: entity.context,
       trigger: entity.trigger,
-      penaltyValue: entity.penaltyValue,
+      penaltyValue: +entity.penaltyValue,
       penaltyUnit: entity.penaltyUnit,
       ...(entity.revisions ? { revisions: EventTypeRevisionDto.fromEntities(entity.revisions) } : {}),
       multiplicatorUnit: entity.multiplicatorUnit,
       hasComment: entity.hasComment,
-      order: entity.order,
+      order: +entity.order,
     } : null;
   }
 

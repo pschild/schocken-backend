@@ -9,8 +9,8 @@ export class GameEvent extends BaseEntity {
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   datetime: Date;
 
-  @Column({ nullable: true, length: 32 })
-  multiplicatorValue: string;
+  @Column({ type: 'numeric', nullable: false, default: 1 })
+  multiplicatorValue: number;
 
   @Column({ nullable: true, length: 128 })
   comment: string;

@@ -6,6 +6,6 @@ export class UpdateEventTypeDto extends PartialType(CreateEventTypeDto) {
   static mapForeignKeys(dto: UpdateEventTypeDto): EventType {
     return {
       ...dto,
-      ...(dto.penalty ? { penaltyValue: dto.penalty.penaltyValue, penaltyUnit: dto.penalty.penaltyUnit } : {}),
+      ...(dto.penalty ? { penaltyValue: +dto.penalty.penaltyValue, penaltyUnit: dto.penalty.penaltyUnit } : {}),
     } as unknown as EventType;
   }}

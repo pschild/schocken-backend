@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { firstValueFrom } from 'rxjs';
 import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm';
 import { SoftRemoveEvent } from 'typeorm/subscriber/event/SoftRemoveEvent';
 import { EventType } from '../model/event-type.entity';
@@ -32,15 +33,15 @@ export class EventTypeRevisionSubscriber implements EntitySubscriberInterface {
   }
 
   afterInsert(event: InsertEvent<EventType>): Promise<unknown> | void {
-    this.revisionService.create(this.createEntity(event.entity, EventTypeRevisionType.INSERT));
+    return firstValueFrom(this.revisionService.create(this.createEntity(event.entity, EventTypeRevisionType.INSERT)));
   }
 
   afterUpdate(event: UpdateEvent<EventType>): Promise<unknown> | void {
-    this.revisionService.create(this.createEntity(event.entity as EventType, EventTypeRevisionType.UPDATE));
+    return firstValueFrom(this.revisionService.create(this.createEntity(event.entity as EventType, EventTypeRevisionType.UPDATE)));
   }
 
   afterSoftRemove(event: SoftRemoveEvent<EventType>): Promise<unknown> | void {
-    this.revisionService.create(this.createEntity(event.entity, EventTypeRevisionType.REMOVE));
+    return firstValueFrom(this.revisionService.create(this.createEntity(event.entity, EventTypeRevisionType.REMOVE)));
   }
 
   private createEntity(entity: EventType, type: EventTypeRevisionType): CreateEventTypeRevisionDto {
@@ -48,6 +49,7 @@ export class EventTypeRevisionSubscriber implements EntitySubscriberInterface {
     const eventTypeId = originalEntity.id.toString();
     delete originalEntity.id;
     delete originalEntity.createDateTime;
+    delete originalEntity.deletedDateTime;
 
     return {
       ...originalEntity,

@@ -136,6 +136,7 @@ describe('Attendances', () => {
     let result;
     result = await firstValueFrom(roundService.findOne(createdRound.id));
     expect(result.attendees.length).toBe(1);
+    expect(result.attendees[0].name).toEqual('John');
 
     let queryResult;
     queryResult = await source.manager.query(`SELECT * FROM attendances`);
@@ -162,6 +163,8 @@ describe('Attendances', () => {
     let result;
     result = await firstValueFrom(roundService.findOne(createdRound.id));
     expect(result.attendees.length).toBe(1);
+    expect(result.attendees[0].name).toEqual('John');
+    expect(result.attendees[0].isDeleted).toEqual(false);
 
     let queryResult;
     queryResult = await source.manager.query(`SELECT * FROM attendances`);
@@ -173,7 +176,9 @@ describe('Attendances', () => {
     await firstValueFrom(playerService.remove(createdPlayer.id));
 
     result = await firstValueFrom(roundService.findOne(createdRound.id));
-    expect(result.attendees.length).toBe(0);
+    expect(result.attendees.length).toBe(1);
+    expect(result.attendees[0].name).toEqual('John');
+    expect(result.attendees[0].isDeleted).toEqual(true);
 
     queryResult = await source.manager.query(`SELECT * FROM attendances`);
     expect(queryResult).toEqual([{

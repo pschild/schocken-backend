@@ -138,8 +138,12 @@ describe('PlayerService integration', () => {
     });
 
     it('should skip duplicate check if id is the one of existing player', async () => {
-      const response = await repo.save({ name: 'John' });
-      expect(response.name).toEqual('John');
+      const createdPlayer = await repo.save({ name: 'John' });
+
+      const updateResult = await firstValueFrom(service.update(createdPlayer.id, { name: 'John', active: false }));
+      expect(updateResult).toBeTruthy();
+      expect(updateResult.name).toBe('John');
+      expect(updateResult.active).toBe(false);
     });
 
     it('should fail if a player with given name already exists', async () => {

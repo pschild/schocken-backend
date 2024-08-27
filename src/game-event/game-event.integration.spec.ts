@@ -1,0 +1,297 @@
+import { Test } from '@nestjs/testing';
+import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { differenceInMilliseconds } from 'date-fns';
+import { firstValueFrom } from 'rxjs';
+import { DataSource, Repository } from 'typeorm';
+import { EventTypeContext } from '../event-type/enum/event-type-context.enum';
+import { EventTypeService } from '../event-type/event-type.service';
+import { GameService } from '../game/game.service';
+import { PlaceType } from '../game/enum/place-type.enum';
+import { EventTypeRevision } from '../model/event-type-revision.entity';
+import { EventType } from '../model/event-type.entity';
+import { GameEvent } from '../model/game-event.entity';
+import { Game } from '../model/game.entity';
+import { Player } from '../model/player.entity';
+import { Round } from '../model/round.entity';
+import { PlayerService } from '../player/player.service';
+import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
+import { GameEventService } from './game-event.service';
+
+describe('GameEvents', () => {
+  let service: GameEventService;
+  let gameService: GameService;
+  let playerService: PlayerService;
+  let eventTypeService: EventTypeService;
+  let source: DataSource;
+  let playerRepo: Repository<Player>;
+  let eventTypeRepo: Repository<EventType>;
+
+  beforeAll(async () => {
+    source = await setupDataSource([Game, Round, Player, GameEvent, EventType, EventTypeRevision]);
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot(),
+      ],
+      providers: [
+        GameEventService,
+        GameService,
+        PlayerService,
+        EventTypeService,
+        {
+          provide: getRepositoryToken(GameEvent),
+          useValue: source.getRepository(GameEvent),
+        },
+        {
+          provide: getRepositoryToken(Game),
+          useValue: source.getRepository(Game),
+        },
+        {
+          provide: getRepositoryToken(Player),
+          useValue: source.getRepository(Player),
+        },
+        {
+          provide: getRepositoryToken(EventType),
+          useValue: source.getRepository(EventType),
+        }
+      ],
+    })
+      .overrideProvider(DataSource)
+      .useValue(source)
+      .compile();
+
+    service = moduleRef.get(GameEventService);
+    gameService = moduleRef.get(GameService);
+    playerService = moduleRef.get(PlayerService);
+    eventTypeService = moduleRef.get(EventTypeService);
+    playerRepo = moduleRef.get<Repository<Player>>(getRepositoryToken(Player));
+    eventTypeRepo = moduleRef.get<Repository<EventType>>(getRepositoryToken(EventType));
+  });
+
+  afterEach(async () => {
+    await truncateAllTables(source);
+  })
+
+  afterAll(async () => {
+    await source.destroy();
+  });
+
+  describe('creation', () => {
+    it('should create successfully with default value', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+
+      const result = await firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+      expect(result).toBeTruthy();
+      expect(result.id).toMatch(UUID_V4_REGEX);
+      expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(500);
+      expect(result.game).toBeNull();
+      expect(result.player.id).toEqual(createdPlayer.id);
+      expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.multiplicatorValue).toEqual(1);
+      expect(result.comment).toBeNull();
+    });
+
+    it('should create successfully', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+
+      const result = await firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id, comment: 'Lorem ipsum', multiplicatorValue: 1.5 }));
+      expect(result).toBeTruthy();
+      expect(result.id).toMatch(UUID_V4_REGEX);
+      expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(500);
+      expect(result.game).toBeNull();
+      expect(result.player.id).toEqual(createdPlayer.id);
+      expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.multiplicatorValue).toEqual(1.5);
+      expect(result.comment).toEqual('Lorem ipsum');
+    });
+
+    it('should fail if an unknown game is given', async () => {
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+
+      await expect(firstValueFrom(service.create({ gameId: RANDOM_UUID(), playerId: createdPlayer.id, eventTypeId: createdEventType.id }))).rejects.toThrowError(/violates foreign key constraint/);
+    });
+
+    it('should fail if an unknown player is given', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+
+      await expect(firstValueFrom(service.create({ gameId: createdGame.id, playerId: RANDOM_UUID(), eventTypeId: createdEventType.id }))).rejects.toThrowError(/violates foreign key constraint/);
+    });
+
+    it('should fail if an unknown event type is given', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+
+      await expect(firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: RANDOM_UUID() }))).rejects.toThrowError(/violates foreign key constraint/);
+    });
+  });
+
+  describe('query', () => {
+    it('should find a game event', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+
+      const response = await firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      const result = await firstValueFrom(service.findOne(response.id));
+      expect(result).toBeTruthy();
+      expect(result.game).toBeNull();
+      expect(result.player.id).toEqual(createdPlayer.id);
+      expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.multiplicatorValue).toEqual(1);
+      expect(result.comment).toBeNull();
+    });
+
+    it('should return null if game event not found', async () => {
+      const result = await firstValueFrom(service.findOne(RANDOM_UUID()));
+      expect(result).toBeNull();
+    });
+
+    it('should find all game events', async () => {
+      const createdGame1 = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer1 = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType1 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test1', order: 1 }));
+
+      const createdGame2 = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer2 = await firstValueFrom(playerService.create({ name: 'Jack' }));
+      const createdEventType2 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test2', order: 2 }));
+
+      await firstValueFrom(service.create({ gameId: createdGame1.id, playerId: createdPlayer1.id, eventTypeId: createdEventType1.id }));
+      await firstValueFrom(service.create({ gameId: createdGame2.id, playerId: createdPlayer2.id, eventTypeId: createdEventType2.id }));
+
+      const result = await firstValueFrom(service.findAll());
+      expect(result).toBeTruthy();
+      expect(result.length).toBe(2);
+    });
+
+    it('should return empty array if no game events found', async () => {
+      const result = await firstValueFrom(service.findAll());
+      expect(result).toStrictEqual([]);
+    });
+  });
+
+  describe('update', () => {
+    it('should be updated', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdGameEvent = await firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      let result;
+      result = await firstValueFrom(service.findOne(createdGameEvent.id));
+      expect(result).toBeTruthy();
+      expect(result.id).toMatch(UUID_V4_REGEX);
+      expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(500);
+      expect(result.game).toBeNull();
+      expect(result.player.id).toEqual(createdPlayer.id);
+      expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.multiplicatorValue).toEqual(1);
+      expect(result.comment).toBeNull();
+
+      await firstValueFrom(service.update(createdGameEvent.id, { multiplicatorValue: 1.5, comment: 'Lorem ipsum' }));
+
+      result = await firstValueFrom(service.findOne(createdGameEvent.id));
+      expect(result).toBeTruthy();
+      expect(result.id).toMatch(UUID_V4_REGEX);
+      expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(500);
+      expect(result.game).toBeNull();
+      expect(result.player.id).toEqual(createdPlayer.id);
+      expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.multiplicatorValue).toEqual(1.5);
+      expect(result.comment).toEqual('Lorem ipsum');
+    });
+
+    it('should fail if game event with given id not found', async () => {
+      await expect(firstValueFrom(service.update(RANDOM_UUID(), { comment: 'Lorem ipsum' }))).rejects.toThrowError('Not Found');
+    });
+  });
+
+  describe('removal', () => {
+    it('should be removed when related to a game, player and event type', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdGameEvent = await firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      const result = await firstValueFrom(service.remove(createdGameEvent.id));
+      expect(result).toEqual(createdGameEvent.id);
+
+      await expect(firstValueFrom(service.findAll())).resolves.toEqual([]);
+
+      // game should still exist
+      const game = await firstValueFrom(gameService.findOne(createdGame.id));
+      expect(game).toBeDefined();
+
+      // player should still exist
+      const player = await firstValueFrom(playerService.findOne(createdPlayer.id));
+      expect(player).toBeDefined();
+
+      // event type should still exist
+      const eventType = await firstValueFrom(eventTypeService.findOne(createdEventType.id));
+      expect(eventType).toBeDefined();
+    });
+
+    it('should fail if a related player should be deleted (hard)', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      await firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      await expect(playerRepo.delete(createdPlayer.id)).rejects.toThrowError(/violates foreign key constraint/);
+    });
+
+    it('should fail if a related event type should be deleted (hard)', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      await firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      await expect(eventTypeRepo.delete(createdEventType.id)).rejects.toThrowError(/violates foreign key constraint/);
+    });
+
+    // TODO: 1
+    it('should load player even if it was softly deleted', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEvent = await firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      const result = await firstValueFrom(playerService.remove(createdPlayer.id));
+      expect(result).toEqual(createdPlayer.id);
+
+      const event = await firstValueFrom(service.findOne(createdEvent.id));
+      expect(event.player).toMatchObject({ id: createdPlayer.id, name: 'John', isDeleted: true });
+    });
+
+    it('should load event type even if it was softly deleted', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEvent = await firstValueFrom(service.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      const result = await firstValueFrom(eventTypeService.remove(createdEventType.id));
+      expect(result).toEqual(createdEventType.id);
+
+      const event = await firstValueFrom(service.findOne(createdEvent.id));
+      expect(event.eventType).toMatchObject({ id: createdEventType.id, description: 'test', isDeleted: true });
+    });
+
+    it('should fail if game to remove not exists', async () => {
+      await expect(firstValueFrom(service.remove(RANDOM_UUID()))).rejects.toThrowError(/Could not find any entity/);
+    });
+  });
+});

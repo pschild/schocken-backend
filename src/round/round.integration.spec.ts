@@ -136,6 +136,30 @@ describe('Rounds', () => {
   });
 
   describe('removal', () => {
+    it('should be removed including all referring events', async () => {
+      expect(false).toBeTruthy();
+
+      // const createdGame = await firstValueFrom(service.create({ placeType: PlaceType.REMOTE }));
+      // const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      // const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      //
+      // const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      // const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      // await firstValueFrom(gameEventService.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+      //
+      // const result = await firstValueFrom(service.findOne(createdGame.id));
+      // expect(result.rounds.length).toBe(2);
+      // expect(result.rounds[0].id).toEqual(createdRound1.id);
+      // expect(result.rounds[1].id).toEqual(createdRound2.id);
+      // expect(result.events).toBeUndefined();
+      //
+      // await firstValueFrom(service.remove(createdGame.id));
+      //
+      // await expect(firstValueFrom(service.findAll())).resolves.toEqual([]);
+      // await expect(firstValueFrom(roundService.findAll())).resolves.toEqual([]);
+      // await expect(firstValueFrom(gameEventService.findAll())).resolves.toEqual([]);
+    });
+
     it('should remove a round', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       await firstValueFrom(roundService.create({ gameId: createdGame.id }));

@@ -20,7 +20,7 @@ export class Game extends BaseEntity {
   @Column({ type: 'enum', enum: PlaceType })
   placeType: PlaceType;
 
-  @ManyToOne(() => Player, player => player.hostedGames, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Player, player => player.hostedGames, { nullable: true })
   hostedBy: Player;
 
   @Column({ nullable: true, length: 64 })

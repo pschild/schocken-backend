@@ -37,9 +37,9 @@ describe('GameEventController e2e', () => {
   describe('create', () => {
     it.each([
       [null, 400, ['gameId must be a UUID', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
-      [{ multiplicatorValue: RANDOM_STRING(33), comment: RANDOM_STRING(129) }, 400, ['multiplicatorValue must be shorter than or equal to 32 characters', 'comment must be shorter than or equal to 128 characters', 'gameId must be a UUID', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
-      [{ multiplicatorValue: RANDOM_STRING(32), comment: RANDOM_STRING(128), gameId: 'invalid-uuid', playerId: 'invalid-uuid', eventTypeId: 'invalid-uuid' }, 400, ['gameId must be a UUID', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
-      [{ multiplicatorValue: RANDOM_STRING(32), comment: RANDOM_STRING(128), gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }, 201, undefined],
+      [{ multiplicatorValue: -1, comment: RANDOM_STRING(129) }, 400, ['multiplicatorValue must not be less than 1', 'comment must be shorter than or equal to 128 characters', 'gameId must be a UUID', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
+      [{ multiplicatorValue: 10, comment: RANDOM_STRING(128), gameId: 'invalid-uuid', playerId: 'invalid-uuid', eventTypeId: 'invalid-uuid' }, 400, ['gameId must be a UUID', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
+      [{ comment: RANDOM_STRING(128), gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }, 201, undefined],
       [{ gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }, 201, undefined],
     ])('request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
       let response;
@@ -74,9 +74,9 @@ describe('GameEventController e2e', () => {
   describe('update', () => {
     it.each([
       [null, 200, undefined],
-      [{ multiplicatorValue: RANDOM_STRING(33), comment: RANDOM_STRING(129) }, 400, ['multiplicatorValue must be shorter than or equal to 32 characters', 'comment must be shorter than or equal to 128 characters']],
-      [{ multiplicatorValue: RANDOM_STRING(32), comment: RANDOM_STRING(128), gameId: 'invalid-uuid', playerId: 'invalid-uuid', eventTypeId: 'invalid-uuid' }, 400, ['gameId must be a UUID', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
-      [{ multiplicatorValue: RANDOM_STRING(32), comment: RANDOM_STRING(128), gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }, 200, undefined],
+      [{ multiplicatorValue: -1, comment: RANDOM_STRING(129) }, 400, ['multiplicatorValue must not be less than 1', 'comment must be shorter than or equal to 128 characters']],
+      [{ multiplicatorValue: 10, comment: RANDOM_STRING(128), gameId: 'invalid-uuid', playerId: 'invalid-uuid', eventTypeId: 'invalid-uuid' }, 400, ['gameId must be a UUID', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
+      [{ comment: RANDOM_STRING(128), gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }, 200, undefined],
       [{ gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }, 200, undefined],
     ])('request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
       let response;

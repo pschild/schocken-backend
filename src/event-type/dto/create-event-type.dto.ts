@@ -38,7 +38,7 @@ export class CreateEventTypeDto {
   static mapForeignKeys(dto: CreateEventTypeDto): EventType {
     return {
       ...dto,
-      ...(dto.penalty ? { penaltyValue: dto.penalty.penaltyValue, penaltyUnit: dto.penalty.penaltyUnit } : {}),
+      ...(dto.penalty ? { penaltyValue: +dto.penalty.penaltyValue, penaltyUnit: dto.penalty.penaltyUnit } : {}),
     } as unknown as EventType;
   }
 }

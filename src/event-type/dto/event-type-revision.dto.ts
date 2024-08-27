@@ -29,11 +29,11 @@ export class EventTypeRevisionDto {
       description: entity.description,
       context: entity.context,
       trigger: entity.trigger,
-      penaltyValue: entity.penaltyValue,
+      penaltyValue: +entity.penaltyValue,
       penaltyUnit: entity.penaltyUnit,
       multiplicatorUnit: entity.multiplicatorUnit,
       hasComment: entity.hasComment,
-      order: entity.order,
+      order: +entity.order,
       eventType: EventTypeDto.fromEntity(entity.eventType),
     } : null;
   }

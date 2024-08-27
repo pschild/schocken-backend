@@ -137,6 +137,7 @@ describe('Finalists', () => {
 
     let result;
     result = await firstValueFrom(roundService.findOne(createdRound.id));
+    expect(result.finalists[0].name).toEqual('John');
     expect(result.finalists.length).toBe(1);
 
     let queryResult;
@@ -164,6 +165,8 @@ describe('Finalists', () => {
     let result;
     result = await firstValueFrom(roundService.findOne(createdRound.id));
     expect(result.finalists.length).toBe(1);
+    expect(result.finalists[0].name).toEqual('John');
+    expect(result.finalists[0].isDeleted).toEqual(false);
 
     let queryResult;
     queryResult = await source.manager.query(`SELECT * FROM finals`);
@@ -175,7 +178,9 @@ describe('Finalists', () => {
     await firstValueFrom(playerService.remove(createdPlayer.id));
 
     result = await firstValueFrom(roundService.findOne(createdRound.id));
-    expect(result.finalists.length).toBe(0);
+    expect(result.finalists.length).toBe(1);
+    expect(result.finalists[0].name).toEqual('John');
+    expect(result.finalists[0].isDeleted).toEqual(true);
 
     queryResult = await source.manager.query(`SELECT * FROM finals`);
     expect(queryResult).toEqual([{

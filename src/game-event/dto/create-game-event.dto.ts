@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
 import { GameEvent } from '../../model/game-event.entity';
 
 export class CreateGameEventDto {
@@ -7,9 +7,9 @@ export class CreateGameEventDto {
   datetime?: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(32)
-  multiplicatorValue?: string;
+  @IsNumber()
+  @Min(1)
+  multiplicatorValue?: number;
 
   @IsOptional()
   @IsString()

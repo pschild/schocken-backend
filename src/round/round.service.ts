@@ -31,7 +31,7 @@ export class RoundService {
   }
 
   findOne(id: string): Observable<RoundDto> {
-    return from(this.repo.findOne({ where: { id }, relations: ['game', 'attendees', 'finalists'] })).pipe(
+    return from(this.repo.findOne({ where: { id }, relations: ['game', 'attendees', 'finalists'], withDeleted: true })).pipe(
       map(RoundDto.fromEntity)
     );
   }
