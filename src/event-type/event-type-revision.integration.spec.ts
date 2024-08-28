@@ -12,7 +12,6 @@ import { setupDataSource, truncateAllTables } from '../test.utils';
 import { EventTypeContext } from './enum/event-type-context.enum';
 import { EventTypeRevisionType } from './enum/event-type-revision-type.enum';
 import { PenaltyUnit } from './enum/penalty-unit.enum';
-import { EventTypeRevisionService } from './event-type-revision.service';
 import { EventTypeRevisionSubscriber } from './event-type-revision.subscriber';
 import { EventTypeService } from './event-type.service';
 
@@ -31,7 +30,6 @@ describe('EventTypeRevisionService integration', () => {
       ],
       providers: [
         EventTypeService,
-        EventTypeRevisionService,
         EventTypeRevisionSubscriber,
         {
           provide: getRepositoryToken(EventType),
