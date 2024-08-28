@@ -6,7 +6,7 @@ import { PlaceType } from '../game/enum/place-type.enum';
 import { GameService } from '../game/game.service';
 import { EventTypeRevision } from '../model/event-type-revision.entity';
 import { EventType } from '../model/event-type.entity';
-import { GameEvent } from '../model/game-event.entity';
+import { Event } from '../model/event.entity';
 import { Player } from '../model/player.entity';
 import { Round } from '../model/round.entity';
 import { Game } from '../model/game.entity';
@@ -22,7 +22,7 @@ describe('Finalists', () => {
   let playerRepo: Repository<Player>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, GameEvent, EventType, EventTypeRevision]);
+    source = await setupDataSource([Game, Round, Player, Event, EventType, EventTypeRevision]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [

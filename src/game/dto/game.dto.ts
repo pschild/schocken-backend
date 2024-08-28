@@ -1,4 +1,4 @@
-import { GameEventDto } from '../../game-event/dto/game-event.dto';
+import { EventDto } from '../../event/dto/event.dto';
 import { Game } from '../../model/game.entity';
 import { PlayerDto } from '../../player/dto/player.dto';
 import { RoundDto } from '../../round/dto/round.dto';
@@ -13,7 +13,7 @@ export class GameDto {
   excludeFromStatistics: boolean;
   place?: { type: PlaceType; location?: string };
   rounds?: RoundDto[];
-  events?: GameEventDto[];
+  events?: EventDto[];
 
   static fromEntity(entity: Game): GameDto {
     return entity ? {
@@ -25,7 +25,7 @@ export class GameDto {
       excludeFromStatistics: entity.excludeFromStatistics,
       place: GameDto.mapPlace(entity),
       ...(entity.rounds ? { rounds: RoundDto.fromEntities(entity.rounds) } : {}),
-      ...(entity.events ? { events: GameEventDto.fromEntities(entity.events) } : {}),
+      ...(entity.events ? { events: EventDto.fromEntities(entity.events) } : {}),
     } : null;
   }
 

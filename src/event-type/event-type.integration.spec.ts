@@ -3,12 +3,13 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { differenceInMilliseconds } from 'date-fns';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
+import { EventContext } from '../event/enum/event-context.enum';
 import { GameService } from '../game/game.service';
-import { GameEventService } from '../game-event/game-event.service';
+import { EventService } from '../event/event.service';
 import { PlaceType } from '../game/enum/place-type.enum';
 import { EventTypeRevision } from '../model/event-type-revision.entity';
 import { EventType } from '../model/event-type.entity';
-import { GameEvent } from '../model/game-event.entity';
+import { Event } from '../model/event.entity';
 import { Game } from '../model/game.entity';
 import { Player } from '../model/player.entity';
 import { Round } from '../model/round.entity';
@@ -23,12 +24,12 @@ describe('EventTypeService integration', () => {
   let service: EventTypeService;
   let gameService: GameService;
   let playerService: PlayerService;
-  let gameEventService: GameEventService;
+  let eventService: EventService;
   let source: DataSource;
   let repo: Repository<EventType>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, GameEvent, EventType, EventTypeRevision]);
+    source = await setupDataSource([Game, Round, Player, Event, EventType, EventTypeRevision]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -38,7 +39,7 @@ describe('EventTypeService integration', () => {
         EventTypeService,
         GameService,
         PlayerService,
-        GameEventService,
+        EventService,
         {
           provide: getRepositoryToken(Game),
           useValue: source.getRepository(Game),
@@ -48,8 +49,8 @@ describe('EventTypeService integration', () => {
           useValue: source.getRepository(Player),
         },
         {
-          provide: getRepositoryToken(GameEvent),
-          useValue: source.getRepository(GameEvent),
+          provide: getRepositoryToken(Event),
+          useValue: source.getRepository(Event),
         },
         {
           provide: getRepositoryToken(EventType),
@@ -64,7 +65,7 @@ describe('EventTypeService integration', () => {
     service = moduleRef.get(EventTypeService);
     gameService = moduleRef.get(GameService);
     playerService = moduleRef.get(PlayerService);
-    gameEventService = moduleRef.get(GameEventService);
+    eventService = moduleRef.get(EventService);
     repo = moduleRef.get<Repository<EventType>>(getRepositoryToken(EventType));
   });
 
@@ -194,20 +195,20 @@ describe('EventTypeService integration', () => {
     });
 
     // TODO: 2
-    it('should load game event even event type was softly deleted', async () => {
+    it('should load event even event type was softly deleted', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
       const createdEventType = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
-      const createdGameEvent = await firstValueFrom(gameEventService.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+      const createdEvent = await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       let findResult;
-      findResult = await firstValueFrom(gameEventService.findOne(createdGameEvent.id));
+      findResult = await firstValueFrom(eventService.findOne(createdEvent.id));
       expect(findResult.eventType.description).toEqual('test');
       expect(findResult.eventType.isDeleted).toEqual(false);
 
       await firstValueFrom(service.remove(createdEventType.id));
 
-      findResult = await firstValueFrom(gameEventService.findOne(createdGameEvent.id));
+      findResult = await firstValueFrom(eventService.findOne(createdEvent.id));
       expect(findResult.eventType.description).toEqual('test');
       expect(findResult.eventType.isDeleted).toEqual(true);
     });

@@ -2,16 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
-import { GameEvent } from '../model/game-event.entity';
+import { Event } from '../model/event.entity';
 import { MockType, RANDOM_UUID, TestData } from '../test.utils';
-import { GameEventDto } from './dto/game-event.dto';
-import { GameEventService } from './game-event.service';
+import { EventDto } from './dto/event.dto';
+import { EventContext } from './enum/event-context.enum';
+import { EventService } from './event.service';
 
-describe('GameEventService', () => {
-  let service: GameEventService;
-  let repositoryMock: MockType<Repository<GameEvent>>;
+describe('EventService', () => {
+  let service: EventService;
+  let repositoryMock: MockType<Repository<Event>>;
 
-  const repositoryMockFactory: () => MockType<Repository<GameEvent>> = jest.fn(() => ({
+  const repositoryMockFactory: () => MockType<Repository<Event>> = jest.fn(() => ({
     findOne: jest.fn(),
     findOneByOrFail: jest.fn(),
     find: jest.fn(),
@@ -23,13 +24,13 @@ describe('GameEventService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        GameEventService,
-        { provide: getRepositoryToken(GameEvent), useFactory: repositoryMockFactory },
+        EventService,
+        { provide: getRepositoryToken(Event), useFactory: repositoryMockFactory },
       ],
     }).compile();
 
-    service = module.get(GameEventService);
-    repositoryMock = module.get(getRepositoryToken(GameEvent));
+    service = module.get(EventService);
+    repositoryMock = module.get(getRepositoryToken(Event));
   });
 
   it('should be defined', () => {
@@ -37,13 +38,24 @@ describe('GameEventService', () => {
   });
 
   describe('create', () => {
-    it('should create a new entity successfully', async () => {
+    it('should create a new entity with context GAME successfully', async () => {
       const entity = TestData.gameEvent();
       repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
-      const result = await firstValueFrom(service.create({ gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }));
-      expect(result).toEqual(GameEventDto.fromEntity(entity));
+      const result = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }));
+      expect(result).toEqual(EventDto.fromEntity(entity));
+      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('should create a new entity with context ROUND successfully', async () => {
+      const entity = TestData.gameEvent();
+      repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
+      repositoryMock.save.mockReturnValue(Promise.resolve(entity));
+
+      const result = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }));
+      expect(result).toEqual(EventDto.fromEntity(entity));
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
@@ -54,21 +66,22 @@ describe('GameEventService', () => {
     repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.findOne(entity.id));
-    expect(result).toEqual(GameEventDto.fromEntity(entity));
+    expect(result).toEqual(EventDto.fromEntity(entity));
     expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
   });
 
   it('should find all entities', async () => {
-    const entity = TestData.gameEvent();
-    repositoryMock.find.mockReturnValue(Promise.resolve([entity]));
+    const entity1 = TestData.gameEvent();
+    const entity2 = TestData.roundEvent();
+    repositoryMock.find.mockReturnValue(Promise.resolve([entity1, entity2]));
 
     const result = await firstValueFrom(service.findAll());
-    expect(result).toEqual(GameEventDto.fromEntities([entity]));
+    expect(result).toEqual(EventDto.fromEntities([entity1, entity2]));
     expect(repositoryMock.find).toHaveBeenCalledTimes(1);
   });
 
   describe('update', () => {
-    it('should fail on game event not found by id', async () => {
+    it('should fail on event not found by id', async () => {
       repositoryMock.findOne.mockReturnValue(Promise.resolve( null));
       repositoryMock.preload.mockReturnValue(Promise.resolve(null));
       await expect(firstValueFrom(service.update(RANDOM_UUID(), { gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }))).rejects.toThrowError(/Not Found/);
@@ -81,7 +94,7 @@ describe('GameEventService', () => {
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }));
-      expect(result).toEqual(GameEventDto.fromEntity(entity));
+      expect(result).toEqual(EventDto.fromEntity(entity));
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);

@@ -1,20 +1,24 @@
 import { EventTypeDto } from '../../event-type/dto/event-type.dto';
 import { GameDto } from '../../game/dto/game.dto';
-import { GameEvent } from '../../model/game-event.entity';
+import { Event } from '../../model/event.entity';
 import { PlayerDto } from '../../player/dto/player.dto';
+import { RoundDto } from '../../round/dto/round.dto';
+import { EventContext } from '../enum/event-context.enum';
 
-export class GameEventDto {
+export class EventDto {
   id: string;
   createDateTime: string;
   lastChangedDateTime: string;
   datetime: string;
   multiplicatorValue: number;
   comment: string;
-  game: GameDto;
+  context: EventContext;
+  game?: GameDto;
+  round?: RoundDto;
   player: PlayerDto;
   eventType: EventTypeDto;
 
-  static fromEntity(entity: GameEvent): GameEventDto {
+  static fromEntity(entity: Event): EventDto {
     return entity ? {
       id: entity.id,
       createDateTime: entity.createDateTime.toISOString(),
@@ -22,13 +26,15 @@ export class GameEventDto {
       datetime: entity.datetime.toISOString(),
       multiplicatorValue: +entity.multiplicatorValue,
       comment: entity.comment,
-      game: GameDto.fromEntity(entity.game),
+      context: entity.context,
+      ...(entity.game ? { game: GameDto.fromEntity(entity.game) } : {}),
+      ...(entity.round ? { round: RoundDto.fromEntity(entity.round) } : {}),
       player: PlayerDto.fromEntity(entity.player),
       eventType: EventTypeDto.fromEntity(entity.eventType),
     } : null;
   }
 
-  static fromEntities(entities: GameEvent[]): GameEventDto[] {
-    return entities.map(e => GameEventDto.fromEntity(e));
+  static fromEntities(entities: Event[]): EventDto[] {
+    return entities.map(e => EventDto.fromEntity(e));
   }
 }

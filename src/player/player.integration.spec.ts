@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
 import { EventTypeRevision } from '../model/event-type-revision.entity';
 import { EventType } from '../model/event-type.entity';
-import { GameEvent } from '../model/game-event.entity';
+import { Event } from '../model/event.entity';
 import { Game } from '../model/game.entity';
 import { Round } from '../model/round.entity';
 import { DuplicateUsernameException } from './exception/duplicate-username.exception';
@@ -22,7 +22,7 @@ describe('PlayerService integration', () => {
   let repo: Repository<Player>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, GameEvent, EventType, EventTypeRevision]);
+    source = await setupDataSource([Game, Round, Player, Event, EventType, EventTypeRevision]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [

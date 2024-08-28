@@ -4,10 +4,11 @@ import { v4 } from 'uuid';
 import { EventTypeContext } from './event-type/enum/event-type-context.enum';
 import { EventTypeTrigger } from './event-type/enum/event-type-trigger.enum';
 import { PenaltyUnit } from './event-type/enum/penalty-unit.enum';
+import { EventContext } from './event/enum/event-context.enum';
 import { PlaceType } from './game/enum/place-type.enum';
 import { BaseEntity } from './model/base.entity';
 import { EventType } from './model/event-type.entity';
-import { GameEvent } from './model/game-event.entity';
+import { Event } from './model/event.entity';
 import { Game } from './model/game.entity';
 import { Player } from './model/player.entity';
 import { Round } from './model/round.entity';
@@ -141,6 +142,7 @@ export namespace TestData {
       game: null,
       attendees: [],
       finalists: [],
+      events: [],
     };
   }
 
@@ -159,12 +161,28 @@ export namespace TestData {
     };
   }
 
-  export function gameEvent(): GameEvent {
+  export function gameEvent(): Event {
     return {
       ...createBaseEntity(false),
       datetime: new Date(),
       eventType: null,
+      context: EventContext.GAME,
       game: null,
+      round: null,
+      player: null,
+      comment: 'some comment',
+      multiplicatorValue: 2
+    };
+  }
+
+  export function roundEvent(): Event {
+    return {
+      ...createBaseEntity(false),
+      datetime: new Date(),
+      eventType: null,
+      context: EventContext.ROUND,
+      game: null,
+      round: null,
       player: null,
       comment: 'some comment',
       multiplicatorValue: 2

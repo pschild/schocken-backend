@@ -1,7 +1,7 @@
 import { Check, Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { PlaceType } from '../game/enum/place-type.enum';
 import { BaseEntity } from './base.entity';
-import { GameEvent } from './game-event.entity';
+import { Event } from './event.entity';
 import { Player } from './player.entity';
 import { Round } from './round.entity';
 
@@ -29,6 +29,6 @@ export class Game extends BaseEntity {
   @OneToMany(() => Round, round => round.game)
   rounds: Round[];
 
-  @OneToMany(() => GameEvent, event => event.game)
-  events: GameEvent[];
+  @OneToMany(() => Event, event => event.game)
+  events: Event[];
 }

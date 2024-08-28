@@ -4,39 +4,39 @@ import { from, Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
-import { GameEvent } from '../model/game-event.entity';
-import { CreateGameEventDto } from './dto/create-game-event.dto';
-import { GameEventDto } from './dto/game-event.dto';
-import { UpdateGameEventDto } from './dto/update-game-event.dto';
+import { Event } from '../model/event.entity';
+import { CreateEventDto } from './dto/create-event.dto';
+import { EventDto } from './dto/event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 
 @Injectable()
-export class GameEventService {
+export class EventService {
 
   constructor(
-    @InjectRepository(GameEvent) private readonly repo: Repository<GameEvent>
+    @InjectRepository(Event) private readonly repo: Repository<Event>
   ) {
   }
 
-  create(dto: CreateGameEventDto): Observable<GameEventDto> {
-    return from(this.repo.save(CreateGameEventDto.mapForeignKeys(dto))).pipe(
+  create(dto: CreateEventDto): Observable<EventDto> {
+    return from(this.repo.save(CreateEventDto.mapForeignKeys(dto))).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
 
-  findAll(): Observable<GameEventDto[]> {
+  findAll(): Observable<EventDto[]> {
     return from(this.repo.find()).pipe(
-      map(GameEventDto.fromEntities)
+      map(EventDto.fromEntities)
     );
   }
 
-  findOne(id: string): Observable<GameEventDto> {
+  findOne(id: string): Observable<EventDto> {
     return from(this.repo.findOne({ where: { id }, relations: ['player', 'eventType'], withDeleted: true })).pipe(
-      map(GameEventDto.fromEntity)
+      map(EventDto.fromEntity)
     );
   }
 
-  update(id: string, dto: UpdateGameEventDto): Observable<GameEventDto> {
-    return from(this.repo.preload({ id, ...UpdateGameEventDto.mapForeignKeys(dto) })).pipe(
+  update(id: string, dto: UpdateEventDto): Observable<EventDto> {
+    return from(this.repo.preload({ id, ...UpdateEventDto.mapForeignKeys(dto) })).pipe(
       ensureExistence(),
       switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),

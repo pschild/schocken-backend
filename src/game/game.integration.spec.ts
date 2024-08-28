@@ -5,12 +5,13 @@ import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
 import { EventTypeContext } from '../event-type/enum/event-type-context.enum';
 import { EventTypeService } from '../event-type/event-type.service';
-import { GameEventService } from '../game-event/game-event.service';
+import { EventContext } from '../event/enum/event-context.enum';
+import { EventService } from '../event/event.service';
 import { PlaceType } from './enum/place-type.enum';
 import { GameService } from './game.service';
 import { EventTypeRevision } from '../model/event-type-revision.entity';
 import { EventType } from '../model/event-type.entity';
-import { GameEvent } from '../model/game-event.entity';
+import { Event } from '../model/event.entity';
 import { Game } from '../model/game.entity';
 import { Player } from '../model/player.entity';
 import { Round } from '../model/round.entity';
@@ -22,13 +23,13 @@ describe('Games', () => {
   let service: GameService;
   let roundService: RoundService;
   let playerService: PlayerService;
-  let gameEventService: GameEventService;
+  let eventService: EventService;
   let eventTypeService: EventTypeService;
   let source: DataSource;
   let playerRepo: Repository<Player>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, GameEvent, EventType, EventTypeRevision]);
+    source = await setupDataSource([Game, Round, Player, Event, EventType, EventTypeRevision]);
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -38,7 +39,7 @@ describe('Games', () => {
         GameService,
         RoundService,
         PlayerService,
-        GameEventService,
+        EventService,
         EventTypeService,
         {
           provide: getRepositoryToken(Game),
@@ -53,8 +54,8 @@ describe('Games', () => {
           useValue: source.getRepository(Player),
         },
         {
-          provide: getRepositoryToken(GameEvent),
-          useValue: source.getRepository(GameEvent),
+          provide: getRepositoryToken(Event),
+          useValue: source.getRepository(Event),
         },
         {
           provide: getRepositoryToken(EventType),
@@ -69,7 +70,7 @@ describe('Games', () => {
     service = moduleRef.get(GameService);
     roundService = moduleRef.get(RoundService);
     playerService = moduleRef.get(PlayerService);
-    gameEventService = moduleRef.get(GameEventService);
+    eventService = moduleRef.get(EventService);
     eventTypeService = moduleRef.get(EventTypeService);
     playerRepo = moduleRef.get<Repository<Player>>(getRepositoryToken(Player));
   });
@@ -179,7 +180,7 @@ describe('Games', () => {
 
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
       const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
-      await firstValueFrom(gameEventService.create({ gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+      await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       const result = await firstValueFrom(service.findOne(createdGame.id));
       expect(result.rounds.length).toBe(2);
@@ -191,7 +192,7 @@ describe('Games', () => {
 
       await expect(firstValueFrom(service.findAll())).resolves.toEqual([]);
       await expect(firstValueFrom(roundService.findAll())).resolves.toEqual([]);
-      await expect(firstValueFrom(gameEventService.findAll())).resolves.toEqual([]);
+      await expect(firstValueFrom(eventService.findAll())).resolves.toEqual([]);
     });
 
     it('should be removed when related to a player', async () => {

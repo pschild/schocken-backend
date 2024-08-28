@@ -1,5 +1,6 @@
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { Event } from './event.entity';
 import { Game } from './game.entity';
 import { Player } from './player.entity';
 
@@ -31,4 +32,7 @@ export class Round extends BaseEntity {
   )
   @JoinTable({ name: 'finals' })
   finalists: Player[];
+
+  @OneToMany(() => Event, event => event.round)
+  events: Event[];
 }
