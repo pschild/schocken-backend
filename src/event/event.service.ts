@@ -4,6 +4,8 @@ import { from, Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
+import { EventTypeDto } from '../event-type/dto/event-type.dto';
+import { EventTypeService } from '../event-type/event-type.service';
 import { Event } from '../model/event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { EventDto } from './dto/event.dto';
@@ -13,12 +15,19 @@ import { UpdateEventDto } from './dto/update-event.dto';
 export class EventService {
 
   constructor(
-    @InjectRepository(Event) private readonly repo: Repository<Event>
+    @InjectRepository(Event) private readonly repo: Repository<Event>,
+    private readonly eventTypeService: EventTypeService
   ) {
   }
 
   create(dto: CreateEventDto): Observable<EventDto> {
-    return from(this.repo.save(CreateEventDto.mapForeignKeys(dto))).pipe(
+    return this.eventTypeService.findOne(dto.eventTypeId).pipe(
+      ensureExistence<EventTypeDto>(),
+      switchMap(eventType => from(this.repo.save({
+        ...CreateEventDto.mapForeignKeys(dto),
+        penaltyValue: eventType.penaltyValue,
+        penaltyUnit: eventType.penaltyUnit,
+      }))),
       switchMap(({ id }) => this.findOne(id)),
     );
   }

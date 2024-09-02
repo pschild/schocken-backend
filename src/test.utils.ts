@@ -171,7 +171,9 @@ export namespace TestData {
       round: null,
       player: null,
       comment: 'some comment',
-      multiplicatorValue: 2
+      multiplicatorValue: 2,
+      penaltyValue: 0.5,
+      penaltyUnit: PenaltyUnit.EURO,
     };
   }
 
@@ -185,7 +187,9 @@ export namespace TestData {
       round: null,
       player: null,
       comment: 'some comment',
-      multiplicatorValue: 2
+      multiplicatorValue: 2,
+      penaltyValue: 0.5,
+      penaltyUnit: PenaltyUnit.EURO,
     };
   }
 }

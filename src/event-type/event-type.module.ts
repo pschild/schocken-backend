@@ -10,5 +10,6 @@ import { EventTypeController } from './event-type.controller';
   imports: [TypeOrmModule.forFeature([EventType, EventTypeRevision])],
   controllers: [EventTypeController],
   providers: [EventTypeService, EventTypeRevisionSubscriber],
+  exports: [EventTypeService]
 })
 export class EventTypeModule {}

@@ -1,4 +1,5 @@
 import { Check, Column, Entity, ManyToOne } from 'typeorm';
+import { PenaltyUnit } from '../event-type/enum/penalty-unit.enum';
 import { EventContext } from '../event/enum/event-context.enum';
 import { BaseEntity } from './base.entity';
 import { EventType } from './event-type.entity';
@@ -15,6 +16,12 @@ export class Event extends BaseEntity {
 
   @Column({ type: 'numeric', nullable: false, default: 1 })
   multiplicatorValue: number;
+
+  @Column({ type: 'numeric', nullable: true })
+  penaltyValue: number;
+
+  @Column({ type: 'enum', enum: PenaltyUnit, nullable: true })
+  penaltyUnit: PenaltyUnit;
 
   @Column({ nullable: true, length: 128 })
   comment: string;

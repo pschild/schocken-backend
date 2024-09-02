@@ -54,7 +54,7 @@ export class EventTypeRevisionSubscriber implements EntitySubscriberInterface {
     const originalEntity = { ...entity };
     const eventTypeId = originalEntity.id.toString();
     delete originalEntity.id;
-    delete originalEntity.createDateTime;
+    delete originalEntity.createDateTime; // remove this line when migrating from existing JSON files
     delete originalEntity.deletedDateTime;
 
     return {
