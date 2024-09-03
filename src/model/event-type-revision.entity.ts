@@ -2,7 +2,7 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 import { EventTypeContext } from '../event-type/enum/event-type-context.enum';
 import { EventTypeRevisionType } from '../event-type/enum/event-type-revision-type.enum';
 import { EventTypeTrigger } from '../event-type/enum/event-type-trigger.enum';
-import { PenaltyUnit } from '../event-type/enum/penalty-unit.enum';
+import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { BaseEntity } from './base.entity';
 import { EventType } from './event-type.entity';
 

@@ -1,9 +1,9 @@
 import { Type } from 'class-transformer';
 import { IsBoolean, IsDate, IsEnum, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
 import { EventType } from '../../model/event-type.entity';
+import { CreatePenaltyDto } from '../../penalty/dto/create-penalty.dto';
 import { EventTypeContext } from '../enum/event-type-context.enum';
 import { EventTypeTrigger } from '../enum/event-type-trigger.enum';
-import { CreatePenaltyDto } from './create-penalty.dto';
 
 export class CreateEventTypeDto {
   // only for migrating from existing JSON files!

@@ -1,7 +1,7 @@
 import { Column, Entity, OneToMany } from 'typeorm';
 import { EventTypeContext } from '../event-type/enum/event-type-context.enum';
 import { EventTypeTrigger } from '../event-type/enum/event-type-trigger.enum';
-import { PenaltyUnit } from '../event-type/enum/penalty-unit.enum';
+import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { BaseEntity } from './base.entity';
 import { EventTypeRevision } from './event-type-revision.entity';
 

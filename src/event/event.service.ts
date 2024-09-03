@@ -22,7 +22,7 @@ export class EventService {
 
   create(dto: CreateEventDto): Observable<EventDto> {
     return this.eventTypeService.findOne(dto.eventTypeId).pipe(
-      ensureExistence<EventTypeDto>(),
+      ensureExistence<EventTypeDto>(`Could not find event type with id '${dto.eventTypeId}'`),
       switchMap(eventType => from(this.repo.save({
         ...CreateEventDto.mapForeignKeys(dto),
         penaltyValue: eventType.penaltyValue,

@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { Repository } from 'typeorm';
+import { EventTypeService } from '../event-type/event-type.service';
 import { Event } from '../model/event.entity';
 import { MockType, RANDOM_UUID, TestData } from '../test.utils';
 import { EventDto } from './dto/event.dto';
@@ -10,7 +11,12 @@ import { EventService } from './event.service';
 
 describe('EventService', () => {
   let service: EventService;
+  let eventTypeServiceMock: MockType<EventTypeService>;
   let repositoryMock: MockType<Repository<Event>>;
+
+  const eventTypeMockFactory: () => MockType<EventTypeService> = jest.fn(() => ({
+    findOne: jest.fn(),
+  }));
 
   const repositoryMockFactory: () => MockType<Repository<Event>> = jest.fn(() => ({
     findOne: jest.fn(),
@@ -25,11 +31,13 @@ describe('EventService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventService,
+        { provide: EventTypeService, useFactory: eventTypeMockFactory },
         { provide: getRepositoryToken(Event), useFactory: repositoryMockFactory },
       ],
     }).compile();
 
     service = module.get(EventService);
+    eventTypeServiceMock = module.get(EventTypeService);
     repositoryMock = module.get(getRepositoryToken(Event));
   });
 
@@ -43,10 +51,14 @@ describe('EventService', () => {
       repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
+      eventTypeServiceMock.findOne.mockReturnValue(of(TestData.eventType()));
+
       const result = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }));
       expect(result).toEqual(EventDto.fromEntity(entity));
+      expect(eventTypeServiceMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.save).toHaveBeenCalledWith(expect.objectContaining({ penaltyValue: 0.5 }));
     });
 
     it('should create a new entity with context ROUND successfully', async () => {
@@ -54,10 +66,19 @@ describe('EventService', () => {
       repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
+      eventTypeServiceMock.findOne.mockReturnValue(of(TestData.eventType()));
+
       const result = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }));
       expect(result).toEqual(EventDto.fromEntity(entity));
+      expect(eventTypeServiceMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.save).toHaveBeenCalledWith(expect.objectContaining({ penaltyValue: 0.5 }));
+    });
+
+    it('should fail if event type not found', async () => {
+      eventTypeServiceMock.findOne.mockReturnValue(of(null));
+      await expect(firstValueFrom(service.create({ context: EventContext.ROUND, roundId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }))).rejects.toThrowError(/Could not find event type with id/);
     });
   });
 

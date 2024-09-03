@@ -1,7 +1,7 @@
 import { EventType } from '../../model/event-type.entity';
+import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
 import { EventTypeContext } from '../enum/event-type-context.enum';
 import { EventTypeTrigger } from '../enum/event-type-trigger.enum';
-import { PenaltyUnit } from '../enum/penalty-unit.enum';
 import { EventTypeRevisionDto } from './event-type-revision.dto';
 
 export class EventTypeDto {

@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Game } from '../model/game.entity';
 import { CreateGameDto } from './dto/create-game.dto';
+import { GameOverviewDto } from './dto/game-overview.dto';
 import { GameDto } from './dto/game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 
@@ -47,6 +48,12 @@ export class GameService {
     return from(this.repo.findOneByOrFail({ id })).pipe(
       switchMap(entity => from(this.repo.remove(entity))),
       map(() => id)
+    );
+  }
+
+  getOverview(): Observable<GameOverviewDto[]> {
+    return from(this.repo.find({ relations: ['rounds', 'hostedBy', 'events', 'rounds.events'], order: { 'datetime': 'DESC' } })).pipe(
+      map(GameOverviewDto.fromEntities)
     );
   }
 }

@@ -33,7 +33,7 @@ export class GameDto {
     return entities.map(e => GameDto.fromEntity(e));
   }
 
-  private static mapPlace(entity: Game): { type: PlaceType; location?: string } {
+  static mapPlace(entity: Game): { type: PlaceType; location?: string } {
     return {
       type: entity.placeType,
       location: GameDto.mapLocation(entity)

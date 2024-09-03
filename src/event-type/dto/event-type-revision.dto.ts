@@ -1,8 +1,8 @@
 import { EventTypeRevision } from '../../model/event-type-revision.entity';
+import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
 import { EventTypeContext } from '../enum/event-type-context.enum';
 import { EventTypeRevisionType } from '../enum/event-type-revision-type.enum';
 import { EventTypeTrigger } from '../enum/event-type-trigger.enum';
-import { PenaltyUnit } from '../enum/penalty-unit.enum';
 import { EventTypeDto } from './event-type.dto';
 
 export class EventTypeRevisionDto {

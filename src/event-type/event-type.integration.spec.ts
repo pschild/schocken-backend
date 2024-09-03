@@ -13,10 +13,10 @@ import { Event } from '../model/event.entity';
 import { Game } from '../model/game.entity';
 import { Player } from '../model/player.entity';
 import { Round } from '../model/round.entity';
+import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { PlayerService } from '../player/player.service';
 import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
 import { EventTypeContext } from './enum/event-type-context.enum';
-import { PenaltyUnit } from './enum/penalty-unit.enum';
 import { EventTypeService } from './event-type.service';
 import { DuplicateEventTypeNameException } from './exception/duplicate-event-type-name.exception';
 

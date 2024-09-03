@@ -13,6 +13,7 @@ import { Event } from '../model/event.entity';
 import { Game } from '../model/game.entity';
 import { Player } from '../model/player.entity';
 import { Round } from '../model/round.entity';
+import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { PlayerService } from '../player/player.service';
 import { RoundService } from '../round/round.service';
 import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
@@ -102,6 +103,8 @@ describe('Events', () => {
       expect(result.round).toBeUndefined();
       expect(result.player.id).toEqual(createdPlayer.id);
       expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.penaltyValue).toEqual(0);
+      expect(result.penaltyUnit).toBeNull();
       expect(result.multiplicatorValue).toEqual(1);
       expect(result.comment).toBeNull();
     });
@@ -109,7 +112,7 @@ describe('Events', () => {
     it('should create for GAME successfully', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1, penalty: { penaltyValue: 1, penaltyUnit: PenaltyUnit.BEER_CRATE } }));
 
       const result = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id, comment: 'Lorem ipsum', multiplicatorValue: 1.5 }));
       expect(result).toBeTruthy();
@@ -122,6 +125,8 @@ describe('Events', () => {
       expect(result.round).toBeUndefined();
       expect(result.player.id).toEqual(createdPlayer.id);
       expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.penaltyValue).toEqual(1);
+      expect(result.penaltyUnit).toEqual(PenaltyUnit.BEER_CRATE);
       expect(result.multiplicatorValue).toEqual(1.5);
       expect(result.comment).toEqual('Lorem ipsum');
     });
@@ -130,7 +135,7 @@ describe('Events', () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1, penalty: { penaltyValue: 0.75, penaltyUnit: PenaltyUnit.EURO } }));
 
       const result = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id, comment: 'Lorem ipsum', multiplicatorValue: 1.5 }));
       expect(result).toBeTruthy();
@@ -143,6 +148,8 @@ describe('Events', () => {
       expect(result.round).toBeUndefined();
       expect(result.player.id).toEqual(createdPlayer.id);
       expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.penaltyValue).toEqual(0.75);
+      expect(result.penaltyUnit).toEqual(PenaltyUnit.EURO);
       expect(result.multiplicatorValue).toEqual(1.5);
       expect(result.comment).toEqual('Lorem ipsum');
     });
@@ -172,7 +179,7 @@ describe('Events', () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
 
-      await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: RANDOM_UUID() }))).rejects.toThrowError(/violates foreign key constraint/);
+      await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: RANDOM_UUID() }))).rejects.toThrowError(/Could not find event type with id/);
     });
   });
 
@@ -191,6 +198,8 @@ describe('Events', () => {
       expect(result.round).toBeUndefined();
       expect(result.player.id).toEqual(createdPlayer.id);
       expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.penaltyValue).toEqual(0);
+      expect(result.penaltyUnit).toBeNull();
       expect(result.multiplicatorValue).toEqual(1);
       expect(result.comment).toBeNull();
     });
@@ -243,6 +252,8 @@ describe('Events', () => {
       expect(result.round).toBeUndefined();
       expect(result.player.id).toEqual(createdPlayer.id);
       expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.penaltyValue).toEqual(0);
+      expect(result.penaltyUnit).toBeNull();
       expect(result.multiplicatorValue).toEqual(1);
       expect(result.comment).toBeNull();
 
@@ -259,6 +270,8 @@ describe('Events', () => {
       expect(result.round).toBeUndefined();
       expect(result.player.id).toEqual(createdPlayer.id);
       expect(result.eventType.id).toEqual(createdEventType.id);
+      expect(result.penaltyValue).toEqual(0);
+      expect(result.penaltyUnit).toBeNull();
       expect(result.multiplicatorValue).toEqual(1.5);
       expect(result.comment).toEqual('Lorem ipsum');
     });
@@ -336,7 +349,6 @@ describe('Events', () => {
       await expect(eventTypeRepo.delete(createdEventType.id)).rejects.toThrowError(/violates foreign key constraint/);
     });
 
-    // TODO: 1
     it('should load player even if it was softly deleted', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));

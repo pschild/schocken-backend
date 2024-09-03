@@ -8,10 +8,10 @@ import { Event } from '../model/event.entity';
 import { Game } from '../model/game.entity';
 import { Player } from '../model/player.entity';
 import { Round } from '../model/round.entity';
+import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { setupDataSource, truncateAllTables } from '../test.utils';
 import { EventTypeContext } from './enum/event-type-context.enum';
 import { EventTypeRevisionType } from './enum/event-type-revision-type.enum';
-import { PenaltyUnit } from './enum/penalty-unit.enum';
 import { EventTypeRevisionSubscriber } from './event-type-revision.subscriber';
 import { EventTypeService } from './event-type.service';
 

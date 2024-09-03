@@ -3,7 +3,6 @@ import { DataSource } from 'typeorm';
 import { v4 } from 'uuid';
 import { EventTypeContext } from './event-type/enum/event-type-context.enum';
 import { EventTypeTrigger } from './event-type/enum/event-type-trigger.enum';
-import { PenaltyUnit } from './event-type/enum/penalty-unit.enum';
 import { EventContext } from './event/enum/event-context.enum';
 import { PlaceType } from './game/enum/place-type.enum';
 import { BaseEntity } from './model/base.entity';
@@ -12,6 +11,7 @@ import { Event } from './model/event.entity';
 import { Game } from './model/game.entity';
 import { Player } from './model/player.entity';
 import { Round } from './model/round.entity';
+import { PenaltyUnit } from './penalty/enum/penalty-unit.enum';
 
 export type MockType<T> = {
   [P in keyof T]?: jest.Mock<unknown>;

@@ -1,6 +1,6 @@
 import { Check, Column, Entity, ManyToOne } from 'typeorm';
-import { PenaltyUnit } from '../event-type/enum/penalty-unit.enum';
 import { EventContext } from '../event/enum/event-context.enum';
+import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { BaseEntity } from './base.entity';
 import { EventType } from './event-type.entity';
 import { Game } from './game.entity';

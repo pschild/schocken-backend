@@ -7,17 +7,18 @@ import { EventTypeContext } from '../event-type/enum/event-type-context.enum';
 import { EventTypeService } from '../event-type/event-type.service';
 import { EventContext } from '../event/enum/event-context.enum';
 import { EventService } from '../event/event.service';
-import { PlaceType } from './enum/place-type.enum';
-import { GameService } from './game.service';
 import { EventTypeRevision } from '../model/event-type-revision.entity';
 import { EventType } from '../model/event-type.entity';
 import { Event } from '../model/event.entity';
 import { Game } from '../model/game.entity';
 import { Player } from '../model/player.entity';
 import { Round } from '../model/round.entity';
+import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { PlayerService } from '../player/player.service';
 import { RoundService } from '../round/round.service';
 import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
+import { PlaceType } from './enum/place-type.enum';
+import { GameService } from './game.service';
 
 describe('Games', () => {
   let service: GameService;
@@ -139,6 +140,34 @@ describe('Games', () => {
     it('should return empty array if no games found', async () => {
       const result = await firstValueFrom(service.findAll());
       expect(result).toStrictEqual([]);
+    });
+
+    it('should query overview of games', async () => {
+      const createdGame = await firstValueFrom(service.create({ placeType: PlaceType.REMOTE }));
+      const createdRound1 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+
+      const createdPlayer1 = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdPlayer2 = await firstValueFrom(playerService.create({ name: 'Jack' }));
+
+      const createdEventType1 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test 1', order: 1, penalty: { penaltyValue: 0.75, penaltyUnit: PenaltyUnit.EURO } }));
+      const createdEventType2 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test 2', order: 1, penalty: { penaltyValue: 1, penaltyUnit: PenaltyUnit.BEER_CRATE } }));
+      const createdEventType3 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test 3', order: 1, penalty: { penaltyValue: 0.1, penaltyUnit: PenaltyUnit.EURO } }));
+      const createdEventType4 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test 4', order: 1, penalty: { penaltyValue: 2, penaltyUnit: PenaltyUnit.EURO } }));
+      const createdEventType5 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test 5', order: 1 }));
+
+      await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer1.id, eventTypeId: createdEventType1.id }));
+      await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer2.id, eventTypeId: createdEventType2.id }));
+      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound1.id, playerId: createdPlayer1.id, eventTypeId: createdEventType3.id, multiplicatorValue: 6 }));
+      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound1.id, playerId: createdPlayer2.id, eventTypeId: createdEventType4.id }));
+      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound2.id, playerId: createdPlayer1.id, eventTypeId: createdEventType5.id }));
+
+      const result = await firstValueFrom(service.getOverview());
+      expect(result.length).toBe(1);
+      expect(result[0].roundCount).toBe(2);
+      expect(result[0].penalties.length).toBe(2);
+      expect(result[0].penalties.find(p => p.unit === PenaltyUnit.EURO).sum).toBe(3.35);
+      expect(result[0].penalties.find(p => p.unit === PenaltyUnit.BEER_CRATE).sum).toBe(1);
     });
   });
 

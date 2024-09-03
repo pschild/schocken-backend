@@ -1,10 +1,10 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
+import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { RANDOM_STRING, RANDOM_UUID } from '../test.utils';
 import { EventTypeContext } from './enum/event-type-context.enum';
 import { EventTypeTrigger } from './enum/event-type-trigger.enum';
-import { PenaltyUnit } from './enum/penalty-unit.enum';
 import { EventTypeController } from './event-type.controller';
 import { EventTypeService } from './event-type.service';
 

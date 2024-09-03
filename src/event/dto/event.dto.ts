@@ -1,7 +1,7 @@
 import { EventTypeDto } from '../../event-type/dto/event-type.dto';
-import { PenaltyUnit } from '../../event-type/enum/penalty-unit.enum';
 import { GameDto } from '../../game/dto/game.dto';
 import { Event } from '../../model/event.entity';
+import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
 import { PlayerDto } from '../../player/dto/player.dto';
 import { RoundDto } from '../../round/dto/round.dto';
 import { EventContext } from '../enum/event-context.enum';
