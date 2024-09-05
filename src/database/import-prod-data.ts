@@ -177,6 +177,7 @@ function mapToGame(raw: any, playerNameMap: { id: string, name: string }[]): Par
   return {
     createDateTime: raw.doc.datetime,
     lastChangedDateTime: raw.doc.datetime,
+    datetime: raw.doc.datetime,
     completed: raw.doc.completed,
     placeType,
     placeOfAwayGame: placeType === PlaceType.AWAY ? raw.doc.placeDetail : null,
