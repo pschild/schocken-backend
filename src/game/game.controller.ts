@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { Observable } from 'rxjs';
+import { GameDetailDto } from './dto/game-detail.dto';
 import { GameDto } from './dto/game.dto';
 import { GameService } from './game.service';
 import { CreateGameDto } from './dto/create-game.dto';
@@ -22,6 +23,11 @@ export class GameController {
   @Get(':id')
   findOne(@Param('id') id: string): Observable<GameDto> {
     return this.service.findOne(id);
+  }
+
+  @Get(':id/details')
+  getDetails(@Param('id') id: string): Observable<GameDetailDto> {
+    return this.service.getDetails(id);
   }
 
   @Patch(':id')

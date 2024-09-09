@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { EventTypeDto } from './dto/event-type.dto';
-import { EventTypeService } from './event-type.service';
 import { CreateEventTypeDto } from './dto/create-event-type.dto';
+import { EventTypeDto } from './dto/event-type.dto';
 import { UpdateEventTypeDto } from './dto/update-event-type.dto';
+import { EventTypeService } from './event-type.service';
 
 @Controller('event-type')
 export class EventTypeController {

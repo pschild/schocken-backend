@@ -5,9 +5,10 @@ import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Round } from '../model/round.entity';
-import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { CreateRoundDto } from './dto/create-round.dto';
+import { RoundDetailDto } from './dto/round-detail.dto';
 import { RoundDto } from './dto/round.dto';
+import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { UpdateRoundDto } from './dto/update-round.dto';
 
 @Injectable()
@@ -33,6 +34,12 @@ export class RoundService {
   findOne(id: string): Observable<RoundDto> {
     return from(this.repo.findOne({ where: { id }, relations: ['game', 'attendees', 'finalists'], withDeleted: true })).pipe(
       map(RoundDto.fromEntity)
+    );
+  }
+
+  getDetails(id: string): Observable<RoundDetailDto> {
+    return from(this.repo.findOne({ where: { id }, relations: ['events', 'events.player', 'events.eventType', 'attendees', 'finalists'], withDeleted: true })).pipe(
+      map(RoundDetailDto.fromEntity)
     );
   }
 

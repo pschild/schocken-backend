@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Game } from '../model/game.entity';
 import { CreateGameDto } from './dto/create-game.dto';
+import { GameDetailDto } from './dto/game-detail.dto';
 import { GameOverviewDto } from './dto/game-overview.dto';
 import { GameDto } from './dto/game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
@@ -31,8 +32,14 @@ export class GameService {
   }
 
   findOne(id: string): Observable<GameDto> {
-    return from(this.repo.findOne({ where: { id }, relations: ['rounds', 'hostedBy'], withDeleted: true })).pipe(
+    return from(this.repo.findOne({ where: { id } })).pipe(
       map(GameDto.fromEntity)
+    );
+  }
+
+  getDetails(id: string): Observable<GameDetailDto> {
+    return from(this.repo.findOne({ where: { id }, relations: ['rounds', 'hostedBy', 'events', 'events.player', 'events.eventType', 'rounds.events', 'rounds.events.player', 'rounds.events.eventType', 'rounds.attendees', 'rounds.finalists'], order: { rounds: { datetime: 'ASC' } }, withDeleted: true })).pipe(
+      map(GameDetailDto.fromEntity)
     );
   }
 
@@ -52,7 +59,7 @@ export class GameService {
   }
 
   getOverview(): Observable<GameOverviewDto[]> {
-    return from(this.repo.find({ relations: ['rounds', 'hostedBy', 'events', 'rounds.events'], order: { 'datetime': 'DESC' } })).pipe(
+    return from(this.repo.find({ /*where: { datetime: Raw(alias => `date_part('year', ${alias}) = '2023'`) },*/ relations: ['rounds', 'hostedBy', 'events', 'rounds.events'], order: { datetime: 'DESC' } })).pipe(
       map(GameOverviewDto.fromEntities)
     );
   }

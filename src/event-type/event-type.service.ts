@@ -4,10 +4,16 @@ import { from, iif, Observable, of, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Not, Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
+import { EventContext } from '../event/enum/event-context.enum';
 import { EventType } from '../model/event-type.entity';
+import { Event } from '../model/event.entity';
+import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { CreateEventTypeDto } from './dto/create-event-type.dto';
+import { EventTypeOverviewDto } from './dto/event-type-overview.dto';
+import { EventTypeRevisionDto } from './dto/event-type-revision.dto';
 import { EventTypeDto } from './dto/event-type.dto';
 import { UpdateEventTypeDto } from './dto/update-event-type.dto';
+import { EventTypeContext } from './enum/event-type-context.enum';
 import { DuplicateEventTypeNameException } from './exception/duplicate-event-type-name.exception';
 
 @Injectable()
@@ -34,8 +40,28 @@ export class EventTypeService {
     );
   }
 
+  /**
+   * Queries all event types by given context and sorts them by their frequency.
+   * @param context
+   */
+  getOverviewByContext(context: EventTypeContext): Observable<EventTypeOverviewDto[]> {
+    return from(
+      this.repo.createQueryBuilder('et')
+        .select(['et.*', 'COUNT(e.id) as count'])
+        .where({ context })
+        .leftJoin(Event, 'e', 'e.eventTypeId = et.id')
+        .groupBy('et.id')
+        .addGroupBy('et.description')
+        .orderBy('count', 'DESC')
+        .addOrderBy('et.description', 'ASC')
+        .getRawMany<EventType & { count: number }>()
+    ).pipe(
+      map(EventTypeOverviewDto.fromEntities)
+    );
+  }
+
   findOne(id: string): Observable<EventTypeDto> {
-    return from(this.repo.findOneBy({ id })).pipe(
+    return from(this.repo.findOne({ where: { id }, relations: ['revisions'] })).pipe(
       map(EventTypeDto.fromEntity)
     );
   }

@@ -9,7 +9,7 @@ export class GameOverviewDto {
   datetime: string;
   completed: boolean;
   excludeFromStatistics: boolean;
-  place?: { type: PlaceType; location?: string };
+  place: { type: PlaceType; location?: string };
   roundCount: number;
   penalties: { unit: string, sum: number }[];
 
