@@ -47,25 +47,25 @@ describe('EventTypeService', () => {
 
     it('should create a new entity successfully', async () => {
       const entity = TestData.eventType();
-      repositoryMock.findOneBy
-        .mockReturnValueOnce(Promise.resolve(null))
-        .mockReturnValueOnce(Promise.resolve(entity));
+      repositoryMock.findOneBy.mockReturnValue(Promise.resolve(null))
+      repositoryMock.findOne.mockReturnValueOnce(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event', order: 0 }));
       expect(result).toEqual(EventTypeDto.fromEntity(entity));
-      expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(2);
+      expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
   });
 
   it('should find one entity', async () => {
     const entity = TestData.eventType();
-    repositoryMock.findOneBy.mockReturnValue(Promise.resolve(entity));
+    repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.findOne(entity.id));
     expect(result).toEqual(EventTypeDto.fromEntity(entity));
-    expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);
+    expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
   });
 
   it('should find all entities', async () => {
@@ -91,17 +91,17 @@ describe('EventTypeService', () => {
 
     it('should update an entity successfully', async () => {
       const entity = TestData.eventType();
-      repositoryMock.findOne.mockReturnValue(Promise.resolve( null))
-      repositoryMock.findOneBy.mockReturnValue(Promise.resolve( entity))
+      repositoryMock.findOne
+        .mockReturnValueOnce(Promise.resolve( null))
+        .mockReturnValueOnce(Promise.resolve( entity));
       repositoryMock.preload.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { context: EventTypeContext.GAME, description: 'some event', order: 0 }));
       expect(result).toEqual(EventTypeDto.fromEntity(entity));
-      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.findOne).toHaveBeenCalledTimes(2);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
-      expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);
     });
   });
 

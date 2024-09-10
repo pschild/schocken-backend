@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { format } from 'date-fns';
 import { from, iif, Observable, of, switchMap, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Not, Repository } from 'typeorm';
@@ -15,6 +16,7 @@ import { EventTypeDto } from './dto/event-type.dto';
 import { UpdateEventTypeDto } from './dto/update-event-type.dto';
 import { EventTypeContext } from './enum/event-type-context.enum';
 import { DuplicateEventTypeNameException } from './exception/duplicate-event-type-name.exception';
+import { findValidAt } from './util/event-type-revision.utils';
 
 @Injectable()
 export class EventTypeService {
@@ -64,6 +66,26 @@ export class EventTypeService {
     return from(this.repo.findOne({ where: { id }, relations: ['revisions'] })).pipe(
       map(EventTypeDto.fromEntity)
     );
+  }
+
+  findValidPenalty(eventTypeId: string, context: EventContext, referenceDate: Date): Observable<{ penaltyValue: number; penaltyUnit: PenaltyUnit; warning?: string }> {
+    return from(this.repo.findOne({ where: { id: eventTypeId, context: EventTypeContext[context.valueOf()] }, relations: ['revisions'] })).pipe(
+      map(EventTypeDto.fromEntity),
+      ensureExistence<EventTypeDto>(`Could not find event type with id '${eventTypeId}' and context '${context}'`),
+      map(eventType => ({
+        current: eventType,
+        revision: findValidAt(eventType.revisions, referenceDate),
+      })),
+      map(({ current, revision }) => {
+        return this.penaltyIsOutdated(current, revision)
+          ? { penaltyValue: revision.penaltyValue, penaltyUnit: revision.penaltyUnit, warning: `Penalty valid at ${format(referenceDate, 'dd.MM.yyyy HH:mm:ss')}: ${revision.penaltyValue} ${revision.penaltyUnit}, penalty valid now: ${current.penaltyValue} ${current.penaltyUnit}` }
+          : { penaltyValue: current.penaltyValue, penaltyUnit: current.penaltyUnit };
+      }),
+    );
+  }
+
+  private penaltyIsOutdated(currentEntity: EventTypeDto, revision: EventTypeRevisionDto): boolean {
+    return revision && (currentEntity.penaltyValue !== revision.penaltyValue || currentEntity.penaltyUnit !== revision.penaltyUnit);
   }
 
   update(id: string, dto: UpdateEventTypeDto): Observable<EventTypeDto> {

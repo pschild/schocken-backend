@@ -167,7 +167,7 @@ describe('Rounds', () => {
       const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test', order: 1 }));
       await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       const result = await firstValueFrom(roundService.findOne(createdRound.id));

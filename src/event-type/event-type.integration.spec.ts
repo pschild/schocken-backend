@@ -45,6 +45,10 @@ describe('EventTypeService integration', () => {
           useValue: source.getRepository(Game),
         },
         {
+          provide: getRepositoryToken(Round),
+          useValue: source.getRepository(Round),
+        },
+        {
           provide: getRepositoryToken(Player),
           useValue: source.getRepository(Player),
         },
@@ -202,13 +206,13 @@ describe('EventTypeService integration', () => {
       const createdEvent = await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       let findResult;
-      findResult = await firstValueFrom(eventService.findOne(createdEvent.id));
+      findResult = await firstValueFrom(eventService.findOne(createdEvent.entity.id));
       expect(findResult.eventType.description).toEqual('test');
       expect(findResult.eventType.isDeleted).toEqual(false);
 
       await firstValueFrom(service.remove(createdEventType.id));
 
-      findResult = await firstValueFrom(eventService.findOne(createdEvent.id));
+      findResult = await firstValueFrom(eventService.findOne(createdEvent.entity.id));
       expect(findResult.eventType.description).toEqual('test');
       expect(findResult.eventType.isDeleted).toEqual(true);
     });
