@@ -9,7 +9,7 @@ import { Event } from '../model/event.entity';
 import { Game } from '../model/game.entity';
 import { Round } from '../model/round.entity';
 import { CreateEventDto } from './dto/create-event.dto';
-import { EventWithWarningDto } from './dto/event-with-warning.dto';
+import { CreateEventResponse } from './dto/create-event.response';
 import { EventDto } from './dto/event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventContext } from './enum/event-context.enum';
@@ -25,7 +25,7 @@ export class EventService {
   ) {
   }
 
-  create(dto: CreateEventDto): Observable<EventWithWarningDto> {
+  create(dto: CreateEventDto): Observable<CreateEventResponse> {
     const referenceDate$ = dto.context === EventContext.GAME
       ? from(this.gameRepo.findOneOrFail({ where: { id: dto.gameId } })).pipe(map(game => game.datetime))
       : from(this.roundRepo.findOneOrFail({ where: { id: dto.roundId }, relations: ['game'] })).pipe(map(round => round.game.datetime));
@@ -35,7 +35,7 @@ export class EventService {
       switchMap(({ penaltyValue, penaltyUnit, warning }) => {
         return from(this.repo.save({ ...CreateEventDto.mapForeignKeys(dto), penaltyValue, penaltyUnit })).pipe(
           switchMap(({ id }) => this.findOne(id)),
-          map(entity => ({ entity, warning })),
+          map(event => ({ event, warning })),
         );
       })
     );

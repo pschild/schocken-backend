@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { CreateEventDto } from './dto/create-event.dto';
-import { EventWithWarningDto } from './dto/event-with-warning.dto';
+import { CreateEventResponse } from './dto/create-event.response';
 import { EventDto } from './dto/event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventService } from './event.service';
@@ -11,7 +11,7 @@ export class EventController {
   constructor(private readonly service: EventService) {}
 
   @Post()
-  create(@Body() dto: CreateEventDto): Observable<EventWithWarningDto> {
+  create(@Body() dto: CreateEventDto): Observable<CreateEventResponse> {
     return this.service.create(dto);
   }
 

@@ -73,7 +73,7 @@ describe('EventService', () => {
       eventTypeServiceMock.findValidPenalty.mockReturnValue(of({ penaltyValue: 0.5, penaltyUnit: PenaltyUnit.EURO }));
 
       const result = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }));
-      expect(result.entity).toEqual(EventDto.fromEntity(entity));
+      expect(result.event).toEqual(EventDto.fromEntity(entity));
       expect(result.warning).toBeUndefined();
       expect(eventTypeServiceMock.findValidPenalty).toHaveBeenCalledTimes(1);
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
@@ -92,7 +92,7 @@ describe('EventService', () => {
       eventTypeServiceMock.findValidPenalty.mockReturnValue(of({ penaltyValue: 0.5, penaltyUnit: PenaltyUnit.EURO }));
 
       const result = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }));
-      expect(result.entity).toEqual(EventDto.fromEntity(entity));
+      expect(result.event).toEqual(EventDto.fromEntity(entity));
       expect(result.warning).toBeUndefined();
       expect(eventTypeServiceMock.findValidPenalty).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
@@ -109,7 +109,7 @@ describe('EventService', () => {
       eventTypeServiceMock.findValidPenalty.mockReturnValue(of({ penaltyValue: 0.8, penaltyUnit: PenaltyUnit.EURO, warning: 'some warning' }));
 
       const result = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }));
-      expect(result.entity).toEqual(EventDto.fromEntity(entity));
+      expect(result.event).toEqual(EventDto.fromEntity(entity));
       expect(result.warning).toEqual('some warning');
       expect(eventTypeServiceMock.findValidPenalty).toHaveBeenCalledTimes(1);
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);

@@ -98,19 +98,19 @@ describe('Events', () => {
 
       const result = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
       expect(result).toBeTruthy();
-      expect(result.entity.id).toMatch(UUID_V4_REGEX);
-      expect(differenceInMilliseconds(new Date(), new Date(result.entity.createDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.entity.lastChangedDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.entity.datetime))).toBeLessThan(500);
-      expect(result.entity.context).toEqual(EventContext.GAME);
-      expect(result.entity.game).toBeUndefined();
-      expect(result.entity.round).toBeUndefined();
-      expect(result.entity.player.id).toEqual(createdPlayer.id);
-      expect(result.entity.eventType.id).toEqual(createdEventType.id);
-      expect(result.entity.penaltyValue).toEqual(0);
-      expect(result.entity.penaltyUnit).toBeNull();
-      expect(result.entity.multiplicatorValue).toEqual(1);
-      expect(result.entity.comment).toBeNull();
+      expect(result.event.id).toMatch(UUID_V4_REGEX);
+      expect(differenceInMilliseconds(new Date(), new Date(result.event.createDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.event.lastChangedDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.event.datetime))).toBeLessThan(500);
+      expect(result.event.context).toEqual(EventContext.GAME);
+      expect(result.event.game).toBeUndefined();
+      expect(result.event.round).toBeUndefined();
+      expect(result.event.player.id).toEqual(createdPlayer.id);
+      expect(result.event.eventType.id).toEqual(createdEventType.id);
+      expect(result.event.penaltyValue).toEqual(0);
+      expect(result.event.penaltyUnit).toBeNull();
+      expect(result.event.multiplicatorValue).toEqual(1);
+      expect(result.event.comment).toBeNull();
     });
 
     it('should create for GAME successfully', async () => {
@@ -120,19 +120,19 @@ describe('Events', () => {
 
       const result = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id, comment: 'Lorem ipsum', multiplicatorValue: 1.5 }));
       expect(result).toBeTruthy();
-      expect(result.entity.id).toMatch(UUID_V4_REGEX);
-      expect(differenceInMilliseconds(new Date(), new Date(result.entity.createDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.entity.lastChangedDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.entity.datetime))).toBeLessThan(500);
-      expect(result.entity.context).toEqual(EventContext.GAME);
-      expect(result.entity.game).toBeUndefined();
-      expect(result.entity.round).toBeUndefined();
-      expect(result.entity.player.id).toEqual(createdPlayer.id);
-      expect(result.entity.eventType.id).toEqual(createdEventType.id);
-      expect(result.entity.penaltyValue).toEqual(1);
-      expect(result.entity.penaltyUnit).toEqual(PenaltyUnit.BEER_CRATE);
-      expect(result.entity.multiplicatorValue).toEqual(1.5);
-      expect(result.entity.comment).toEqual('Lorem ipsum');
+      expect(result.event.id).toMatch(UUID_V4_REGEX);
+      expect(differenceInMilliseconds(new Date(), new Date(result.event.createDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.event.lastChangedDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.event.datetime))).toBeLessThan(500);
+      expect(result.event.context).toEqual(EventContext.GAME);
+      expect(result.event.game).toBeUndefined();
+      expect(result.event.round).toBeUndefined();
+      expect(result.event.player.id).toEqual(createdPlayer.id);
+      expect(result.event.eventType.id).toEqual(createdEventType.id);
+      expect(result.event.penaltyValue).toEqual(1);
+      expect(result.event.penaltyUnit).toEqual(PenaltyUnit.BEER_CRATE);
+      expect(result.event.multiplicatorValue).toEqual(1.5);
+      expect(result.event.comment).toEqual('Lorem ipsum');
     });
 
     it('should create for ROUND successfully', async () => {
@@ -143,19 +143,19 @@ describe('Events', () => {
 
       const result = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id, comment: 'Lorem ipsum', multiplicatorValue: 1.5 }));
       expect(result).toBeTruthy();
-      expect(result.entity.id).toMatch(UUID_V4_REGEX);
-      expect(differenceInMilliseconds(new Date(), new Date(result.entity.createDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.entity.lastChangedDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.entity.datetime))).toBeLessThan(500);
-      expect(result.entity.context).toEqual(EventContext.ROUND);
-      expect(result.entity.game).toBeUndefined();
-      expect(result.entity.round).toBeUndefined();
-      expect(result.entity.player.id).toEqual(createdPlayer.id);
-      expect(result.entity.eventType.id).toEqual(createdEventType.id);
-      expect(result.entity.penaltyValue).toEqual(0.75);
-      expect(result.entity.penaltyUnit).toEqual(PenaltyUnit.EURO);
-      expect(result.entity.multiplicatorValue).toEqual(1.5);
-      expect(result.entity.comment).toEqual('Lorem ipsum');
+      expect(result.event.id).toMatch(UUID_V4_REGEX);
+      expect(differenceInMilliseconds(new Date(), new Date(result.event.createDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.event.lastChangedDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.event.datetime))).toBeLessThan(500);
+      expect(result.event.context).toEqual(EventContext.ROUND);
+      expect(result.event.game).toBeUndefined();
+      expect(result.event.round).toBeUndefined();
+      expect(result.event.player.id).toEqual(createdPlayer.id);
+      expect(result.event.eventType.id).toEqual(createdEventType.id);
+      expect(result.event.penaltyValue).toEqual(0.75);
+      expect(result.event.penaltyUnit).toEqual(PenaltyUnit.EURO);
+      expect(result.event.multiplicatorValue).toEqual(1.5);
+      expect(result.event.comment).toEqual('Lorem ipsum');
     });
 
     it('should fail if an unknown game is given', async () => {
@@ -195,7 +195,7 @@ describe('Events', () => {
 
       const response = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
-      const result = await firstValueFrom(service.findOne(response.entity.id));
+      const result = await firstValueFrom(service.findOne(response.event.id));
       expect(result).toBeTruthy();
       expect(result.context).toEqual(EventContext.GAME);
       expect(result.game).toBeUndefined();
@@ -245,7 +245,7 @@ describe('Events', () => {
       const createdEvent = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       let result;
-      result = await firstValueFrom(service.findOne(createdEvent.entity.id));
+      result = await firstValueFrom(service.findOne(createdEvent.event.id));
       expect(result).toBeTruthy();
       expect(result.id).toMatch(UUID_V4_REGEX);
       expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
@@ -261,9 +261,9 @@ describe('Events', () => {
       expect(result.multiplicatorValue).toEqual(1);
       expect(result.comment).toBeNull();
 
-      await firstValueFrom(service.update(createdEvent.entity.id, { multiplicatorValue: 1.5, comment: 'Lorem ipsum' }));
+      await firstValueFrom(service.update(createdEvent.event.id, { multiplicatorValue: 1.5, comment: 'Lorem ipsum' }));
 
-      result = await firstValueFrom(service.findOne(createdEvent.entity.id));
+      result = await firstValueFrom(service.findOne(createdEvent.event.id));
       expect(result).toBeTruthy();
       expect(result.id).toMatch(UUID_V4_REGEX);
       expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
@@ -292,8 +292,8 @@ describe('Events', () => {
       const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
       const createdEvent = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
-      const result = await firstValueFrom(service.remove(createdEvent.entity.id));
-      expect(result).toEqual(createdEvent.entity.id);
+      const result = await firstValueFrom(service.remove(createdEvent.event.id));
+      expect(result).toEqual(createdEvent.event.id);
 
       await expect(firstValueFrom(service.findAll())).resolves.toEqual([]);
 
@@ -317,8 +317,8 @@ describe('Events', () => {
       const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test' }));
       const createdEvent = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
-      const result = await firstValueFrom(service.remove(createdEvent.entity.id));
-      expect(result).toEqual(createdEvent.entity.id);
+      const result = await firstValueFrom(service.remove(createdEvent.event.id));
+      expect(result).toEqual(createdEvent.event.id);
 
       await expect(firstValueFrom(service.findAll())).resolves.toEqual([]);
 
@@ -362,7 +362,7 @@ describe('Events', () => {
       const result = await firstValueFrom(playerService.remove(createdPlayer.id));
       expect(result).toEqual(createdPlayer.id);
 
-      const event = await firstValueFrom(service.findOne(createdEvent.entity.id));
+      const event = await firstValueFrom(service.findOne(createdEvent.event.id));
       expect(event.player).toMatchObject({ id: createdPlayer.id, name: 'John', isDeleted: true });
     });
 
@@ -375,7 +375,7 @@ describe('Events', () => {
       const result = await firstValueFrom(eventTypeService.remove(createdEventType.id));
       expect(result).toEqual(createdEventType.id);
 
-      const event = await firstValueFrom(service.findOne(createdEvent.entity.id));
+      const event = await firstValueFrom(service.findOne(createdEvent.event.id));
       expect(event.eventType).toMatchObject({ id: createdEventType.id, description: 'test', isDeleted: true });
     });
 

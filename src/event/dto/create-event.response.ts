@@ -1,6 +1,6 @@
 import { EventDto } from './event.dto';
 
-export class EventWithWarningDto {
-  entity: EventDto;
+export class CreateEventResponse {
+  event: EventDto;
   warning?: string;
 }
