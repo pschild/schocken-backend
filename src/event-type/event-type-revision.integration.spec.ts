@@ -60,7 +60,7 @@ describe('EventTypeRevisionService integration', () => {
 
   describe('creation', () => {
     it('should create an INSERT revision when event type is updated', async () => {
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'some event type', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'some event type' }));
 
       const revisions = await revisionRepo.find({ where: { eventType: { id: createdEventType.id } }, relations: ['eventType'] });
       expect(revisions.length).toEqual(1);
@@ -74,7 +74,7 @@ describe('EventTypeRevisionService integration', () => {
 
   describe('update', () => {
     it('should create UPDATE revisions when event type is updated', async () => {
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'some event type', order: 1, penalty: { penaltyValue: 0.5, penaltyUnit: PenaltyUnit.EURO } }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'some event type', penalty: { penaltyValue: 0.5, penaltyUnit: PenaltyUnit.EURO } }));
 
       let revisions;
       revisions = await revisionRepo.find({ where: { eventType: { id: createdEventType.id } }, relations: ['eventType'] });
@@ -113,7 +113,7 @@ describe('EventTypeRevisionService integration', () => {
 
   describe('removal', () => {
     it('should create a REMOVE revision when event type is removed', async () => {
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'some event type', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'some event type' }));
 
       let revisions;
       revisions = await revisionRepo.find({ where: { eventType: { id: createdEventType.id } }, relations: ['eventType'] });

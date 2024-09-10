@@ -42,7 +42,7 @@ describe('EventTypeService', () => {
   describe('create', () => {
     it('should fail on duplicate entity name', async () => {
       repositoryMock.findOneBy.mockReturnValue(Promise.resolve( { id: RANDOM_UUID(), description: 'some event' }));
-      await expect(firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event', order: 0 }))).rejects.toThrowError(new DuplicateEventTypeNameException());
+      await expect(firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event' }))).rejects.toThrowError(new DuplicateEventTypeNameException());
     });
 
     it('should create a new entity successfully', async () => {
@@ -51,7 +51,7 @@ describe('EventTypeService', () => {
       repositoryMock.findOne.mockReturnValueOnce(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
-      const result = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event', order: 0 }));
+      const result = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event' }));
       expect(result).toEqual(EventTypeDto.fromEntity(entity));
       expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
@@ -80,13 +80,13 @@ describe('EventTypeService', () => {
   describe('update', () => {
     it('should fail on duplicate entity name', async () => {
       repositoryMock.findOne.mockReturnValue(Promise.resolve( { id: RANDOM_UUID(), name: 'John' }));
-      await expect(firstValueFrom(service.update(RANDOM_UUID(), { context: EventTypeContext.GAME, description: 'some event', order: 0 }))).rejects.toThrowError(new DuplicateEventTypeNameException());
+      await expect(firstValueFrom(service.update(RANDOM_UUID(), { context: EventTypeContext.GAME, description: 'some event' }))).rejects.toThrowError(new DuplicateEventTypeNameException());
     });
 
     it('should fail on entity not found by id', async () => {
       repositoryMock.findOne.mockReturnValue(Promise.resolve( null));
       repositoryMock.preload.mockReturnValue(Promise.resolve(null));
-      await expect(firstValueFrom(service.update(RANDOM_UUID(), { context: EventTypeContext.GAME, description: 'some event', order: 0 }))).rejects.toThrowError(/Not Found/);
+      await expect(firstValueFrom(service.update(RANDOM_UUID(), { context: EventTypeContext.GAME, description: 'some event' }))).rejects.toThrowError(/Not Found/);
     });
 
     it('should update an entity successfully', async () => {
@@ -97,7 +97,7 @@ describe('EventTypeService', () => {
       repositoryMock.preload.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
-      const result = await firstValueFrom(service.update(entity.id, { context: EventTypeContext.GAME, description: 'some event', order: 0 }));
+      const result = await firstValueFrom(service.update(entity.id, { context: EventTypeContext.GAME, description: 'some event' }));
       expect(result).toEqual(EventTypeDto.fromEntity(entity));
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(2);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);

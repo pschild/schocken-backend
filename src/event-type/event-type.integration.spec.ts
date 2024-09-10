@@ -87,7 +87,7 @@ describe('EventTypeService integration', () => {
 
   describe('creation', () => {
     it('should create an event type', async () => {
-      const result = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event type', order: 1 }));
+      const result = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event type' }));
       expect(result).toBeTruthy();
       expect(result.id).toMatch(UUID_V4_REGEX);
       expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
@@ -99,18 +99,17 @@ describe('EventTypeService integration', () => {
       expect(result.penaltyValue).toEqual(0);
       expect(result.penaltyUnit).toBeNull();
       expect(result.multiplicatorUnit).toBeNull();
-      expect(result.order).toEqual(1);
     });
 
     it('should fail if an event type with given description already exists', async () => {
-      await repo.save({ context: EventTypeContext.GAME, description: 'some event type', order: 1 });
-      await expect(firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event type', order: 1 }))).rejects.toThrowError(new DuplicateEventTypeNameException());
+      await repo.save({ context: EventTypeContext.GAME, description: 'some event type' });
+      await expect(firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event type' }))).rejects.toThrowError(new DuplicateEventTypeNameException());
     });
   });
 
   describe('query', () => {
     it('should find an event type', async () => {
-      const response = await repo.save({ context: EventTypeContext.GAME, description: 'some event type', order: 1, penaltyValue: 1.5, penaltyUnit: PenaltyUnit.EURO, multiplicatorUnit: 'some unit' });
+      const response = await repo.save({ context: EventTypeContext.GAME, description: 'some event type', penaltyValue: 1.5, penaltyUnit: PenaltyUnit.EURO, multiplicatorUnit: 'some unit' });
 
       const result = await firstValueFrom(service.findOne(response.id));
       expect(result).toBeTruthy();
@@ -121,7 +120,6 @@ describe('EventTypeService integration', () => {
       expect(result.penaltyValue).toEqual(1.5);
       expect(result.penaltyUnit).toEqual(PenaltyUnit.EURO);
       expect(result.multiplicatorUnit).toEqual('some unit');
-      expect(result.order).toEqual(1);
     });
 
     it('should return null if event type not found', async () => {
@@ -130,8 +128,8 @@ describe('EventTypeService integration', () => {
     });
 
     it('should find all event types', async () => {
-      await repo.save({ context: EventTypeContext.GAME, description: 'first event type', order: 1 });
-      await repo.save({ context: EventTypeContext.GAME, description: 'second event type', order: 1 });
+      await repo.save({ context: EventTypeContext.GAME, description: 'first event type' });
+      await repo.save({ context: EventTypeContext.GAME, description: 'second event type' });
 
       const result = await firstValueFrom(service.findAll());
       expect(result).toBeTruthy();
@@ -148,7 +146,7 @@ describe('EventTypeService integration', () => {
 
   describe('update', () => {
     it('should update an event type', async () => {
-      const response = await repo.save({ context: EventTypeContext.GAME, description: 'first event type', order: 1 });
+      const response = await repo.save({ context: EventTypeContext.GAME, description: 'first event type' });
 
       const findResult = await repo.findOneBy({ id: response.id });
       expect(findResult).toBeTruthy();
@@ -166,24 +164,23 @@ describe('EventTypeService integration', () => {
     });
 
     it('should skip duplicate check if id is the one of existing event type', async () => {
-      const createdEventType = await repo.save({  context: EventTypeContext.GAME, description: 'first event type', order: 1  });
+      const createdEventType = await repo.save({  context: EventTypeContext.GAME, description: 'first event type'  });
 
-      const updateResult = await firstValueFrom(service.update(createdEventType.id, { description: 'first event type', order: 2 }));
+      const updateResult = await firstValueFrom(service.update(createdEventType.id, { description: 'first event type' }));
       expect(updateResult).toBeTruthy();
       expect(updateResult.description).toBe('first event type');
-      expect(updateResult.order).toBe(2);
     });
 
     it('should fail if an event type with given name already exists', async () => {
-      await repo.save({  context: EventTypeContext.GAME, description: 'first event type', order: 1  });
+      await repo.save({  context: EventTypeContext.GAME, description: 'first event type'  });
       await expect(firstValueFrom(service.update(RANDOM_UUID(), { description: 'first event type' }))).rejects.toThrowError(new DuplicateEventTypeNameException());
     });
   });
 
   describe('removal', () => {
     it('should remove an event type', async () => {
-      const response = await repo.save({ context: EventTypeContext.GAME, description: 'first event type', order: 1 });
-      await repo.save({ context: EventTypeContext.GAME, description: 'second event type', order: 1 });
+      const response = await repo.save({ context: EventTypeContext.GAME, description: 'first event type' });
+      await repo.save({ context: EventTypeContext.GAME, description: 'second event type' });
 
       const findResult = await repo.findOneBy({ id: response.id });
       expect(findResult).toBeTruthy();
@@ -202,7 +199,7 @@ describe('EventTypeService integration', () => {
     it('should load event even event type was softly deleted', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'test' }));
       const createdEvent = await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       let findResult;

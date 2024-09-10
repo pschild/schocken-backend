@@ -17,7 +17,6 @@ export class EventTypeDto {
   revisions?: EventTypeRevisionDto[];
   multiplicatorUnit?: string;
   hasComment: boolean;
-  order: number;
 
   static fromEntity(entity: EventType): EventTypeDto {
     return entity ? {
@@ -33,7 +32,6 @@ export class EventTypeDto {
       ...(entity.revisions ? { revisions: EventTypeRevisionDto.fromEntities(entity.revisions) } : {}),
       multiplicatorUnit: entity.multiplicatorUnit,
       hasComment: entity.hasComment,
-      order: +entity.order,
     } : null;
   }
 

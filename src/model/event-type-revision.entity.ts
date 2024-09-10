@@ -32,9 +32,6 @@ export class EventTypeRevision extends BaseEntity {
   @Column({ default: false })
   hasComment: boolean;
 
-  @Column()
-  order: number;
-
   @ManyToOne(
     () => EventType,
     eventType => eventType.revisions,

@@ -30,7 +30,4 @@ export class EventType extends BaseEntity {
 
   @Column({ default: false })
   hasComment: boolean;
-
-  @Column()
-  order: number;
 }

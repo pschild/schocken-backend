@@ -151,7 +151,6 @@ export namespace TestData {
       ...createBaseEntity(false),
       description: 'some event',
       context: EventTypeContext.ROUND,
-      order: 0,
       hasComment: false,
       multiplicatorUnit: 'some unit',
       trigger: EventTypeTrigger.START_NEW_ROUND,

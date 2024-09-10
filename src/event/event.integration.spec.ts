@@ -94,7 +94,7 @@ describe('Events', () => {
     it('should create successfully with default value', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
 
       const result = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
       expect(result).toBeTruthy();
@@ -116,7 +116,7 @@ describe('Events', () => {
     it('should create for GAME successfully', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1, penalty: { penaltyValue: 1, penaltyUnit: PenaltyUnit.BEER_CRATE } }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', penalty: { penaltyValue: 1, penaltyUnit: PenaltyUnit.BEER_CRATE } }));
 
       const result = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id, comment: 'Lorem ipsum', multiplicatorValue: 1.5 }));
       expect(result).toBeTruthy();
@@ -139,7 +139,7 @@ describe('Events', () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test', order: 1, penalty: { penaltyValue: 0.75, penaltyUnit: PenaltyUnit.EURO } }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test', penalty: { penaltyValue: 0.75, penaltyUnit: PenaltyUnit.EURO } }));
 
       const result = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id, comment: 'Lorem ipsum', multiplicatorValue: 1.5 }));
       expect(result).toBeTruthy();
@@ -160,21 +160,21 @@ describe('Events', () => {
 
     it('should fail if an unknown game is given', async () => {
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
 
       await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: RANDOM_UUID(), playerId: createdPlayer.id, eventTypeId: createdEventType.id }))).rejects.toThrowError(/Could not find any entity of type "Game" matching/);
     });
 
     it('should fail if an unknown round is given', async () => {
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
 
       await expect(firstValueFrom(service.create({ context: EventContext.ROUND, roundId: RANDOM_UUID(), playerId: createdPlayer.id, eventTypeId: createdEventType.id }))).rejects.toThrowError(/Could not find any entity of type "Round" matching/);
     });
 
     it('should fail if an unknown player is given', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
 
       await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: RANDOM_UUID(), eventTypeId: createdEventType.id }))).rejects.toThrowError(/violates foreign key constraint/);
     });
@@ -191,7 +191,7 @@ describe('Events', () => {
     it('should find an event', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
 
       const response = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
@@ -216,12 +216,12 @@ describe('Events', () => {
     it('should find all events', async () => {
       const createdGame1 = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer1 = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType1 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test1', order: 1 }));
+      const createdEventType1 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test1' }));
 
       const createdGame2 = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame2.id }));
       const createdPlayer2 = await firstValueFrom(playerService.create({ name: 'Jack' }));
-      const createdEventType2 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test2', order: 2 }));
+      const createdEventType2 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test2' }));
 
       await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame1.id, playerId: createdPlayer1.id, eventTypeId: createdEventType1.id }));
       await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound2.id, playerId: createdPlayer2.id, eventTypeId: createdEventType2.id }));
@@ -241,7 +241,7 @@ describe('Events', () => {
     it('should be updated', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
       const createdEvent = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       let result;
@@ -289,7 +289,7 @@ describe('Events', () => {
     it('should be removed when related to a game, player and event type', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
       const createdEvent = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       const result = await firstValueFrom(service.remove(createdEvent.entity.id));
@@ -314,7 +314,7 @@ describe('Events', () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test' }));
       const createdEvent = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       const result = await firstValueFrom(service.remove(createdEvent.entity.id));
@@ -338,7 +338,7 @@ describe('Events', () => {
     it('should fail if a related player should be deleted (hard)', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
       await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       await expect(playerRepo.delete(createdPlayer.id)).rejects.toThrowError(/violates foreign key constraint/);
@@ -347,7 +347,7 @@ describe('Events', () => {
     it('should fail if a related event type should be deleted (hard)', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
       await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       await expect(eventTypeRepo.delete(createdEventType.id)).rejects.toThrowError(/violates foreign key constraint/);
@@ -356,7 +356,7 @@ describe('Events', () => {
     it('should load player even if it was softly deleted', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
       const createdEvent = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       const result = await firstValueFrom(playerService.remove(createdPlayer.id));
@@ -369,7 +369,7 @@ describe('Events', () => {
     it('should load event type even if it was softly deleted', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
       const createdEvent = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       const result = await firstValueFrom(eventTypeService.remove(createdEventType.id));

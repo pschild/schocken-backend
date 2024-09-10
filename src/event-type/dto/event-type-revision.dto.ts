@@ -17,7 +17,6 @@ export class EventTypeRevisionDto {
   penaltyUnit?: PenaltyUnit;
   multiplicatorUnit?: string;
   hasComment: boolean;
-  order: number;
   eventType: EventTypeDto;
 
   static fromEntity(entity: EventTypeRevision): EventTypeRevisionDto {
@@ -33,7 +32,6 @@ export class EventTypeRevisionDto {
       penaltyUnit: entity.penaltyUnit,
       multiplicatorUnit: entity.multiplicatorUnit,
       hasComment: entity.hasComment,
-      order: +entity.order,
       eventType: EventTypeDto.fromEntity(entity.eventType),
     } : null;
   }

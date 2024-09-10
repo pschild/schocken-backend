@@ -150,11 +150,11 @@ describe('Games', () => {
       const createdPlayer1 = await firstValueFrom(playerService.create({ name: 'John' }));
       const createdPlayer2 = await firstValueFrom(playerService.create({ name: 'Jack' }));
 
-      const createdEventType1 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test 1', order: 1, penalty: { penaltyValue: 0.75, penaltyUnit: PenaltyUnit.EURO } }));
-      const createdEventType2 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test 2', order: 1, penalty: { penaltyValue: 1, penaltyUnit: PenaltyUnit.BEER_CRATE } }));
-      const createdEventType3 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test 3', order: 1, penalty: { penaltyValue: 0.1, penaltyUnit: PenaltyUnit.EURO } }));
-      const createdEventType4 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test 4', order: 1, penalty: { penaltyValue: 2, penaltyUnit: PenaltyUnit.EURO } }));
-      const createdEventType5 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test 5', order: 1 }));
+      const createdEventType1 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test 1', penalty: { penaltyValue: 0.75, penaltyUnit: PenaltyUnit.EURO } }));
+      const createdEventType2 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test 2', penalty: { penaltyValue: 1, penaltyUnit: PenaltyUnit.BEER_CRATE } }));
+      const createdEventType3 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test 3', penalty: { penaltyValue: 0.1, penaltyUnit: PenaltyUnit.EURO } }));
+      const createdEventType4 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test 4', penalty: { penaltyValue: 2, penaltyUnit: PenaltyUnit.EURO } }));
+      const createdEventType5 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test 5' }));
 
       await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer1.id, eventTypeId: createdEventType1.id }));
       await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer2.id, eventTypeId: createdEventType2.id }));
@@ -208,7 +208,7 @@ describe('Games', () => {
       const createdRound2 = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
-      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test', order: 1 }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
       await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       const result = await firstValueFrom(service.findOne(createdGame.id));

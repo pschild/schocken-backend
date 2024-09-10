@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDate, IsEnum, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDate, IsEnum, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
 import { EventType } from '../../model/event-type.entity';
 import { CreatePenaltyDto } from '../../penalty/dto/create-penalty.dto';
 import { EventTypeContext } from '../enum/event-type-context.enum';
@@ -40,10 +40,6 @@ export class CreateEventTypeDto {
   @IsOptional()
   @IsBoolean()
   hasComment?: boolean;
-
-  @IsNumber()
-  @Min(0)
-  order: number;
 
   static mapForeignKeys(dto: CreateEventTypeDto): EventType {
     return {

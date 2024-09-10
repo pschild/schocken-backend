@@ -38,9 +38,6 @@ export class CreateEventTypeRevisionDto {
   @IsBoolean()
   hasComment?: boolean;
 
-  @IsNumber()
-  order: number;
-
   @IsUUID()
   eventTypeId: string;
 
