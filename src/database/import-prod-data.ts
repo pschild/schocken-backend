@@ -38,10 +38,13 @@ const seed = async () => {
 
   let rows, insertResults, mappingList;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const importedRows = (importData as any).rows;
+
   console.log(`import-Datei ermittelt durch GET .../couchdb/schocken-remote-prod/_all_docs?include_docs=true`);
-  console.log(`Stand der import-Datei: 04.09.2024`);
+  console.log(`Stand der import-Datei: 11.09.2024`);
   console.log(`Importing event types...`);
-  rows = importData.rows.filter(row => row.id.startsWith('EVENT_TYPE__'));
+  rows = importedRows.filter(row => row.id.startsWith('EVENT_TYPE__'));
   insertResults = rows.map(async row => {
     const insertResult = await queryRunner.manager.insert(EventType, mapToEventType(row));
 
@@ -57,7 +60,7 @@ const seed = async () => {
   mappingList.map(i => Object.assign(ID_MAP, i));
 
   console.log(`Importing event type revisions...`);
-  rows = importData.rows.filter(row => row.id.startsWith('EVENT_TYPE__'));
+  rows = importedRows.filter(row => row.id.startsWith('EVENT_TYPE__'));
   const promises = rows.map(async row => {
     const historyList = row.doc.history
       .sort((a, b) => new Date(b.validFrom).getTime() - new Date(a.validFrom).getTime()); // neuster Eintrag steht oben!
@@ -71,7 +74,7 @@ const seed = async () => {
   console.log(`Created ${result.length} event type revisions!`);
 
   console.log(`Importing players...`);
-  rows = importData.rows.filter(row => row.id.startsWith('PLAYER__'));
+  rows = importedRows.filter(row => row.id.startsWith('PLAYER__'));
   insertResults = rows.map(async row => {
     const insertResult = await queryRunner.manager.insert(Player, mapToPlayer(row));
     PLAYER_NAME_MAP.push({ id: insertResult.identifiers[0].id, name: row.doc.name });
@@ -82,7 +85,7 @@ const seed = async () => {
   mappingList.map(i => Object.assign(ID_MAP, i));
 
   console.log(`Importing games...`);
-  rows = importData.rows.filter(row => row.id.startsWith('GAME__'));
+  rows = importedRows.filter(row => row.id.startsWith('GAME__'));
   insertResults = rows.map(async row => {
     const insertResult = await queryRunner.manager.insert(Game, mapToGame(row, PLAYER_NAME_MAP));
     return { [row.id]: insertResult.identifiers[0].id };
@@ -92,7 +95,7 @@ const seed = async () => {
   mappingList.map(i => Object.assign(ID_MAP, i));
 
   console.log(`Importing game events...`);
-  rows = importData.rows.filter(row => row.id.startsWith('GAME_EVENT__'));
+  rows = importedRows.filter(row => row.id.startsWith('GAME_EVENT__'));
   insertResults = rows.map(async row => {
     const insertResult = await queryRunner.manager.insert(Event, mapToEvent(row, EventContext.GAME, ID_MAP, EVENT_TYPE_HISTORY_MAP));
     return { [row.id]: insertResult.identifiers[0].id };
@@ -102,7 +105,7 @@ const seed = async () => {
   mappingList.map(i => Object.assign(ID_MAP, i));
 
   console.log(`Importing rounds, attendances and finals...`);
-  rows = importData.rows.filter(row => row.id.startsWith('ROUND__'))/*.slice(0, 5)*/;
+  rows = importedRows.filter(row => row.id.startsWith('ROUND__'))/*.slice(0, 5)*/;
   insertResults = rows.map(async row => {
     const insertResult = await queryRunner.manager.save(Round, mapToRound(row, ID_MAP));
     return { [row.id]: insertResult.id };
@@ -112,7 +115,7 @@ const seed = async () => {
   mappingList.map(i => Object.assign(ID_MAP, i));
 
   console.log(`Importing round events...`);
-  rows = importData.rows.filter(row => row.id.startsWith('ROUND_EVENT__'));
+  rows = importedRows.filter(row => row.id.startsWith('ROUND_EVENT__'));
   insertResults = rows.map(async row => {
     const insertResult = await queryRunner.manager.insert(Event, mapToEvent(row, EventContext.ROUND, ID_MAP, EVENT_TYPE_HISTORY_MAP));
     return { [row.id]: insertResult.identifiers[0].id };
@@ -122,6 +125,7 @@ const seed = async () => {
   mappingList.map(i => Object.assign(ID_MAP, i));
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapToEventType(raw: any): Partial<EventType> {
   return {
     createDateTime: raw.doc.history[raw.doc.history.length - 1].validFrom,
@@ -136,6 +140,7 @@ function mapToEventType(raw: any): Partial<EventType> {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapToEventTypeRevision(raw: any, historyItem: any, type: EventTypeRevisionType, idMap: { [id: string]: string }): Partial<EventTypeRevision> {
   return {
     type,
@@ -152,6 +157,7 @@ function mapToEventTypeRevision(raw: any, historyItem: any, type: EventTypeRevis
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapToPlayer(raw: any): Partial<Player> {
   return {
     createDateTime: raw.doc.registered,
@@ -162,6 +168,7 @@ function mapToPlayer(raw: any): Partial<Player> {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapToGame(raw: any, playerNameMap: { id: string, name: string }[]): Partial<Game> {
   const placeType = mapToPlaceType(raw.doc.place);
   const hostId = playerNameMap.find(i => i.name === raw.doc.place)?.id;
@@ -183,6 +190,7 @@ function mapToGame(raw: any, playerNameMap: { id: string, name: string }[]): Par
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapToEvent(raw: any, context: EventContext, idMap: { [id: string]: string }, eventTypeHistory: Map<string, { validFrom: Date; penaltyValue: number; penaltyUnit: string }[]>): Partial<Event> {
   const { penaltyValue, penaltyUnit } = getPenaltyValidAt(new Date(raw.doc.datetime), eventTypeHistory.get(idMap[raw.doc.eventTypeId]));
 
@@ -202,6 +210,7 @@ function mapToEvent(raw: any, context: EventContext, idMap: { [id: string]: stri
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapToRound(raw: any, idMap: { [id: string]: string }): Partial<Round> {
   return {
     createDateTime: raw.doc.datetime,
