@@ -32,7 +32,7 @@ export class GameService {
   }
 
   findOne(id: string): Observable<GameDto> {
-    return from(this.repo.findOne({ where: { id }, relations: ['hostedBy', 'rounds'], withDeleted: true })).pipe(
+    return from(this.repo.findOneOrFail({ where: { id }, relations: ['hostedBy', 'rounds'], withDeleted: true })).pipe(
       map(GameDto.fromEntity)
     );
   }

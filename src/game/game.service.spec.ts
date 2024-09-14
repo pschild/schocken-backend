@@ -14,6 +14,7 @@ describe('GameService', () => {
 
   const repositoryMockFactory: () => MockType<Repository<Game>> = jest.fn(() => ({
     findOne: jest.fn(),
+    findOneOrFail: jest.fn(),
     findOneByOrFail: jest.fn(),
     find: jest.fn(),
     save: jest.fn(),
@@ -40,23 +41,23 @@ describe('GameService', () => {
   describe('create', () => {
     it('should create a new entity successfully', async () => {
       const entity = TestData.game();
-      repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
+      repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.create({ placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere' }));
       expect(result).toEqual(GameDto.fromEntity(entity));
-      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
   });
 
   it('should find one entity', async () => {
     const entity = TestData.game();
-    repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
+    repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.findOne(entity.id));
     expect(result).toEqual(GameDto.fromEntity(entity));
-    expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+    expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
   });
 
   it('should find all entities', async () => {
@@ -77,13 +78,13 @@ describe('GameService', () => {
 
     it('should update an entity successfully', async () => {
       const entity = TestData.game();
-      repositoryMock.findOne.mockReturnValue(Promise.resolve( entity))
+      repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve( entity))
       repositoryMock.preload.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere' }));
       expect(result).toEqual(GameDto.fromEntity(entity));
-      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });

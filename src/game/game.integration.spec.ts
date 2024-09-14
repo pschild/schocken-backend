@@ -123,9 +123,8 @@ describe('Games', () => {
       expect(result.excludeFromStatistics).toBe(false);
     });
 
-    it('should return null if game not found', async () => {
-      const result = await firstValueFrom(service.findOne(RANDOM_UUID()));
-      expect(result).toBeNull();
+    it('should throw error if game not found', async () => {
+      await expect(firstValueFrom(service.findOne(RANDOM_UUID()))).rejects.toThrowError(/Could not find any entity/);
     });
 
     it('should find all games', async () => {
@@ -158,9 +157,9 @@ describe('Games', () => {
 
       await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer1.id, eventTypeId: createdEventType1.id }));
       await firstValueFrom(eventService.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer2.id, eventTypeId: createdEventType2.id }));
-      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound1.id, playerId: createdPlayer1.id, eventTypeId: createdEventType3.id, multiplicatorValue: 6 }));
-      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound1.id, playerId: createdPlayer2.id, eventTypeId: createdEventType4.id }));
-      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound2.id, playerId: createdPlayer1.id, eventTypeId: createdEventType5.id }));
+      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound1.round.id, playerId: createdPlayer1.id, eventTypeId: createdEventType3.id, multiplicatorValue: 6 }));
+      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound1.round.id, playerId: createdPlayer2.id, eventTypeId: createdEventType4.id }));
+      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound2.round.id, playerId: createdPlayer1.id, eventTypeId: createdEventType5.id }));
 
       const result = await firstValueFrom(service.getOverview());
       expect(result.length).toBe(1);
@@ -182,8 +181,8 @@ describe('Games', () => {
       result = await firstValueFrom(service.findOne(createdGame.id));
       expect(result.rounds.length).toBe(2);
       expect(result.completed).toBe(false);
-      expect(result.rounds[0].id).toEqual(createdRound1.id);
-      expect(result.rounds[1].id).toEqual(createdRound2.id);
+      expect(result.rounds[0].id).toEqual(createdRound1.round.id);
+      expect(result.rounds[1].id).toEqual(createdRound2.round.id);
       expect(result.place).toEqual({ type: PlaceType.HOME, location: createdPlayer.name });
 
       await firstValueFrom(service.update(createdGame.id, { completed: true }));
@@ -191,8 +190,8 @@ describe('Games', () => {
       result = await firstValueFrom(service.findOne(createdGame.id));
       expect(result.rounds.length).toBe(2);
       expect(result.completed).toBe(true);
-      expect(result.rounds[0].id).toEqual(createdRound1.id);
-      expect(result.rounds[1].id).toEqual(createdRound2.id);
+      expect(result.rounds[0].id).toEqual(createdRound1.round.id);
+      expect(result.rounds[1].id).toEqual(createdRound2.round.id);
       expect(result.place).toEqual({ type: PlaceType.HOME, location: createdPlayer.name });
     });
 
@@ -213,8 +212,8 @@ describe('Games', () => {
 
       const result = await firstValueFrom(service.findOne(createdGame.id));
       expect(result.rounds.length).toBe(2);
-      expect(result.rounds[0].id).toEqual(createdRound1.id);
-      expect(result.rounds[1].id).toEqual(createdRound2.id);
+      expect(result.rounds[0].id).toEqual(createdRound1.round.id);
+      expect(result.rounds[1].id).toEqual(createdRound2.round.id);
       expect(result.events).toBeUndefined();
 
       await firstValueFrom(service.remove(createdGame.id));

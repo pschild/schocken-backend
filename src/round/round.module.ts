@@ -8,5 +8,6 @@ import { RoundController } from './round.controller';
   imports: [TypeOrmModule.forFeature([Round])],
   controllers: [RoundController],
   providers: [RoundService],
+  exports: [RoundService]
 })
 export class RoundModule {}

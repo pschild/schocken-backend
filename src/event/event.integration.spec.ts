@@ -141,7 +141,7 @@ describe('Events', () => {
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
       const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test', penalty: { penaltyValue: 0.75, penaltyUnit: PenaltyUnit.EURO } }));
 
-      const result = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id, comment: 'Lorem ipsum', multiplicatorValue: 1.5 }));
+      const result = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.round.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id, comment: 'Lorem ipsum', multiplicatorValue: 1.5 }));
       expect(result).toBeTruthy();
       expect(result.event.id).toMatch(UUID_V4_REGEX);
       expect(differenceInMilliseconds(new Date(), new Date(result.event.createDateTime))).toBeLessThan(500);
@@ -224,7 +224,7 @@ describe('Events', () => {
       const createdEventType2 = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test2' }));
 
       await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame1.id, playerId: createdPlayer1.id, eventTypeId: createdEventType1.id }));
-      await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound2.id, playerId: createdPlayer2.id, eventTypeId: createdEventType2.id }));
+      await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound2.round.id, playerId: createdPlayer2.id, eventTypeId: createdEventType2.id }));
 
       const result = await firstValueFrom(service.findAll());
       expect(result).toBeTruthy();
@@ -315,7 +315,7 @@ describe('Events', () => {
       const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
       const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test' }));
-      const createdEvent = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+      const createdEvent = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.round.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
       const result = await firstValueFrom(service.remove(createdEvent.event.id));
       expect(result).toEqual(createdEvent.event.id);
@@ -323,7 +323,7 @@ describe('Events', () => {
       await expect(firstValueFrom(service.findAll())).resolves.toEqual([]);
 
       // round should still exist
-      const round = await firstValueFrom(roundService.findOne(createdGame.id));
+      const round = await firstValueFrom(roundService.findOne(createdRound.round.id));
       expect(round).toBeDefined();
 
       // player should still exist

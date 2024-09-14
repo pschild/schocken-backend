@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { Observable } from 'rxjs';
+import { CreateRoundResponse } from './dto/create-round.response';
 import { RoundDetailDto } from './dto/round-detail.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { RoundDto } from './dto/round.dto';
@@ -12,7 +13,7 @@ export class RoundController {
   constructor(private readonly service: RoundService) {}
 
   @Post()
-  create(@Body() dto: CreateRoundDto): Observable<RoundDto> {
+  create(@Body() dto: CreateRoundDto): Observable<CreateRoundResponse> {
     return this.service.create(dto);
   }
 

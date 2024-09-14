@@ -68,8 +68,8 @@ describe('Finalists', () => {
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
 
     const result = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-    expect(result).toBeTruthy();
-    expect(result.finalists).toEqual([]);
+    expect(result.round).toBeTruthy();
+    expect(result.round.finalists).toEqual([]);
   });
 
   it('should be added and removed for an existing round', async () => {
@@ -78,15 +78,15 @@ describe('Finalists', () => {
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
-    await firstValueFrom(roundService.addFinalist(createdRound.id, createdPlayer1.id));
+    await firstValueFrom(roundService.addFinalist(createdRound.round.id, createdPlayer1.id));
 
     let result;
-    result = await firstValueFrom(roundService.addFinalist(createdRound.id, createdPlayer2.id));
+    result = await firstValueFrom(roundService.addFinalist(createdRound.round.id, createdPlayer2.id));
     expect(result.finalists.length).toBe(2);
     expect(result.finalists[0].id).toEqual(createdPlayer1.id);
     expect(result.finalists[1].id).toEqual(createdPlayer2.id);
 
-    result = await firstValueFrom(roundService.removeFinalist(createdRound.id, createdPlayer1.id));
+    result = await firstValueFrom(roundService.removeFinalist(createdRound.round.id, createdPlayer1.id));
     expect(result.finalists.length).toBe(1);
     expect(result.finalists[0].id).toEqual(createdPlayer2.id);
   });
@@ -95,16 +95,16 @@ describe('Finalists', () => {
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
-    await expect(firstValueFrom(roundService.addFinalist(createdRound.id, RANDOM_UUID()))).rejects.toThrowError(/violates foreign key constraint/);
+    await expect(firstValueFrom(roundService.addFinalist(createdRound.round.id, RANDOM_UUID()))).rejects.toThrowError(/violates foreign key constraint/);
   });
 
   it('should not remove player when round is removed', async () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-    await firstValueFrom(roundService.addFinalist(createdRound.id, createdPlayer.id));
+    await firstValueFrom(roundService.addFinalist(createdRound.round.id, createdPlayer.id));
 
-    await firstValueFrom(roundService.remove(createdRound.id));
+    await firstValueFrom(roundService.remove(createdRound.round.id));
 
     const result = await playerRepo.findOne({ where: { id: createdPlayer.id } });
     expect(result).toBeDefined();
@@ -114,16 +114,16 @@ describe('Finalists', () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-    await firstValueFrom(roundService.addFinalist(createdRound.id, createdPlayer.id));
+    await firstValueFrom(roundService.addFinalist(createdRound.round.id, createdPlayer.id));
 
     let queryResult;
     queryResult = await source.manager.query(`SELECT * FROM finals`);
     expect(queryResult).toEqual([{
-      roundId: createdRound.id,
+      roundId: createdRound.round.id,
       playerId: createdPlayer.id,
     }]);
 
-    await firstValueFrom(roundService.remove(createdRound.id));
+    await firstValueFrom(roundService.remove(createdRound.round.id));
 
     queryResult = await source.manager.query(`SELECT * FROM finals`);
     expect(queryResult).toEqual([]);
@@ -133,23 +133,23 @@ describe('Finalists', () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-    await firstValueFrom(roundService.addFinalist(createdRound.id, createdPlayer.id));
+    await firstValueFrom(roundService.addFinalist(createdRound.round.id, createdPlayer.id));
 
     let result;
-    result = await firstValueFrom(roundService.findOne(createdRound.id));
+    result = await firstValueFrom(roundService.findOne(createdRound.round.id));
     expect(result.finalists[0].name).toEqual('John');
     expect(result.finalists.length).toBe(1);
 
     let queryResult;
     queryResult = await source.manager.query(`SELECT * FROM finals`);
     expect(queryResult).toEqual([{
-      roundId: createdRound.id,
+      roundId: createdRound.round.id,
       playerId: createdPlayer.id,
     }]);
 
     await playerRepo.delete(createdPlayer.id);
 
-    result = await firstValueFrom(roundService.findOne(createdRound.id));
+    result = await firstValueFrom(roundService.findOne(createdRound.round.id));
     expect(result.finalists.length).toBe(0);
 
     queryResult = await source.manager.query(`SELECT * FROM finals`);
@@ -160,10 +160,10 @@ describe('Finalists', () => {
     const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
     const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
     const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-    await firstValueFrom(roundService.addFinalist(createdRound.id, createdPlayer.id));
+    await firstValueFrom(roundService.addFinalist(createdRound.round.id, createdPlayer.id));
 
     let result;
-    result = await firstValueFrom(roundService.findOne(createdRound.id));
+    result = await firstValueFrom(roundService.findOne(createdRound.round.id));
     expect(result.finalists.length).toBe(1);
     expect(result.finalists[0].name).toEqual('John');
     expect(result.finalists[0].isDeleted).toEqual(false);
@@ -171,20 +171,20 @@ describe('Finalists', () => {
     let queryResult;
     queryResult = await source.manager.query(`SELECT * FROM finals`);
     expect(queryResult).toEqual([{
-      roundId: createdRound.id,
+      roundId: createdRound.round.id,
       playerId: createdPlayer.id,
     }]);
 
     await firstValueFrom(playerService.remove(createdPlayer.id));
 
-    result = await firstValueFrom(roundService.findOne(createdRound.id));
+    result = await firstValueFrom(roundService.findOne(createdRound.round.id));
     expect(result.finalists.length).toBe(1);
     expect(result.finalists[0].name).toEqual('John');
     expect(result.finalists[0].isDeleted).toEqual(true);
 
     queryResult = await source.manager.query(`SELECT * FROM finals`);
     expect(queryResult).toEqual([{
-      roundId: createdRound.id,
+      roundId: createdRound.round.id,
       playerId: createdPlayer.id,
     }]);
   });

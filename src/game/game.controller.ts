@@ -35,6 +35,12 @@ export class GameController {
     return this.service.update(id, dto);
   }
 
+  @Patch(':id/complete')
+  complete(@Param('id') id: string): Observable<GameDto> {
+    // TODO: calculate points and persist ranking of players
+    return this.service.update(id, { completed: true });
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string): Observable<string> {
     return this.service.remove(id);

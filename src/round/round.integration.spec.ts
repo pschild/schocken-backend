@@ -86,14 +86,14 @@ describe('Rounds', () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
 
       const result = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
-      expect(result).toBeTruthy();
-      expect(result.id).toMatch(UUID_V4_REGEX);
-      expect(result.game.id).toEqual(createdGame.id);
-      expect(result.attendees).toEqual([]);
-      expect(result.finalists).toEqual([]);
-      expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(500);
+      expect(result.round).toBeTruthy();
+      expect(result.round.id).toMatch(UUID_V4_REGEX);
+      expect(result.round.game.id).toEqual(createdGame.id);
+      expect(result.round.attendees).toEqual([]);
+      expect(result.round.finalists).toEqual([]);
+      expect(differenceInMilliseconds(new Date(), new Date(result.round.createDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.round.lastChangedDateTime))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.round.datetime))).toBeLessThan(500);
     });
 
     it('should fail with an unknown gameId', async () => {
@@ -106,16 +106,15 @@ describe('Rounds', () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
 
-      const result = await firstValueFrom(roundService.findOne(createdRound.id));
+      const result = await firstValueFrom(roundService.findOne(createdRound.round.id));
       expect(result.id).toMatch(UUID_V4_REGEX);
       expect(result.game.id).toEqual(createdGame.id);
       expect(result.game.datetime).toEqual(createdGame.datetime);
       expect(result.game.completed).toEqual(createdGame.completed);
     });
 
-    it('should return null if round not found', async () => {
-      const result = await firstValueFrom(roundService.findOne(RANDOM_UUID()));
-      expect(result).toBeNull();
+    it('should throw error if round not found', async () => {
+      await expect(firstValueFrom(roundService.findOne(RANDOM_UUID()))).rejects.toThrowError(/Could not find any entity/);
     });
 
     it('should find all rounds', async () => {
@@ -126,8 +125,8 @@ describe('Rounds', () => {
       const result = await firstValueFrom(roundService.findAll());
       expect(result).toBeTruthy();
       expect(result.length).toBe(2);
-      expect(result[0].id).toEqual(createdRound1.id);
-      expect(result[1].id).toEqual(createdRound2.id);
+      expect(result[0].id).toEqual(createdRound1.round.id);
+      expect(result[1].id).toEqual(createdRound2.round.id);
     });
 
     it('should return empty array if no rounds found', async () => {
@@ -145,15 +144,15 @@ describe('Rounds', () => {
       let result;
       result = await firstValueFrom(gameService.findOne(createdGame.id));
       expect(result.rounds.length).toBe(2);
-      expect(result.rounds[0].id).toEqual(createdRound1.id);
-      expect(result.rounds[1].id).toEqual(createdRound2.id);
+      expect(result.rounds[0].id).toEqual(createdRound1.round.id);
+      expect(result.rounds[1].id).toEqual(createdRound2.round.id);
 
-      await firstValueFrom(roundService.update(createdRound2.id, { datetime: new Date().toISOString() }));
+      await firstValueFrom(roundService.update(createdRound2.round.id, { datetime: new Date().toISOString() }));
 
       result = await firstValueFrom(gameService.findOne(createdGame.id));
       expect(result.rounds.length).toBe(2);
-      expect(result.rounds[0].id).toEqual(createdRound1.id);
-      expect(result.rounds[1].id).toEqual(createdRound2.id);
+      expect(result.rounds[0].id).toEqual(createdRound1.round.id);
+      expect(result.rounds[1].id).toEqual(createdRound2.round.id);
     });
 
     it('should fail if round with given id not found', async () => {
@@ -168,12 +167,12 @@ describe('Rounds', () => {
 
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
       const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test' }));
-      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+      await firstValueFrom(eventService.create({ context: EventContext.ROUND, roundId: createdRound.round.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
 
-      const result = await firstValueFrom(roundService.findOne(createdRound.id));
+      const result = await firstValueFrom(roundService.findOne(createdRound.round.id));
       expect(result.events).toBeUndefined();
 
-      await firstValueFrom(roundService.remove(createdRound.id));
+      await firstValueFrom(roundService.remove(createdRound.round.id));
 
       await expect(firstValueFrom(roundService.findAll())).resolves.toEqual([]);
       await expect(firstValueFrom(eventService.findAll())).resolves.toEqual([]);
@@ -188,7 +187,7 @@ describe('Rounds', () => {
       result = await firstValueFrom(gameService.findOne(createdGame.id));
       expect(result.rounds.length).toBe(2);
 
-      await firstValueFrom(roundService.remove(createdRound2.id));
+      await firstValueFrom(roundService.remove(createdRound2.round.id));
 
       result = await firstValueFrom(gameService.findOne(createdGame.id));
       expect(result.rounds.length).toBe(1);

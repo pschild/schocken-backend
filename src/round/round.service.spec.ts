@@ -13,11 +13,13 @@ describe('RoundService', () => {
 
   const repositoryMockFactory: () => MockType<Repository<Round>> = jest.fn(() => ({
     findOne: jest.fn(),
+    findOneOrFail: jest.fn(),
     findOneByOrFail: jest.fn(),
     find: jest.fn(),
     save: jest.fn(),
     preload: jest.fn(),
     remove: jest.fn(),
+    count: jest.fn(),
   }));
 
   beforeEach(async () => {
@@ -39,23 +41,40 @@ describe('RoundService', () => {
   describe('create', () => {
     it('should create a new entity successfully', async () => {
       const entity = TestData.round();
-      repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
+      repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
+      repositoryMock.count.mockReturnValue(Promise.resolve(42));
 
       const result = await firstValueFrom(service.create({ gameId: RANDOM_UUID() }));
-      expect(result).toEqual(RoundDto.fromEntity(entity));
-      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+      expect(result.round).toEqual(RoundDto.fromEntity(entity));
+      expect(result.celebration).toBeNull();
+      expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.count).toHaveBeenCalledTimes(1);
+    });
+
+    it('should create a new entity with celebration successfully', async () => {
+      const entity = TestData.round();
+      repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
+      repositoryMock.save.mockReturnValue(Promise.resolve(entity));
+      repositoryMock.count.mockReturnValue(Promise.resolve(100));
+
+      const result = await firstValueFrom(service.create({ gameId: RANDOM_UUID() }));
+      expect(result.round).toEqual(RoundDto.fromEntity(entity));
+      expect(result.celebration).toEqual({ label: 'Runden', count: 100 });
+      expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.save).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.count).toHaveBeenCalledTimes(1);
     });
   });
 
   it('should find one entity', async () => {
     const entity = TestData.round();
-    repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
+    repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.findOne(entity.id));
     expect(result).toEqual(RoundDto.fromEntity(entity));
-    expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+    expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
   });
 
   it('should find all entities', async () => {
@@ -76,13 +95,13 @@ describe('RoundService', () => {
 
     it('should update an entity successfully', async () => {
       const entity = TestData.round();
-      repositoryMock.findOne.mockReturnValue(Promise.resolve( entity))
+      repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve( entity))
       repositoryMock.preload.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { gameId: RANDOM_UUID() }));
       expect(result).toEqual(RoundDto.fromEntity(entity));
-      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
@@ -113,33 +132,39 @@ describe('RoundService', () => {
     const entity = TestData.round();
     const dto = { playerIds: [RANDOM_UUID(), RANDOM_UUID()] };
     repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
+    repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
     repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.updateAttendees(RANDOM_UUID(), dto));
     expect(result).toEqual(RoundDto.fromEntity(entity));
     expect(repositoryMock.save).toHaveBeenCalledTimes(1);
-    expect(repositoryMock.findOne).toHaveBeenCalledTimes(2);
+    expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+    expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
   });
 
   it('should add finalist', async () => {
     const entity = TestData.round();
     repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
+    repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
     repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.addFinalist(RANDOM_UUID(), RANDOM_UUID()));
     expect(result).toEqual(RoundDto.fromEntity(entity));
     expect(repositoryMock.save).toHaveBeenCalledTimes(1);
-    expect(repositoryMock.findOne).toHaveBeenCalledTimes(2);
+    expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+    expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
   });
 
   it('should remove finalist', async () => {
     const entity = TestData.round();
     repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
+    repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
     repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.removeFinalist(RANDOM_UUID(), RANDOM_UUID()));
     expect(result).toEqual(RoundDto.fromEntity(entity));
     expect(repositoryMock.save).toHaveBeenCalledTimes(1);
-    expect(repositoryMock.findOne).toHaveBeenCalledTimes(2);
+    expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+    expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
   });
 });
