@@ -19,6 +19,7 @@ import { RoundService } from '../round/round.service';
 import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
 import { EventTypeContext } from './enum/event-type-context.enum';
 import { EventTypeService } from './event-type.service';
+import { EventTypeSubscriber } from './event-type.subscriber';
 import { DuplicateEventTypeNameException } from './exception/duplicate-event-type-name.exception';
 
 describe('EventTypeService integration', () => {
@@ -42,6 +43,7 @@ describe('EventTypeService integration', () => {
         RoundService,
         PlayerService,
         EventService,
+        EventTypeSubscriber,
         {
           provide: getRepositoryToken(Game),
           useValue: source.getRepository(Game),
@@ -168,14 +170,16 @@ describe('EventTypeService integration', () => {
     it('should skip duplicate check if id is the one of existing event type', async () => {
       const createdEventType = await repo.save({  context: EventTypeContext.GAME, description: 'first event type'  });
 
-      const updateResult = await firstValueFrom(service.update(createdEventType.id, { description: 'first event type' }));
+      const updateResult = await firstValueFrom(service.update(createdEventType.id, { description: 'first event type', hasComment: true }));
       expect(updateResult).toBeTruthy();
       expect(updateResult.description).toBe('first event type');
     });
 
     it('should fail if an event type with given name already exists', async () => {
-      await repo.save({  context: EventTypeContext.GAME, description: 'first event type'  });
-      await expect(firstValueFrom(service.update(RANDOM_UUID(), { description: 'first event type' }))).rejects.toThrowError(new DuplicateEventTypeNameException());
+      await repo.save({  context: EventTypeContext.GAME, description: 'first event type' });
+      const createdEventType2 = await repo.save({  context: EventTypeContext.GAME, description: 'second event type' });
+
+      await expect(firstValueFrom(service.update(createdEventType2.id, { description: 'first event type' }))).rejects.toThrowError(new DuplicateEventTypeNameException());
     });
   });
 

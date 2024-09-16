@@ -5,7 +5,6 @@ import { Repository } from 'typeorm';
 import { Player } from '../model/player.entity';
 import { MockType, RANDOM_UUID, TestData } from '../test.utils';
 import { PlayerDto } from './dto/player.dto';
-import { DuplicateUsernameException } from './exception/duplicate-username.exception';
 import { PlayerService } from './player.service';
 
 /**
@@ -42,21 +41,14 @@ describe('PlayerService', () => {
   });
 
   describe('create', () => {
-    it('should fail on duplicate entity name', async () => {
-      repositoryMock.findOneBy.mockReturnValue(Promise.resolve( { id: RANDOM_UUID(), name: 'John' }));
-      await expect(firstValueFrom(service.create({ name: 'John' }))).rejects.toThrowError(new DuplicateUsernameException());
-    });
-
     it('should create a new entity successfully', async () => {
       const entity = TestData.activePlayer();
-      repositoryMock.findOneBy
-        .mockReturnValueOnce(Promise.resolve(null))
-        .mockReturnValueOnce(Promise.resolve(entity));
+      repositoryMock.findOneBy.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.create({ name: 'John' }));
       expect(result).toEqual(PlayerDto.fromEntity(entity));
-      expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(2);
+      expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
   });
@@ -80,11 +72,6 @@ describe('PlayerService', () => {
   });
 
   describe('update', () => {
-    it('should fail on duplicate entity name', async () => {
-      repositoryMock.findOne.mockReturnValue(Promise.resolve( { id: RANDOM_UUID(), name: 'John' }));
-      await expect(firstValueFrom(service.update(RANDOM_UUID(), { name: 'John' }))).rejects.toThrowError(new DuplicateUsernameException());
-    });
-
     it('should fail on entity not found by id', async () => {
       repositoryMock.findOne.mockReturnValue(Promise.resolve( null));
       repositoryMock.preload.mockReturnValue(Promise.resolve(null));
@@ -93,14 +80,12 @@ describe('PlayerService', () => {
 
     it('should update an entity successfully', async () => {
       const entity = TestData.activePlayer();
-      repositoryMock.findOne.mockReturnValue(Promise.resolve( null))
       repositoryMock.findOneBy.mockReturnValue(Promise.resolve( entity))
       repositoryMock.preload.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { name: 'John' }));
       expect(result).toEqual(PlayerDto.fromEntity(entity));
-      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
       expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);

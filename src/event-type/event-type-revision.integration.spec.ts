@@ -12,8 +12,8 @@ import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { setupDataSource, truncateAllTables } from '../test.utils';
 import { EventTypeContext } from './enum/event-type-context.enum';
 import { EventTypeRevisionType } from './enum/event-type-revision-type.enum';
-import { EventTypeRevisionSubscriber } from './event-type-revision.subscriber';
 import { EventTypeService } from './event-type.service';
+import { EventTypeSubscriber } from './event-type.subscriber';
 
 describe('EventTypeRevisionService integration', () => {
   let eventTypeService: EventTypeService;
@@ -30,7 +30,7 @@ describe('EventTypeRevisionService integration', () => {
       ],
       providers: [
         EventTypeService,
-        EventTypeRevisionSubscriber,
+        EventTypeSubscriber,
         {
           provide: getRepositoryToken(EventType),
           useValue: source.getRepository(EventType),
@@ -105,7 +105,7 @@ describe('EventTypeRevisionService integration', () => {
       expect(revisions[2].type).toEqual(EventTypeRevisionType.UPDATE);
       expect(revisions[2].createDateTime.toISOString()).not.toEqual(createdEventType.createDateTime);
       expect(revisions[2].eventType.id).toEqual(createdEventType.id);
-      expect(revisions[1].eventType.description).toEqual('some new event type');
+      expect(revisions[2].eventType.description).toEqual('some new event type');
       expect(revisions[2].eventType.penaltyValue).toEqual(0.75);
       expect(revisions[2].eventType.penaltyUnit).toEqual(PenaltyUnit.EURO);
     });

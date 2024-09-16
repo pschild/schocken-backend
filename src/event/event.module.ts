@@ -6,6 +6,7 @@ import { Event } from '../model/event.entity';
 import { RoundModule } from '../round/round.module';
 import { EventController } from './event.controller';
 import { EventService } from './event.service';
+import { EventEntitySubscriber } from './event.subscriber';
 
 @Module({
   imports: [
@@ -15,6 +16,6 @@ import { EventService } from './event.service';
     EventTypeModule
   ],
   controllers: [EventController],
-  providers: [EventService],
+  providers: [EventService, EventEntitySubscriber],
 })
 export class EventModule {}

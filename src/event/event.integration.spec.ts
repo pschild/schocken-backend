@@ -19,6 +19,7 @@ import { RoundService } from '../round/round.service';
 import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
 import { EventContext } from './enum/event-context.enum';
 import { EventService } from './event.service';
+import { EventEntitySubscriber } from './event.subscriber';
 
 describe('Events', () => {
   let service: EventService;
@@ -43,6 +44,7 @@ describe('Events', () => {
         RoundService,
         PlayerService,
         EventTypeService,
+        EventEntitySubscriber,
         {
           provide: getRepositoryToken(Event),
           useValue: source.getRepository(Event),
@@ -158,32 +160,49 @@ describe('Events', () => {
       expect(result.event.comment).toEqual('Lorem ipsum');
     });
 
+    it('should fail if game is already completed', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE, completed: true }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
+
+      await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }))).rejects.toThrow(new RegExp(`Das Spiel mit der ID ${createdGame.id} ist bereits abgeschlossen`));
+    });
+
+    it('should fail if round belongs to an already completed game', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE, completed: true }));
+      const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test' }));
+
+      await expect(firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.round.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }))).rejects.toThrow(new RegExp(`Das Spiel mit der ID ${createdGame.id} ist bereits abgeschlossen`));
+    });
+
     it('should fail if an unknown game is given', async () => {
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
       const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
 
-      await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: RANDOM_UUID(), playerId: createdPlayer.id, eventTypeId: createdEventType.id }))).rejects.toThrowError(/Could not find any entity of type "Game" matching/);
+      await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: RANDOM_UUID(), playerId: createdPlayer.id, eventTypeId: createdEventType.id }))).rejects.toThrow(/Could not find any entity of type "Game" matching/);
     });
 
     it('should fail if an unknown round is given', async () => {
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
       const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
 
-      await expect(firstValueFrom(service.create({ context: EventContext.ROUND, roundId: RANDOM_UUID(), playerId: createdPlayer.id, eventTypeId: createdEventType.id }))).rejects.toThrowError(/Could not find any entity of type "Round" matching/);
+      await expect(firstValueFrom(service.create({ context: EventContext.ROUND, roundId: RANDOM_UUID(), playerId: createdPlayer.id, eventTypeId: createdEventType.id }))).rejects.toThrow(/Could not find any entity of type "Round" matching/);
     });
 
     it('should fail if an unknown player is given', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
 
-      await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: RANDOM_UUID(), eventTypeId: createdEventType.id }))).rejects.toThrowError(/violates foreign key constraint/);
+      await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: RANDOM_UUID(), eventTypeId: createdEventType.id }))).rejects.toThrow(/violates foreign key constraint/);
     });
 
     it('should fail if an unknown event type is given', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
 
-      await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: RANDOM_UUID() }))).rejects.toThrowError(/Could not find event type with id/);
+      await expect(firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: RANDOM_UUID() }))).rejects.toThrow(/Could not find event type with id/);
     });
   });
 
@@ -283,6 +302,29 @@ describe('Events', () => {
     it('should fail if event with given id not found', async () => {
       await expect(firstValueFrom(service.update(RANDOM_UUID(), { comment: 'Lorem ipsum' }))).rejects.toThrowError('Not Found');
     });
+
+    it('should fail if game is already completed', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
+      const createdEvent = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      await firstValueFrom(gameService.update(createdGame.id, { completed: true }));
+
+      await expect(firstValueFrom(service.update(createdEvent.event.id, { multiplicatorValue: 1.5 }))).rejects.toThrow(new RegExp(`Das Spiel mit der ID ${createdGame.id} ist bereits abgeschlossen`));
+    });
+
+    it('should fail if round belongs to an already completed game', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test' }));
+      const createdEvent = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.round.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      await firstValueFrom(gameService.update(createdGame.id, { completed: true }));
+
+      await expect(firstValueFrom(service.update(createdEvent.event.id, { multiplicatorValue: 1.5 }))).rejects.toThrow(new RegExp(`Das Spiel mit der ID ${createdGame.id} ist bereits abgeschlossen`));
+    });
   });
 
   describe('removal', () => {
@@ -381,6 +423,29 @@ describe('Events', () => {
 
     it('should fail if game to remove not exists', async () => {
       await expect(firstValueFrom(service.remove(RANDOM_UUID()))).rejects.toThrowError(/Could not find any entity/);
+    });
+
+    it('should fail if game is already completed', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.GAME, description: 'test' }));
+      const createdEvent = await firstValueFrom(service.create({ context: EventContext.GAME, gameId: createdGame.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      await firstValueFrom(gameService.update(createdGame.id, { completed: true }));
+
+      await expect(firstValueFrom(service.remove(createdEvent.event.id))).rejects.toThrow(new RegExp(`Das Spiel mit der ID ${createdGame.id} ist bereits abgeschlossen`));
+    });
+
+    it('should fail if round belongs to an already completed game', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdEventType = await firstValueFrom(eventTypeService.create({ context: EventTypeContext.ROUND, description: 'test' }));
+      const createdEvent = await firstValueFrom(service.create({ context: EventContext.ROUND, roundId: createdRound.round.id, playerId: createdPlayer.id, eventTypeId: createdEventType.id }));
+
+      await firstValueFrom(gameService.update(createdGame.id, { completed: true }));
+
+      await expect(firstValueFrom(service.remove(createdEvent.event.id))).rejects.toThrow(new RegExp(`Das Spiel mit der ID ${createdGame.id} ist bereits abgeschlossen`));
     });
   });
 });

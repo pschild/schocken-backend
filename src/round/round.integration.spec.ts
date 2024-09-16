@@ -18,6 +18,7 @@ import { Round } from '../model/round.entity';
 import { PlayerService } from '../player/player.service';
 import { RoundService } from './round.service';
 import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
+import { RoundSubscriber } from './round.subscriber';
 
 describe('Rounds', () => {
   let gameService: GameService;
@@ -40,6 +41,7 @@ describe('Rounds', () => {
         PlayerService,
         EventService,
         EventTypeService,
+        RoundSubscriber,
         {
           provide: getRepositoryToken(Game),
           useValue: source.getRepository(Game),
@@ -97,7 +99,12 @@ describe('Rounds', () => {
     });
 
     it('should fail with an unknown gameId', async () => {
-      await expect(firstValueFrom(roundService.create({gameId: RANDOM_UUID()}))).rejects.toThrowError(/violates foreign key constraint/);
+      await expect(firstValueFrom(roundService.create({gameId: RANDOM_UUID()}))).rejects.toThrowError(/Could not find any entity of type "Game" matching/);
+    });
+
+    it('should fail if game is already completed', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE, completed: true }));
+      await expect(firstValueFrom(roundService.create({ gameId: createdGame.id }))).rejects.toThrow(new RegExp(`Das Spiel mit der ID ${createdGame.id} ist bereits abgeschlossen`));
     });
   });
 
@@ -158,6 +165,15 @@ describe('Rounds', () => {
     it('should fail if round with given id not found', async () => {
       await expect(firstValueFrom(roundService.update(RANDOM_UUID(), { gameId: RANDOM_UUID() }))).rejects.toThrowError('Not Found');
     });
+
+    it('should fail if game is already completed', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+
+      await firstValueFrom(gameService.update(createdGame.id, { completed: true }));
+
+      await expect(firstValueFrom(roundService.update(createdRound.round.id, { datetime: new Date().toISOString() }))).rejects.toThrow(new RegExp(`Das Spiel mit der ID ${createdGame.id} ist bereits abgeschlossen`));
+    });
   });
 
   describe('removal', () => {
@@ -195,6 +211,15 @@ describe('Rounds', () => {
 
     it('should fail if round to remove not exists', async () => {
       await expect(firstValueFrom(roundService.remove(RANDOM_UUID()))).rejects.toThrowError(/Could not find any entity/);
+    });
+
+    it('should fail if game is already completed', async () => {
+      const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
+      const createdRound = await firstValueFrom(roundService.create({ gameId: createdGame.id }));
+
+      await firstValueFrom(gameService.update(createdGame.id, { completed: true }));
+
+      await expect(firstValueFrom(roundService.remove(createdRound.round.id))).rejects.toThrow(new RegExp(`Das Spiel mit der ID ${createdGame.id} ist bereits abgeschlossen`));
     });
   });
 });

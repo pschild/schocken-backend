@@ -6,6 +6,7 @@ import { EventTypeRevision } from '../model/event-type-revision.entity';
 import { EventType } from '../model/event-type.entity';
 import { CreateEventTypeRevisionDto } from './dto/create-event-type-revision.dto';
 import { EventTypeRevisionType } from './enum/event-type-revision-type.enum';
+import { DuplicateEventTypeNameException } from './exception/duplicate-event-type-name.exception';
 
 /**
  * https://stackoverflow.com/questions/58918644/nestjs-cannot-inject-a-service-into-a-subscriber
@@ -22,7 +23,7 @@ import { EventTypeRevisionType } from './enum/event-type-revision-type.enum';
 
 @Injectable()
 @EventSubscriber()
-export class EventTypeRevisionSubscriber implements EntitySubscriberInterface {
+export class EventTypeSubscriber implements EntitySubscriberInterface {
 
   constructor(
     @InjectDataSource() readonly dataSource: DataSource,
@@ -33,6 +34,23 @@ export class EventTypeRevisionSubscriber implements EntitySubscriberInterface {
   // eslint-disable-next-line @typescript-eslint/ban-types
   listenTo(): Function | string {
     return EventType;
+  }
+
+  async beforeInsert(event: InsertEvent<EventType>): Promise<unknown> {
+    await this.checkDuplicateDescription(event, event.entity.description);
+    return;
+  }
+
+  async beforeUpdate(event: UpdateEvent<EventType>): Promise<unknown> {
+    await this.checkDuplicateDescription(event, event.entity.description);
+    return;
+  }
+
+  private async checkDuplicateDescription(event: InsertEvent<EventType> | UpdateEvent<EventType>, description: string): Promise<void> {
+    const entityWithDescription = await event.manager.getRepository(EventType).findOneBy({ description });
+    if (entityWithDescription && entityWithDescription.id !== event.entity.id) {
+      throw new DuplicateEventTypeNameException();
+    }
   }
 
   afterInsert(event: InsertEvent<EventType>): Promise<unknown> | void {

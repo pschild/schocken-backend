@@ -7,11 +7,12 @@ import { EventType } from '../model/event-type.entity';
 import { Event } from '../model/event.entity';
 import { Game } from '../model/game.entity';
 import { Round } from '../model/round.entity';
-import { DuplicateUsernameException } from './exception/duplicate-username.exception';
 import { Player } from '../model/player.entity';
 import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
+import { DuplicatePlayerNameException } from './exception/duplicate-player-name.exception';
 import { PlayerService } from './player.service';
 import { differenceInMilliseconds } from 'date-fns';
+import { PlayerSubscriber } from './player.subscriber';
 
 /**
  * Blueprint for how to test a service using an in-memory database in background.
@@ -30,6 +31,7 @@ describe('PlayerService integration', () => {
       ],
       providers: [
         PlayerService,
+        PlayerSubscriber,
         {
           provide: getRepositoryToken(Player),
           useValue: source.getRepository(Player),
@@ -70,7 +72,7 @@ describe('PlayerService integration', () => {
 
     it('should fail if a player with given name already exists', async () => {
       await repo.save({ name: 'John' });
-      await expect(firstValueFrom(service.create({ name: 'John' }))).rejects.toThrowError(new DuplicateUsernameException());
+      await expect(firstValueFrom(service.create({ name: 'John' }))).rejects.toThrowError(new DuplicatePlayerNameException());
     });
   });
 
@@ -148,7 +150,9 @@ describe('PlayerService integration', () => {
 
     it('should fail if a player with given name already exists', async () => {
       await repo.save({ name: 'John' });
-      await expect(firstValueFrom(service.update(RANDOM_UUID(), { name: 'John' }))).rejects.toThrowError(new DuplicateUsernameException());
+      const createdPlayer2 = await repo.save({ name: 'Jack' });
+
+      await expect(firstValueFrom(service.update(createdPlayer2.id, { name: 'John' }))).rejects.toThrowError(new DuplicatePlayerNameException());
     });
   });
 

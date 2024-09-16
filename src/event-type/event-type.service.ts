@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { format } from 'date-fns';
-import { from, iif, Observable, of, switchMap, throwError } from 'rxjs';
+import { from, Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { EventContext } from '../event/enum/event-context.enum';
 import { EventType } from '../model/event-type.entity';
@@ -15,7 +15,6 @@ import { EventTypeRevisionDto } from './dto/event-type-revision.dto';
 import { EventTypeDto } from './dto/event-type.dto';
 import { UpdateEventTypeDto } from './dto/update-event-type.dto';
 import { EventTypeContext } from './enum/event-type-context.enum';
-import { DuplicateEventTypeNameException } from './exception/duplicate-event-type-name.exception';
 import { findValidAt } from './util/event-type-revision.utils';
 
 @Injectable()
@@ -27,11 +26,7 @@ export class EventTypeService {
   }
 
   create(dto: CreateEventTypeDto): Observable<EventTypeDto> {
-    return from(this.repo.findOneBy({ description: dto.description })).pipe(
-      switchMap(found => found
-        ? throwError(() => new DuplicateEventTypeNameException())
-        : from(this.repo.save(CreateEventTypeDto.mapForeignKeys(dto)))
-      ),
+    return from(this.repo.save(CreateEventTypeDto.mapForeignKeys(dto))).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
@@ -89,19 +84,7 @@ export class EventTypeService {
   }
 
   update(id: string, dto: UpdateEventTypeDto): Observable<EventTypeDto> {
-    // If `description` is provided, try to find an existing entity with this value and a _different_ id.
-    // If found, we need to throw DuplicateException.
-    const findByUniqueValue$ = iif(
-      () => !!dto.description,
-      from(this.repo.findOne({ where: { id: Not(id), description: dto.description } })),
-      of(false)
-    );
-
-    return findByUniqueValue$.pipe(
-      switchMap(found => found
-        ? throwError(() => new DuplicateEventTypeNameException())
-        : from(this.repo.preload({ id, ...UpdateEventTypeDto.mapForeignKeys(dto) }))
-      ),
+    return from(this.repo.preload({ id, ...UpdateEventTypeDto.mapForeignKeys(dto) })).pipe(
       ensureExistence(),
       switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),
