@@ -1,15 +1,15 @@
 import { EventDetailDto } from '../../event/dto/event-detail.dto';
 import { Game } from '../../model/game.entity';
 import { RoundDetailDto } from '../../round/dto/round-detail.dto';
-import { PlaceType } from '../enum/place-type.enum';
 import { GameDto } from './game.dto';
+import { PlaceDto } from './place.dto';
 
 export class GameDetailDto {
   id: string;
   datetime: string;
   completed: boolean;
   excludeFromStatistics: boolean;
-  place: { type: PlaceType; location?: string };
+  place: PlaceDto;
   rounds: RoundDetailDto[];
   events: EventDetailDto[];
 

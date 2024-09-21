@@ -1,17 +1,32 @@
-import { EventDto } from '../../event/dto/event.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { EventPenaltyDto } from '../../event/dto/event-penalty.dto';
 import { Game } from '../../model/game.entity';
+import { PenaltyDto } from '../../penalty/dto/penalty.dto';
 import { summarizePenalties } from '../../penalty/penalty.utils';
-import { PlaceType } from '../enum/place-type.enum';
 import { GameDto } from './game.dto';
+import { PlaceDto } from './place.dto';
 
 export class GameOverviewDto {
+  @ApiProperty({ type: String, format: 'uuid' })
   id: string;
+
+  @ApiProperty({ type: Date })
   datetime: string;
+
+  @ApiProperty({ type: Boolean })
   completed: boolean;
+
+  @ApiProperty({ type: Boolean })
   excludeFromStatistics: boolean;
-  place: { type: PlaceType; location?: string };
+
+  @ApiProperty({ type: PlaceDto })
+  place: PlaceDto;
+
+  @ApiProperty({ type: Number })
   roundCount: number;
-  penalties: { unit: string, sum: number }[];
+
+  @ApiProperty({ type: [PenaltyDto] })
+  penalties: PenaltyDto[];
 
   static fromEntity(entity: Game): GameOverviewDto {
     return entity ? {
@@ -22,21 +37,13 @@ export class GameOverviewDto {
       place: GameDto.mapPlace(entity),
       roundCount: entity.rounds.length,
       penalties: summarizePenalties([
-        ...GameOverviewDto.getGameEvents(entity),
-        ...GameOverviewDto.getRoundEvents(entity),
+        ...EventPenaltyDto.fromEntities(entity.events),
+        ...(entity.rounds || []).map(round => EventPenaltyDto.fromEntities(round.events || [])).flat(),
       ]),
     } : null;
   }
 
   static fromEntities(entities: Game[]): GameOverviewDto[] {
     return entities.map(e => GameOverviewDto.fromEntity(e));
-  }
-
-  private static getGameEvents(game: Game): EventDto[] {
-    return EventDto.fromEntities(game.events);
-  }
-
-  private static getRoundEvents(game: Game): EventDto[] {
-    return (game.rounds || []).map(round => EventDto.fromEntities(round.events || [])).flat();
   }
 }

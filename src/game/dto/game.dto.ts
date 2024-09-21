@@ -1,8 +1,8 @@
 import { EventDto } from '../../event/dto/event.dto';
 import { Game } from '../../model/game.entity';
-import { PlayerDto } from '../../player/dto/player.dto';
 import { RoundDto } from '../../round/dto/round.dto';
 import { PlaceType } from '../enum/place-type.enum';
+import { PlaceDto } from './place.dto';
 
 export class GameDto {
   id: string;
@@ -11,7 +11,7 @@ export class GameDto {
   datetime: string;
   completed: boolean;
   excludeFromStatistics: boolean;
-  place?: { type: PlaceType; location?: string };
+  place?: PlaceDto;
   rounds?: RoundDto[];
   events?: EventDto[];
 
@@ -33,7 +33,7 @@ export class GameDto {
     return entities.map(e => GameDto.fromEntity(e));
   }
 
-  static mapPlace(entity: Game): { type: PlaceType; location?: string } {
+  static mapPlace(entity: Game): PlaceDto {
     return {
       type: entity.placeType,
       location: GameDto.mapLocation(entity)
@@ -43,7 +43,7 @@ export class GameDto {
   private static mapLocation(entity: Game): string {
     switch (entity.placeType) {
       case PlaceType.HOME:
-        return PlayerDto.fromEntity(entity.hostedBy)?.name;
+        return entity.hostedBy.name;
       case PlaceType.AWAY:
         return entity.placeOfAwayGame;
       case PlaceType.REMOTE:

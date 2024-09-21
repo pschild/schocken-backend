@@ -1,7 +1,8 @@
-import { EventDto } from '../event/dto/event.dto';
+import { EventPenaltyDto } from '../event/dto/event-penalty.dto';
+import { PenaltyDto } from './dto/penalty.dto';
 import { PenaltyUnit } from './enum/penalty-unit.enum';
 
-export function summarizePenalties(events: EventDto[]): { unit: string, sum: number }[] {
+export function summarizePenalties(events: EventPenaltyDto[]): PenaltyDto[] {
   return Object.keys(PenaltyUnit)
     .map(unit => {
       const sum = events

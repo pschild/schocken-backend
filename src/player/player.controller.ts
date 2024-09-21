@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from '@nestjs/common';
+import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Observable } from 'rxjs';
 import { Logger } from 'winston';
@@ -7,6 +8,7 @@ import { PlayerDto } from './dto/player.dto';
 import { PlayerService } from './player.service';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 
+@ApiTags('player')
 @Controller('player')
 export class PlayerController {
 
@@ -17,32 +19,42 @@ export class PlayerController {
   }
 
   @Post()
+  @ApiBody({ type: CreatePlayerDto })
+  @ApiCreatedResponse({ type: PlayerDto })
+  @ApiBadRequestResponse({ description: 'When a player with given name already exists.' })
   public create(@Body() dto: CreatePlayerDto): Observable<PlayerDto> {
     return this.service.create(dto);
   }
 
   @Get(':id')
+  @ApiOkResponse({ type: PlayerDto })
   public findOne(@Param('id') id: string): Observable<PlayerDto> {
     return this.service.findOne(id);
   }
 
   @Get()
+  @ApiOkResponse({ type: [PlayerDto] })
   public findAll(): Observable<PlayerDto[]> {
     return this.service.findAll();
   }
 
   @Get('active')
+  @ApiOkResponse({ type: [PlayerDto] })
   public getAllActive(): Observable<PlayerDto[]> {
     return this.service.findAllActive();
   }
 
   @Patch(':id')
+  @ApiBody({ type: UpdatePlayerDto })
+  @ApiOkResponse({ type: PlayerDto })
+  @ApiBadRequestResponse({ description: 'When a player with given name already exists.' })
   public update(@Param('id') id: string, @Body() dto: UpdatePlayerDto): Observable<PlayerDto> {
     this.logger.warn('updating', { context: PlayerController.name });
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
+  @ApiOkResponse({ type: String })
   public remove(@Param('id') id: string): Observable<string> {
     return this.service.remove(id);
   }

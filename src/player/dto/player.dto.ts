@@ -1,14 +1,30 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { GameDto } from '../../game/dto/game.dto';
 import { Player } from '../../model/player.entity';
 
 export class PlayerDto {
+  @ApiProperty({ type: String, format: 'uuid' })
   id: string;
+
+  @ApiProperty({ type: Date })
   createDateTime: string;
+
+  @ApiProperty({ type: Date })
   lastChangedDateTime: string;
+
+  @ApiProperty({ type: Boolean })
   isDeleted: boolean;
+
+  @ApiProperty()
   name: string;
+
+  @ApiProperty({ type: Date })
   registered: string;
+
+  @ApiProperty({ type: Boolean })
   active: boolean;
+
+  @ApiProperty({ type: [GameDto], required: false })
   hostedGames?: GameDto[];
 
   static fromEntity(entity: Player): PlayerDto {
