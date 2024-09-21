@@ -1,4 +1,4 @@
-import { Check, Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Check, Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
 import { PlaceType } from '../game/enum/place-type.enum';
 import { BaseEntity } from './base.entity';
 import { Event } from './event.entity';
@@ -8,6 +8,8 @@ import { Round } from './round.entity';
 @Entity({ name: 'game' })
 @Check('NOT ("placeOfAwayGame" IS NOT NULL AND "hostedById" is NOT NULL)')
 export class Game extends BaseEntity {
+
+  @Index()
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   datetime: Date;
 
@@ -20,6 +22,7 @@ export class Game extends BaseEntity {
   @Column({ type: 'enum', enum: PlaceType })
   placeType: PlaceType;
 
+  @Index()
   @ManyToOne(() => Player, player => player.hostedGames, { nullable: true })
   hostedBy: Player;
 

@@ -59,7 +59,36 @@ export class GameService {
   }
 
   getOverview(): Observable<GameOverviewDto[]> {
-    return from(this.repo.find({ /*where: { datetime: Raw(alias => `date_part('year', ${alias}) = '2023'`) },*/ relations: ['rounds', 'hostedBy', 'events', 'rounds.events'], order: { datetime: 'DESC' } })).pipe(
+    return from(this.repo.find({
+      /*where: { datetime: Raw(alias => `date_part('year', ${alias}) = '2023'`) },*/
+      select: {
+        id: true,
+        datetime: true,
+        hostedBy: {
+          name: true,
+        },
+        placeOfAwayGame: true,
+        placeType: true,
+        completed: true,
+        createDateTime: true,
+        excludeFromStatistics: true,
+        rounds: {
+          id: true,
+          events: {
+            penaltyValue: true,
+            penaltyUnit: true,
+            multiplicatorValue: true,
+          }
+        },
+        events: {
+          penaltyValue: true,
+          penaltyUnit: true,
+          multiplicatorValue: true,
+        }
+      },
+      relations: ['rounds', 'hostedBy', 'events', 'rounds.events'],
+      order: { datetime: 'DESC' }
+    })).pipe(
       map(GameOverviewDto.fromEntities)
     );
   }

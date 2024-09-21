@@ -1,4 +1,4 @@
-import { Check, Column, Entity, ManyToOne } from 'typeorm';
+import { Check, Column, Entity, Index, ManyToOne } from 'typeorm';
 import { EventContext } from '../event/enum/event-context.enum';
 import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { BaseEntity } from './base.entity';
@@ -29,6 +29,7 @@ export class Event extends BaseEntity {
   @Column({ type: 'enum', enum: EventContext })
   context: EventContext;
 
+  @Index()
   @ManyToOne(
     () => Game,
     game => game.events,
@@ -39,6 +40,7 @@ export class Event extends BaseEntity {
   )
   game: Game;
 
+  @Index()
   @ManyToOne(
     () => Round,
     round => round.events,
@@ -49,9 +51,11 @@ export class Event extends BaseEntity {
   )
   round: Round;
 
+  @Index()
   @ManyToOne(() => Player, { nullable: false })
   player: Player;
 
+  @Index()
   @ManyToOne(() => EventType, { nullable: false })
   eventType: EventType;
 }

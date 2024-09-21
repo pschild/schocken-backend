@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { EventTypeContext } from '../event-type/enum/event-type-context.enum';
 import { EventTypeRevisionType } from '../event-type/enum/event-type-revision-type.enum';
 import { EventTypeTrigger } from '../event-type/enum/event-type-trigger.enum';
@@ -32,6 +32,7 @@ export class EventTypeRevision extends BaseEntity {
   @Column({ default: false })
   hasComment: boolean;
 
+  @Index()
   @ManyToOne(
     () => EventType,
     eventType => eventType.revisions,
