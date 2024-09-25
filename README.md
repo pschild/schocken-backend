@@ -4,6 +4,11 @@
 
 2. copy `.env.template` to `.env` and fill in the important data.
 
+## API definition
+
+http://localhost:3000/api  
+http://localhost:3000/api-json
+
 ## Running the app
 
 ```bash

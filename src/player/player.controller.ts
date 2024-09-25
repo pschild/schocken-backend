@@ -1,12 +1,12 @@
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Observable } from 'rxjs';
 import { Logger } from 'winston';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { PlayerDto } from './dto/player.dto';
-import { PlayerService } from './player.service';
 import { UpdatePlayerDto } from './dto/update-player.dto';
+import { PlayerService } from './player.service';
 
 @ApiTags('player')
 @Controller('player')
@@ -55,6 +55,7 @@ export class PlayerController {
 
   @Delete(':id')
   @ApiOkResponse({ type: String })
+  @ApiProduces('text/plain')
   public remove(@Param('id') id: string): Observable<string> {
     return this.service.remove(id);
   }

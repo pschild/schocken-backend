@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Player } from '../../model/player.entity';
 
@@ -8,12 +8,12 @@ export class CreatePlayerDto {
   @MaxLength(32)
   name: string;
 
-  @ApiProperty({ type: Date, required: false })
+  @ApiPropertyOptional({ type: Date })
   @IsOptional()
   @IsString()
   registered?: string;
 
-  @ApiProperty({ type: Boolean, required: false })
+  @ApiPropertyOptional({ type: Boolean })
   @IsOptional()
   @IsBoolean()
   active?: boolean;

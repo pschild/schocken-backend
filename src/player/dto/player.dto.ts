@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { GameDto } from '../../game/dto/game.dto';
 import { Player } from '../../model/player.entity';
 
@@ -24,7 +24,7 @@ export class PlayerDto {
   @ApiProperty({ type: Boolean })
   active: boolean;
 
-  @ApiProperty({ type: [GameDto], required: false })
+  @ApiPropertyOptional({ type: [GameDto] })
   hostedGames?: GameDto[];
 
   static fromEntity(entity: Player): PlayerDto {

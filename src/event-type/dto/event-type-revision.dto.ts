@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EventTypeRevision } from '../../model/event-type-revision.entity';
 import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
 import { EventTypeContext } from '../enum/event-type-context.enum';
@@ -6,17 +7,40 @@ import { EventTypeTrigger } from '../enum/event-type-trigger.enum';
 import { EventTypeDto } from './event-type.dto';
 
 export class EventTypeRevisionDto {
+  @ApiProperty({ type: String, format: 'uuid' })
   id: string;
+
+  @ApiProperty({ enum: EventTypeRevisionType, example: EventTypeRevisionType.UPDATE })
   type: EventTypeRevisionType;
+
+  @ApiProperty({ type: Date })
   createDateTime: string;
+
+  @ApiProperty({ type: Date })
   lastChangedDateTime: string;
+
+  @ApiProperty({ type: String })
   description: string;
+
+  @ApiProperty({ enum: EventTypeContext, example: EventTypeContext.ROUND })
   context: EventTypeContext;
+
+  @ApiPropertyOptional({ enum: EventTypeTrigger, example: EventTypeTrigger.SCHOCK_AUS })
   trigger?: EventTypeTrigger;
+
+  @ApiPropertyOptional({ type: Number })
   penaltyValue?: number;
+
+  @ApiPropertyOptional({ enum: PenaltyUnit, example: PenaltyUnit.EURO })
   penaltyUnit?: PenaltyUnit;
+
+  @ApiPropertyOptional({ type: String })
   multiplicatorUnit?: string;
+
+  @ApiProperty({ type: Boolean })
   hasComment: boolean;
+
+  @ApiProperty({ type: () => EventTypeDto })
   eventType: EventTypeDto;
 
   static fromEntity(entity: EventTypeRevision): EventTypeRevisionDto {

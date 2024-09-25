@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { EventTypeTrigger } from '../../event-type/enum/event-type-trigger.enum';
 import { EventDetailDto } from '../../event/dto/event-detail.dto';
 import { EventPenaltyDto } from '../../event/dto/event-penalty.dto';
@@ -7,21 +8,36 @@ import { summarizePenalties } from '../../penalty/penalty.utils';
 import { PlayerDetailDto } from '../../player/dto/player-detail.dto';
 
 export class RoundDetailDto {
+  @ApiProperty({ type: String, format: 'uuid' })
   id: string;
+
+  @ApiProperty({ type: Date })
   datetime: string;
-  attendees?: { id: string }[];
-  finalists?: { id: string }[];
+
+  @ApiProperty({  type: String, format: 'uuid', isArray: true })
+  attendees?: string[];
+
+  @ApiProperty({  type: String, format: 'uuid', isArray: true })
+  finalists?: string[];
+
+  @ApiProperty({ type: [EventDetailDto] })
   events: EventDetailDto[];
+
+  @ApiProperty({ type: [PenaltyDto] })
   penalties: PenaltyDto[];
+
+  @ApiProperty({ type: Number })
   schockAusCount: number;
+
+  @ApiProperty({ type: Boolean })
   hasFinal: boolean;
 
   static fromEntity(entity: Round): RoundDetailDto {
     return entity ? {
       id: entity.id,
       datetime: entity.datetime.toISOString(),
-      attendees: PlayerDetailDto.fromEntities(entity.attendees).map(player => ({ id: player.id })),
-      finalists: PlayerDetailDto.fromEntities(entity.finalists).map(player => ({ id: player.id })),
+      attendees: PlayerDetailDto.fromEntities(entity.attendees).map(player => player.id),
+      finalists: PlayerDetailDto.fromEntities(entity.finalists).map(player => player.id),
       events: EventDetailDto.fromEntities(entity.events),
       penalties: summarizePenalties(EventPenaltyDto.fromEntities(entity.events)),
       schockAusCount: entity.events.filter(event => event.eventType.trigger === EventTypeTrigger.SCHOCK_AUS)?.length || 0,

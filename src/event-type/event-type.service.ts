@@ -32,7 +32,7 @@ export class EventTypeService {
   }
 
   findAll(): Observable<EventTypeDto[]> {
-    return from(this.repo.find()).pipe(
+    return from(this.repo.find({ relations: ['revisions'] })).pipe(
       map(EventTypeDto.fromEntities)
     );
   }

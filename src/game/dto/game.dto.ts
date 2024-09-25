@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EventDto } from '../../event/dto/event.dto';
 import { Game } from '../../model/game.entity';
 import { RoundDto } from '../../round/dto/round.dto';
@@ -5,14 +6,31 @@ import { PlaceType } from '../enum/place-type.enum';
 import { PlaceDto } from './place.dto';
 
 export class GameDto {
+  @ApiProperty({ type: String, format: 'uuid' })
   id: string;
+
+  @ApiProperty({ type: Date })
   createDateTime: string;
+
+  @ApiProperty({ type: Date })
   lastChangedDateTime: string;
+
+  @ApiProperty({ type: Date })
   datetime: string;
+
+  @ApiProperty({ type: Boolean })
   completed: boolean;
+
+  @ApiProperty({ type: Boolean })
   excludeFromStatistics: boolean;
+
+  @ApiPropertyOptional({ type: PlaceDto })
   place?: PlaceDto;
+
+  @ApiPropertyOptional({ type: [RoundDto] })
   rounds?: RoundDto[];
+
+  @ApiPropertyOptional({ type: [EventDto] })
   events?: EventDto[];
 
   static fromEntity(entity: Game): GameDto {
@@ -43,7 +61,7 @@ export class GameDto {
   private static mapLocation(entity: Game): string {
     switch (entity.placeType) {
       case PlaceType.HOME:
-        return entity.hostedBy.name;
+        return entity.hostedBy?.name;
       case PlaceType.AWAY:
         return entity.placeOfAwayGame;
       case PlaceType.REMOTE:
