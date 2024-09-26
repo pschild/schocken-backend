@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Observable } from 'rxjs';
@@ -34,14 +34,8 @@ export class PlayerController {
 
   @Get()
   @ApiOkResponse({ type: [PlayerDto] })
-  public findAll(): Observable<PlayerDto[]> {
-    return this.service.findAll();
-  }
-
-  @Get('active')
-  @ApiOkResponse({ type: [PlayerDto] })
-  public getAllActive(): Observable<PlayerDto[]> {
-    return this.service.findAllActive();
+  public findAll(@Query('active') active: boolean): Observable<PlayerDto[]> {
+    return active ? this.service.findAllActive() : this.service.findAll();
   }
 
   @Patch(':id')

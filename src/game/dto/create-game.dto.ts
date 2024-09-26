@@ -16,6 +16,11 @@ export class CreateGameDto {
   @IsBoolean()
   completed?: boolean;
 
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
+  @IsBoolean()
+  excludeFromStatistics?: boolean;
+
   @ApiProperty({ enum: PlaceType, example: PlaceType.HOME })
   @IsEnum(PlaceType)
   @PlaceValidation()

@@ -39,6 +39,7 @@ export class GameService {
 
   getDetails(id: string): Observable<GameDetailDto> {
     return from(this.repo.findOne({ where: { id }, relations: ['rounds', 'hostedBy', 'events', 'events.player', 'events.eventType', 'rounds.events', 'rounds.events.player', 'rounds.events.eventType', 'rounds.attendees', 'rounds.finalists'], order: { rounds: { datetime: 'ASC' } }, withDeleted: true })).pipe(
+      ensureExistence(),
       map(GameDetailDto.fromEntity)
     );
   }
