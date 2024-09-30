@@ -6,7 +6,7 @@ export class UpdateGameDto extends PartialType(CreateGameDto) {
   static mapForeignKeys(dto: UpdateGameDto): Game {
     return {
       ...dto,
-      ...(dto.hostedById ? { hostedBy: { id: dto.hostedById } } : {}),
+      ...(dto.hasOwnProperty('hostedById') ? { hostedBy: dto.hostedById ? { id: dto.hostedById } : null } : {}),
     } as unknown as Game;
   }
 }

@@ -42,7 +42,7 @@ export class CreateGameDto {
   static mapForeignKeys(dto: CreateGameDto): Game {
     return {
       ...dto,
-      hostedBy: { id: dto.hostedById }
+      ...(dto.hasOwnProperty('hostedById') ? { hostedBy: dto.hostedById ? { id: dto.hostedById } : null } : {}),
     } as unknown as Game;
   }
 }

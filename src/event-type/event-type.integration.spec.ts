@@ -155,12 +155,46 @@ describe('EventTypeService integration', () => {
       const findResult = await repo.findOneBy({ id: response.id });
       expect(findResult).toBeTruthy();
       expect(findResult.description).toBe('first event type');
+      expect(findResult.penaltyValue).toBeNull();
+      expect(findResult.penaltyUnit).toBeNull();
 
       const updateResult = await firstValueFrom(service.update(response.id, { description: 'new event type', penalty: { penaltyValue: 1.5, penaltyUnit: PenaltyUnit.EURO } }));
       expect(updateResult).toBeTruthy();
       expect(updateResult.description).toBe('new event type');
       expect(updateResult.penaltyValue).toEqual(1.5);
       expect(updateResult.penaltyUnit).toEqual(PenaltyUnit.EURO);
+    });
+
+    it('should remove penalty by passing null', async () => {
+      const response = await repo.save({ context: EventTypeContext.GAME, description: 'first event type', penaltyValue: 1.5, penaltyUnit: PenaltyUnit.EURO });
+
+      const findResult = await repo.findOneBy({ id: response.id });
+      expect(findResult).toBeTruthy();
+      expect(findResult.description).toBe('first event type');
+      expect(findResult.penaltyValue).toEqual(1.5);
+      expect(findResult.penaltyUnit).toEqual(PenaltyUnit.EURO);
+
+      const updateResult = await firstValueFrom(service.update(response.id, { description: 'new event type', penalty: null }));
+      expect(updateResult).toBeTruthy();
+      expect(updateResult.description).toBe('new event type');
+      expect(updateResult.penaltyValue).toBeNull();
+      expect(updateResult.penaltyUnit).toBeNull();
+    });
+
+    it('should remove penalty by passing object with null properties', async () => {
+      const response = await repo.save({ context: EventTypeContext.GAME, description: 'first event type', penaltyValue: 1.5, penaltyUnit: PenaltyUnit.EURO });
+
+      const findResult = await repo.findOneBy({ id: response.id });
+      expect(findResult).toBeTruthy();
+      expect(findResult.description).toBe('first event type');
+      expect(findResult.penaltyValue).toEqual(1.5);
+      expect(findResult.penaltyUnit).toEqual(PenaltyUnit.EURO);
+
+      const updateResult = await firstValueFrom(service.update(response.id, { description: 'new event type', penalty: { penaltyValue: null, penaltyUnit: null } }));
+      expect(updateResult).toBeTruthy();
+      expect(updateResult.description).toBe('new event type');
+      expect(updateResult.penaltyValue).toBeNull();
+      expect(updateResult.penaltyUnit).toBeNull();
     });
 
     it('should fail if event type with given id not found', async () => {

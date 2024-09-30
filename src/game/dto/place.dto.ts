@@ -6,5 +6,8 @@ export class PlaceDto {
   type: PlaceType;
 
   @ApiPropertyOptional({ type: String })
-  location?: string;
+  hostedById?: string;
+
+  @ApiPropertyOptional({ type: String })
+  locationLabel?: string;
 }

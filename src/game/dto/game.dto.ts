@@ -54,7 +54,8 @@ export class GameDto {
   static mapPlace(entity: Game): PlaceDto {
     return {
       type: entity.placeType,
-      location: GameDto.mapLocation(entity)
+      hostedById: entity.hostedBy?.id,
+      locationLabel: GameDto.mapLocation(entity)
     }
   }
 

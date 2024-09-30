@@ -94,18 +94,18 @@ describe('Games', () => {
       expect(differenceInMilliseconds(new Date(), new Date(result.datetime))).toBeLessThan(500);
       expect(result.completed).toBe(false);
       expect(result.excludeFromStatistics).toBe(false);
-      expect(result.place).toEqual({ type: PlaceType.REMOTE, location: null });
+      expect(result.place).toEqual({ type: PlaceType.REMOTE, locationLabel: null, hostedById: undefined });
     });
 
     it('should create with away place', async () => {
       const result = await firstValueFrom(service.create({ placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere' }));
-      expect(result.place).toEqual({ type: PlaceType.AWAY, location: 'anywhere' });
+      expect(result.place).toEqual({ type: PlaceType.AWAY, locationLabel: 'anywhere', hostedById: undefined });
     });
 
     it('should create with home place', async () => {
       const createdPlayer = await playerRepo.save({ name: 'John' });
       const result = await firstValueFrom(service.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id }));
-      expect(result.place).toEqual({ type: PlaceType.HOME, location: 'John' });
+      expect(result.place).toEqual({ type: PlaceType.HOME, locationLabel: 'John', hostedById: createdPlayer.id });
     });
 
     it('should fail if an unknown player is given', async () => {
@@ -183,7 +183,7 @@ describe('Games', () => {
       expect(result.completed).toBe(false);
       expect(result.rounds[0].id).toEqual(createdRound1.round.id);
       expect(result.rounds[1].id).toEqual(createdRound2.round.id);
-      expect(result.place).toEqual({ type: PlaceType.HOME, location: createdPlayer.name });
+      expect(result.place).toEqual({ type: PlaceType.HOME, locationLabel: createdPlayer.name, hostedById: createdPlayer.id });
 
       await firstValueFrom(service.update(createdGame.id, { completed: true }));
 
@@ -192,7 +192,25 @@ describe('Games', () => {
       expect(result.completed).toBe(true);
       expect(result.rounds[0].id).toEqual(createdRound1.round.id);
       expect(result.rounds[1].id).toEqual(createdRound2.round.id);
-      expect(result.place).toEqual({ type: PlaceType.HOME, location: createdPlayer.name });
+      expect(result.place).toEqual({ type: PlaceType.HOME, locationLabel: createdPlayer.name, hostedById: createdPlayer.id });
+    });
+
+    it('should change HOME to AWAY place', async () => {
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdGame = await firstValueFrom(service.create({ placeType: PlaceType.HOME, hostedById: createdPlayer.id }));
+
+      const result = await firstValueFrom(service.update(createdGame.id, { placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere', hostedById: undefined }));
+
+      expect(result.place).toEqual({ type: PlaceType.AWAY, locationLabel: 'anywhere', hostedById: undefined });
+    });
+
+    it('should change AWAY to HOME place', async () => {
+      const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
+      const createdGame = await firstValueFrom(service.create({ placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere' }));
+
+      const result = await firstValueFrom(service.update(createdGame.id, { placeType: PlaceType.HOME, placeOfAwayGame: null, hostedById: createdPlayer.id }));
+
+      expect(result.place).toEqual({ type: PlaceType.HOME, locationLabel: createdPlayer.name, hostedById: createdPlayer.id });
     });
 
     it('should fail if game with given id not found', async () => {
@@ -250,7 +268,7 @@ describe('Games', () => {
       expect(result).toEqual(createdPlayer.id);
 
       const game = await firstValueFrom(service.findOne(createdGame.id));
-      expect(game.place).toEqual({ type: PlaceType.HOME, location: 'John' });
+      expect(game.place).toEqual({ type: PlaceType.HOME, locationLabel: 'John', hostedById: createdPlayer.id });
     });
 
     it('should fail if game to remove not exists', async () => {
