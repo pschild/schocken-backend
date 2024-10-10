@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { of } from 'rxjs';
 import * as request from 'supertest';
 import { RANDOM_STRING, RANDOM_UUID } from '../test.utils';
 import { PlaceType } from './enum/place-type.enum';
@@ -9,10 +10,10 @@ import { GameService } from './game.service';
 describe('GameController e2e', () => {
   let app: INestApplication;
   const gameService = {
-    create: jest.fn(),
-    findOne: jest.fn(),
-    findAll: jest.fn(),
-    update: jest.fn(),
+    create: jest.fn(() => of(null)),
+    findOne: jest.fn(() => of(null)),
+    findAll: jest.fn(() => of([])),
+    update: jest.fn(() => of(null)),
     remove: jest.fn(),
   };
 

@@ -10,6 +10,13 @@ describe('PenaltyUtils', () => {
       expect(summarizePenalties(events)).toStrictEqual([]);
     });
 
+    it('when there is only one penalty', () => {
+      const events = [
+        { penaltyValue: 0.5, penaltyUnit: PenaltyUnit.EURO },
+      ] as EventDto[];
+      expect(summarizePenalties(events)).toStrictEqual([{ unit: PenaltyUnit.EURO, sum: 0.5 }]);
+    });
+
     it('when there are penalties for only one unit', () => {
       const events = [
         { penaltyValue: 0.5, penaltyUnit: PenaltyUnit.EURO },

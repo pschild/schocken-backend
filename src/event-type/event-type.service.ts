@@ -6,13 +6,11 @@ import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { EventContext } from '../event/enum/event-context.enum';
+import { EventTypeRevision } from '../model/event-type-revision.entity';
 import { EventType } from '../model/event-type.entity';
 import { Event } from '../model/event.entity';
 import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { CreateEventTypeDto } from './dto/create-event-type.dto';
-import { EventTypeOverviewDto } from './dto/event-type-overview.dto';
-import { EventTypeRevisionDto } from './dto/event-type-revision.dto';
-import { EventTypeDto } from './dto/event-type.dto';
 import { UpdateEventTypeDto } from './dto/update-event-type.dto';
 import { EventTypeContext } from './enum/event-type-context.enum';
 import { findValidAt } from './util/event-type-revision.utils';
@@ -25,23 +23,21 @@ export class EventTypeService {
   ) {
   }
 
-  create(dto: CreateEventTypeDto): Observable<EventTypeDto> {
+  create(dto: CreateEventTypeDto): Observable<EventType> {
     return from(this.repo.save(CreateEventTypeDto.mapForeignKeys(dto))).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
 
-  findAll(): Observable<EventTypeDto[]> {
-    return from(this.repo.find({ relations: ['revisions'] })).pipe(
-      map(EventTypeDto.fromEntities)
-    );
+  findAll(): Observable<EventType[]> {
+    return from(this.repo.find({ relations: ['revisions'] }));
   }
 
   /**
    * Queries all event types by given context and sorts them by their frequency.
    * @param context
    */
-  getOverviewByContext(context: EventTypeContext): Observable<EventTypeOverviewDto[]> {
+  getOverviewByContext(context: EventTypeContext): Observable<EventType[]> {
     return from(
       this.repo.createQueryBuilder('et')
         .select(['et.*', 'COUNT(e.id) as count'])
@@ -52,21 +48,16 @@ export class EventTypeService {
         .orderBy('count', 'DESC')
         .addOrderBy('et.description', 'ASC')
         .getRawMany<EventType & { count: number }>()
-    ).pipe(
-      map(EventTypeOverviewDto.fromEntities)
     );
   }
 
-  findOne(id: string): Observable<EventTypeDto> {
-    return from(this.repo.findOne({ where: { id }, relations: ['revisions'] })).pipe(
-      map(EventTypeDto.fromEntity)
-    );
+  findOne(id: string): Observable<EventType> {
+    return from(this.repo.findOne({ where: { id }, relations: ['revisions'] }));
   }
 
   findValidPenalty(eventTypeId: string, context: EventContext, referenceDate: Date): Observable<{ penaltyValue: number; penaltyUnit: PenaltyUnit; warning?: string }> {
     return from(this.repo.findOne({ where: { id: eventTypeId, context: EventTypeContext[context.valueOf()] }, relations: ['revisions'] })).pipe(
-      map(EventTypeDto.fromEntity),
-      ensureExistence<EventTypeDto>(`Could not find event type with id '${eventTypeId}' and context '${context}'`),
+      ensureExistence<EventType>(`Could not find event type with id '${eventTypeId}' and context '${context}'`),
       map(eventType => ({
         current: eventType,
         revision: findValidAt(eventType.revisions, referenceDate),
@@ -79,11 +70,11 @@ export class EventTypeService {
     );
   }
 
-  private penaltyIsOutdated(currentEntity: EventTypeDto, revision: EventTypeRevisionDto): boolean {
+  private penaltyIsOutdated(currentEntity: EventType, revision: EventTypeRevision): boolean {
     return revision && (currentEntity.penaltyValue !== revision.penaltyValue || currentEntity.penaltyUnit !== revision.penaltyUnit);
   }
 
-  update(id: string, dto: UpdateEventTypeDto): Observable<EventTypeDto> {
+  update(id: string, dto: UpdateEventTypeDto): Observable<EventType> {
     return from(this.repo.preload({ id, ...UpdateEventTypeDto.mapForeignKeys(dto) })).pipe(
       ensureExistence(),
       switchMap(entity => from(this.repo.save(entity))),

@@ -6,7 +6,6 @@ import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Player } from '../model/player.entity';
 import { CreatePlayerDto } from './dto/create-player.dto';
-import { PlayerDto } from './dto/player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 
 @Injectable()
@@ -17,31 +16,25 @@ export class PlayerService {
   ) {
   }
 
-  public create(dto: CreatePlayerDto): Observable<PlayerDto> {
+  public create(dto: CreatePlayerDto): Observable<Player> {
     return from(this.repo.save(CreatePlayerDto.mapForeignKeys(dto))).pipe(
       switchMap(({ id }) => this.findOne(id)),
     );
   }
 
-  public findOne(id: string): Observable<PlayerDto> {
-    return from(this.repo.findOneBy({ id })).pipe(
-      map(PlayerDto.fromEntity)
-    );
+  public findOne(id: string): Observable<Player> {
+    return from(this.repo.findOneBy({ id }));
   }
 
-  public findAll(): Observable<PlayerDto[]> {
-    return from(this.repo.find()).pipe(
-      map(PlayerDto.fromEntities)
-    );
+  public findAll(): Observable<Player[]> {
+    return from(this.repo.find({ order: { name: 'ASC' }, withDeleted: true }));
   }
 
-  public findAllActive(): Observable<PlayerDto[]> {
-    return from(this.repo.findBy({ active: true })).pipe(
-      map(PlayerDto.fromEntities)
-    );
+  public findAllActive(): Observable<Player[]> {
+    return from(this.repo.findBy({ active: true }));
   }
 
-  public update(id: string, dto: UpdatePlayerDto): Observable<PlayerDto> {
+  public update(id: string, dto: UpdatePlayerDto): Observable<Player> {
     return from(this.repo.preload({ id, ...UpdatePlayerDto.mapForeignKeys(dto) })).pipe(
       ensureExistence(),
       switchMap(entity => from(this.repo.save(entity))),

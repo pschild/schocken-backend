@@ -97,8 +97,8 @@ describe('PlayerService integration', () => {
       const result = await firstValueFrom(service.findAll());
       expect(result).toBeTruthy();
       expect(result.length).toBe(2);
-      expect(result[0].name).toBe('John');
-      expect(result[1].name).toBe('Jane');
+      expect(result[0].name).toBe('Jane');
+      expect(result[1].name).toBe('John');
     });
 
     it('should return empty array if no players found', async () => {

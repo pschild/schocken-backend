@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { of } from 'rxjs';
 import * as request from 'supertest';
 import { RANDOM_UUID } from '../test.utils';
 import { RoundController } from './round.controller';
@@ -8,14 +9,14 @@ import { RoundService } from './round.service';
 describe('RoundController e2e', () => {
   let app: INestApplication;
   const roundService = {
-    create: jest.fn(),
-    findOne: jest.fn(),
-    findAll: jest.fn(),
-    update: jest.fn(),
+    create: jest.fn(() => of({})),
+    findOne: jest.fn(() => of(null)),
+    findAll: jest.fn(() => of([])),
+    update: jest.fn(() => of(null)),
     remove: jest.fn(),
-    updateAttendees: jest.fn(),
-    addFinalist: jest.fn(),
-    removeFinalist: jest.fn(),
+    updateAttendees: jest.fn(() => of(null)),
+    addFinalist: jest.fn(() => of(null)),
+    removeFinalist: jest.fn(() => of(null)),
   };
 
   beforeAll(async () => {

@@ -44,7 +44,7 @@ describe('EventTypeService', () => {
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.create({ context: EventTypeContext.GAME, description: 'some event' }));
-      expect(result).toEqual(EventTypeDto.fromEntity(entity));
+      expect(result).toEqual(entity);
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
@@ -55,7 +55,7 @@ describe('EventTypeService', () => {
     repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.findOne(entity.id));
-    expect(result).toEqual(EventTypeDto.fromEntity(entity));
+    expect(result).toEqual(entity);
     expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
   });
 
@@ -64,7 +64,7 @@ describe('EventTypeService', () => {
     repositoryMock.find.mockReturnValue(Promise.resolve([entity]));
 
     const result = await firstValueFrom(service.findAll());
-    expect(result).toEqual(EventTypeDto.fromEntities([entity]));
+    expect(result).toEqual([entity]);
     expect(repositoryMock.find).toHaveBeenCalledTimes(1);
   });
 
@@ -82,7 +82,7 @@ describe('EventTypeService', () => {
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { context: EventTypeContext.GAME, description: 'some event' }));
-      expect(result).toEqual(EventTypeDto.fromEntity(entity));
+      expect(result).toEqual(entity);
       expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);

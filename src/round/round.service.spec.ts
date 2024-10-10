@@ -4,7 +4,6 @@ import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
 import { Round } from '../model/round.entity';
 import { MockType, RANDOM_UUID, TestData } from '../test.utils';
-import { RoundDto } from './dto/round.dto';
 import { RoundService } from './round.service';
 
 describe('RoundService', () => {
@@ -46,7 +45,7 @@ describe('RoundService', () => {
       repositoryMock.count.mockReturnValue(Promise.resolve(42));
 
       const result = await firstValueFrom(service.create({ gameId: RANDOM_UUID() }));
-      expect(result.round).toEqual(RoundDto.fromEntity(entity));
+      expect(result.round).toEqual(entity);
       expect(result.celebration).toBeNull();
       expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
@@ -60,7 +59,7 @@ describe('RoundService', () => {
       repositoryMock.count.mockReturnValue(Promise.resolve(100));
 
       const result = await firstValueFrom(service.create({ gameId: RANDOM_UUID() }));
-      expect(result.round).toEqual(RoundDto.fromEntity(entity));
+      expect(result.round).toEqual(entity);
       expect(result.celebration).toEqual({ label: 'Runden', count: 100 });
       expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
@@ -73,7 +72,7 @@ describe('RoundService', () => {
     repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.findOne(entity.id));
-    expect(result).toEqual(RoundDto.fromEntity(entity));
+    expect(result).toEqual(entity);
     expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
   });
 
@@ -82,7 +81,7 @@ describe('RoundService', () => {
     repositoryMock.find.mockReturnValue(Promise.resolve([entity]));
 
     const result = await firstValueFrom(service.findAll());
-    expect(result).toEqual(RoundDto.fromEntities([entity]));
+    expect(result).toEqual([entity]);
     expect(repositoryMock.find).toHaveBeenCalledTimes(1);
   });
 
@@ -100,7 +99,7 @@ describe('RoundService', () => {
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { gameId: RANDOM_UUID() }));
-      expect(result).toEqual(RoundDto.fromEntity(entity));
+      expect(result).toEqual(entity);
       expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
@@ -136,7 +135,7 @@ describe('RoundService', () => {
     repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.updateAttendees(RANDOM_UUID(), dto));
-    expect(result).toEqual(RoundDto.fromEntity(entity));
+    expect(result).toEqual(entity);
     expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
     expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
@@ -149,7 +148,7 @@ describe('RoundService', () => {
     repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.addFinalist(RANDOM_UUID(), RANDOM_UUID()));
-    expect(result).toEqual(RoundDto.fromEntity(entity));
+    expect(result).toEqual(entity);
     expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
     expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
@@ -162,7 +161,7 @@ describe('RoundService', () => {
     repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.removeFinalist(RANDOM_UUID(), RANDOM_UUID()));
-    expect(result).toEqual(RoundDto.fromEntity(entity));
+    expect(result).toEqual(entity);
     expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
     expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);

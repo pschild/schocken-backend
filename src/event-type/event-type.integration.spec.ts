@@ -100,7 +100,7 @@ describe('EventTypeService integration', () => {
       expect(result.trigger).toBeNull();
       expect(result.hasComment).toEqual(false);
       expect(result.description).toBe('some event type');
-      expect(result.penaltyValue).toEqual(0);
+      expect(result.penaltyValue).toBeNull();
       expect(result.penaltyUnit).toBeNull();
       expect(result.multiplicatorUnit).toBeNull();
     });
@@ -235,7 +235,6 @@ describe('EventTypeService integration', () => {
       expect(await repo.count({ withDeleted: true })).toBe(2);
     });
 
-    // TODO: 2
     it('should load event even event type was softly deleted', async () => {
       const createdGame = await firstValueFrom(gameService.create({ placeType: PlaceType.REMOTE }));
       const createdPlayer = await firstValueFrom(playerService.create({ name: 'John' }));
@@ -245,13 +244,14 @@ describe('EventTypeService integration', () => {
       let findResult;
       findResult = await firstValueFrom(eventService.findOne(createdEvent.event.id));
       expect(findResult.eventType.description).toEqual('test');
-      expect(findResult.eventType.isDeleted).toEqual(false);
+      expect(findResult.eventType.deletedDateTime).toBeNull();
 
       await firstValueFrom(service.remove(createdEventType.id));
 
       findResult = await firstValueFrom(eventService.findOne(createdEvent.event.id));
       expect(findResult.eventType.description).toEqual('test');
-      expect(findResult.eventType.isDeleted).toEqual(true);
+      expect(findResult.eventType.deletedDateTime).toBeDefined();
+      expect(differenceInMilliseconds(new Date(), findResult.eventType.deletedDateTime)).toBeLessThan(500);
     });
 
     it('should fail if event type to remove not exists', async () => {

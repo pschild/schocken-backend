@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { of } from 'rxjs';
 import * as request from 'supertest';
 import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { RANDOM_STRING, RANDOM_UUID } from '../test.utils';
@@ -11,10 +12,10 @@ import { EventTypeService } from './event-type.service';
 describe('EventTypeController e2e', () => {
   let app: INestApplication;
   const eventTypeService = {
-    create: jest.fn(),
-    findOne: jest.fn(),
-    findAll: jest.fn(),
-    update: jest.fn(),
+    create: jest.fn(() => of(null)),
+    findOne: jest.fn(() => of(null)),
+    findAll: jest.fn(() => of([])),
+    update: jest.fn(() => of(null)),
     remove: jest.fn(),
   };
 

@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { differenceInMilliseconds } from 'date-fns';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
 import { PlaceType } from '../game/enum/place-type.enum';
@@ -164,7 +165,7 @@ describe('Attendances', () => {
     result = await firstValueFrom(roundService.findOne(createdRound.round.id));
     expect(result.attendees.length).toBe(1);
     expect(result.attendees[0].name).toEqual('John');
-    expect(result.attendees[0].isDeleted).toEqual(false);
+    expect(result.attendees[0].deletedDateTime).toBeNull();
 
     let queryResult;
     queryResult = await source.manager.query(`SELECT * FROM attendances`);
@@ -178,7 +179,8 @@ describe('Attendances', () => {
     result = await firstValueFrom(roundService.findOne(createdRound.round.id));
     expect(result.attendees.length).toBe(1);
     expect(result.attendees[0].name).toEqual('John');
-    expect(result.attendees[0].isDeleted).toEqual(true);
+    expect(result.attendees[0].deletedDateTime).toBeDefined();
+    expect(differenceInMilliseconds(new Date(), result.attendees[0].deletedDateTime)).toBeLessThan(500);
 
     queryResult = await source.manager.query(`SELECT * FROM attendances`);
     expect(queryResult).toEqual([{

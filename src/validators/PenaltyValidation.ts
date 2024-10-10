@@ -18,7 +18,6 @@ export function PenaltyValidation(validationOptions?: ValidationOptions) {
       },
       validator: {
         validate(value: CreatePenaltyDto, args: ValidationArguments) {
-          console.log(typeof value.penaltyValue !== 'undefined' && typeof value.penaltyUnit !== 'undefined');
           return typeof value.penaltyValue !== 'undefined' && typeof value.penaltyUnit !== 'undefined';
         },
       },

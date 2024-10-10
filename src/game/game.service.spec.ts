@@ -4,7 +4,6 @@ import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
 import { Game } from '../model/game.entity';
 import { MockType, RANDOM_UUID, TestData } from '../test.utils';
-import { GameDto } from './dto/game.dto';
 import { PlaceType } from './enum/place-type.enum';
 import { GameService } from './game.service';
 
@@ -45,7 +44,7 @@ describe('GameService', () => {
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.create({ placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere' }));
-      expect(result).toEqual(GameDto.fromEntity(entity));
+      expect(result).toEqual(entity);
       expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
@@ -56,7 +55,7 @@ describe('GameService', () => {
     repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.findOne(entity.id));
-    expect(result).toEqual(GameDto.fromEntity(entity));
+    expect(result).toEqual(entity);
     expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
   });
 
@@ -65,7 +64,7 @@ describe('GameService', () => {
     repositoryMock.find.mockReturnValue(Promise.resolve([entity]));
 
     const result = await firstValueFrom(service.findAll());
-    expect(result).toEqual(GameDto.fromEntities([entity]));
+    expect(result).toEqual([entity]);
     expect(repositoryMock.find).toHaveBeenCalledTimes(1);
   });
 
@@ -83,7 +82,7 @@ describe('GameService', () => {
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere' }));
-      expect(result).toEqual(GameDto.fromEntity(entity));
+      expect(result).toEqual(entity);
       expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);

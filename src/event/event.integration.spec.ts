@@ -109,9 +109,9 @@ describe('Events', () => {
       expect(result.event.round).toBeUndefined();
       expect(result.event.player.id).toEqual(createdPlayer.id);
       expect(result.event.eventType.id).toEqual(createdEventType.id);
-      expect(result.event.penaltyValue).toEqual(0);
+      expect(result.event.penaltyValue).toBeNull();
       expect(result.event.penaltyUnit).toBeNull();
-      expect(result.event.multiplicatorValue).toEqual(1);
+      expect(result.event.multiplicatorValue).toEqual('1');
       expect(result.event.comment).toBeNull();
     });
 
@@ -221,9 +221,9 @@ describe('Events', () => {
       expect(result.round).toBeUndefined();
       expect(result.player.id).toEqual(createdPlayer.id);
       expect(result.eventType.id).toEqual(createdEventType.id);
-      expect(result.penaltyValue).toEqual(0);
+      expect(result.penaltyValue).toBeNull();
       expect(result.penaltyUnit).toBeNull();
-      expect(result.multiplicatorValue).toEqual(1);
+      expect(result.multiplicatorValue).toEqual('1');
       expect(result.comment).toBeNull();
     });
 
@@ -275,9 +275,9 @@ describe('Events', () => {
       expect(result.round).toBeUndefined();
       expect(result.player.id).toEqual(createdPlayer.id);
       expect(result.eventType.id).toEqual(createdEventType.id);
-      expect(result.penaltyValue).toEqual(0);
+      expect(result.penaltyValue).toBeNull();
       expect(result.penaltyUnit).toBeNull();
-      expect(result.multiplicatorValue).toEqual(1);
+      expect(result.multiplicatorValue).toEqual('1');
       expect(result.comment).toBeNull();
 
       await firstValueFrom(service.update(createdEvent.event.id, { multiplicatorValue: 1.5, comment: 'Lorem ipsum' }));
@@ -293,7 +293,7 @@ describe('Events', () => {
       expect(result.round).toBeUndefined();
       expect(result.player.id).toEqual(createdPlayer.id);
       expect(result.eventType.id).toEqual(createdEventType.id);
-      expect(result.penaltyValue).toEqual(0);
+      expect(result.penaltyValue).toBeNull();
       expect(result.penaltyUnit).toBeNull();
       expect(result.multiplicatorValue).toEqual(1.5);
       expect(result.comment).toEqual('Lorem ipsum');
@@ -405,7 +405,9 @@ describe('Events', () => {
       expect(result).toEqual(createdPlayer.id);
 
       const event = await firstValueFrom(service.findOne(createdEvent.event.id));
-      expect(event.player).toMatchObject({ id: createdPlayer.id, name: 'John', isDeleted: true });
+      expect(event.player.id).toEqual(createdPlayer.id);
+      expect(event.player.name).toEqual('John');
+      expect(differenceInMilliseconds(new Date(), event.player.deletedDateTime)).toBeLessThan(500);
     });
 
     it('should load event type even if it was softly deleted', async () => {
@@ -418,7 +420,9 @@ describe('Events', () => {
       expect(result).toEqual(createdEventType.id);
 
       const event = await firstValueFrom(service.findOne(createdEvent.event.id));
-      expect(event.eventType).toMatchObject({ id: createdEventType.id, description: 'test', isDeleted: true });
+      expect(event.eventType.id).toEqual(createdEventType.id);
+      expect(event.eventType.description).toEqual('test');
+      expect(differenceInMilliseconds(new Date(), event.eventType.deletedDateTime)).toBeLessThan(500);
     });
 
     it('should fail if game to remove not exists', async () => {

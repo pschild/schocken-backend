@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { CreateEventTypeDto } from './dto/create-event-type.dto';
 import { EventTypeDto } from './dto/event-type.dto';
 import { UpdateEventTypeDto } from './dto/update-event-type.dto';
@@ -15,25 +16,33 @@ export class EventTypeController {
   @ApiBody({ type: CreateEventTypeDto })
   @ApiCreatedResponse({ type: EventTypeDto })
   create(@Body() dto: CreateEventTypeDto): Observable<EventTypeDto> {
-    return this.service.create(dto);
+    return this.service.create(dto).pipe(
+      map(EventTypeDto.fromEntity)
+    );
   }
 
   @Get()
   @ApiOkResponse({ type: [EventTypeDto] })
   findAll(): Observable<EventTypeDto[]> {
-    return this.service.findAll();
+    return this.service.findAll().pipe(
+      map(EventTypeDto.fromEntities)
+    );
   }
 
   @Get(':id')
   @ApiOkResponse({ type: EventTypeDto })
   findOne(@Param('id') id: string): Observable<EventTypeDto> {
-    return this.service.findOne(id);
+    return this.service.findOne(id).pipe(
+      map(EventTypeDto.fromEntity)
+    );
   }
 
   @Patch(':id')
   @ApiOkResponse({ type: EventTypeDto })
   update(@Param('id') id: string, @Body() dto: UpdateEventTypeDto): Observable<EventTypeDto> {
-    return this.service.update(id, dto);
+    return this.service.update(id, dto).pipe(
+      map(EventTypeDto.fromEntity)
+    );
   }
 
   @Delete(':id')

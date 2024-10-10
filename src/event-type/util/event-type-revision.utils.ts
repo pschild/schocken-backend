@@ -1,7 +1,7 @@
 import { compareDesc, isBefore, isEqual } from 'date-fns';
-import { EventTypeRevisionDto } from '../dto/event-type-revision.dto';
+import { EventTypeRevision } from '../../model/event-type-revision.entity';
 
-export function findValidAt(entities: EventTypeRevisionDto[], date: Date): EventTypeRevisionDto {
+export function findValidAt(entities: EventTypeRevision[], date: Date): EventTypeRevision {
   const pastRevisions = entities
     .filter(entity => isBefore(entity.createDateTime, date) || isEqual(entity.createDateTime, date))
     .sort((a, b) => compareDesc(a.createDateTime, b.createDateTime)); // neuster Eintrag steht oben!

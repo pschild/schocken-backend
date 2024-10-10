@@ -4,7 +4,6 @@ import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
 import { Player } from '../model/player.entity';
 import { MockType, RANDOM_UUID, TestData } from '../test.utils';
-import { PlayerDto } from './dto/player.dto';
 import { PlayerService } from './player.service';
 
 /**
@@ -47,7 +46,7 @@ describe('PlayerService', () => {
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.create({ name: 'John' }));
-      expect(result).toEqual(PlayerDto.fromEntity(entity));
+      expect(result).toEqual(entity);
       expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
@@ -58,7 +57,7 @@ describe('PlayerService', () => {
     repositoryMock.findOneBy.mockReturnValue(Promise.resolve(entity));
 
     const result = await firstValueFrom(service.findOne(entity.id));
-    expect(result).toEqual(PlayerDto.fromEntity(entity));
+    expect(result).toEqual(entity);
     expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);
   });
 
@@ -67,7 +66,7 @@ describe('PlayerService', () => {
     repositoryMock.find.mockReturnValue(Promise.resolve([entity]));
 
     const result = await firstValueFrom(service.findAll());
-    expect(result).toEqual(PlayerDto.fromEntities([entity]));
+    expect(result).toEqual([entity]);
     expect(repositoryMock.find).toHaveBeenCalledTimes(1);
   });
 
@@ -85,7 +84,7 @@ describe('PlayerService', () => {
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { name: 'John' }));
-      expect(result).toEqual(PlayerDto.fromEntity(entity));
+      expect(result).toEqual(entity);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
       expect(repositoryMock.findOneBy).toHaveBeenCalledTimes(1);

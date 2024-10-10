@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { RANDOM_STRING, RANDOM_UUID } from '../test.utils';
 import { PlayerController } from './player.controller';
 import { PlayerService } from './player.service';
+import { of } from 'rxjs';
 
 /**
  * Blueprint for how to test a controller with fake http requests.
@@ -12,10 +13,10 @@ import { PlayerService } from './player.service';
 describe('PlayerController e2e', () => {
   let app: INestApplication;
   const playerService = {
-    create: jest.fn(),
-    findOne: jest.fn(),
-    findAll: jest.fn(),
-    update: jest.fn(),
+    create: jest.fn(() => of(null)),
+    findOne: jest.fn(() => of(null)),
+    findAll: jest.fn(() => of([])),
+    update: jest.fn(() => of(null)),
     remove: jest.fn(),
   };
 

@@ -1,17 +1,20 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { GameOverviewDto } from './dto/game-overview.dto';
-import { GameService } from './game.service';
+import { GameOverviewService } from './game-overview.service';
 
 @ApiTags('game-overview')
 @Controller('game-overview')
 export class GameOverviewController {
-  constructor(private readonly service: GameService) {}
+  constructor(private readonly overviewService: GameOverviewService) {}
 
   @Get()
   @ApiOkResponse({ type: [GameOverviewDto] })
   getOverview(): Observable<GameOverviewDto[]> {
-    return this.service.getOverview();
+    return this.overviewService.getOverview().pipe(
+      map(GameOverviewDto.fromEntities)
+    );
   }
 }

@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { of } from 'rxjs';
 import * as request from 'supertest';
 import { RANDOM_STRING, RANDOM_UUID } from '../test.utils';
 import { EventContext } from './enum/event-context.enum';
@@ -9,10 +10,10 @@ import { EventService } from './event.service';
 describe('EventController e2e', () => {
   let app: INestApplication;
   const eventService = {
-    create: jest.fn(),
-    findOne: jest.fn(),
-    findAll: jest.fn(),
-    update: jest.fn(),
+    create: jest.fn(() => of({})),
+    findOne: jest.fn(() => of(null)),
+    findAll: jest.fn(() => of([])),
+    update: jest.fn(() => of(null)),
     remove: jest.fn(),
   };
 

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { defaultIfEmpty, filter, forkJoin, from, Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CelebrationDto, isCelebration } from '../celebration';
 import { ensureExistence } from '../ensure-existence.operator';
 import { EventTypeService } from '../event-type/event-type.service';
@@ -10,8 +10,6 @@ import { GameService } from '../game/game.service';
 import { Event } from '../model/event.entity';
 import { RoundService } from '../round/round.service';
 import { CreateEventDto } from './dto/create-event.dto';
-import { CreateEventResponse } from './dto/create-event.response';
-import { EventDto } from './dto/event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventContext } from './enum/event-context.enum';
 
@@ -26,10 +24,10 @@ export class EventService {
   ) {
   }
 
-  create(dto: CreateEventDto): Observable<CreateEventResponse> {
+  create(dto: CreateEventDto): Observable<{ event: Event; celebration?: CelebrationDto; warning?: string }> {
     const referenceDate$ = dto.context === EventContext.GAME
-      ? this.gameService.findOne(dto.gameId).pipe(map(game => game.datetime))
-      : this.roundService.findOne(dto.roundId).pipe(map(round => round.game.datetime));
+      ? this.gameService.findOne(dto.gameId).pipe(map(game => game.datetime.toISOString()))
+      : this.roundService.findOne(dto.roundId).pipe(map(round => round.game.datetime.toISOString()));
 
     return referenceDate$.pipe(
       switchMap(referenceDate => this.eventTypeService.findValidPenalty(dto.eventTypeId, dto.context, new Date(referenceDate))),
@@ -53,23 +51,27 @@ export class EventService {
     );
   }
 
-  findAll(): Observable<EventDto[]> {
-    return from(this.repo.find()).pipe(
-      map(EventDto.fromEntities)
-    );
+  findAll(): Observable<Event[]> {
+    return from(this.repo.find());
   }
 
-  findOne(id: string): Observable<EventDto> {
-    return from(this.repo.findOne({ where: { id }, relations: ['player', 'eventType'], withDeleted: true })).pipe(
-      map(EventDto.fromEntity)
-    );
+  // findAllByGameId(id: string): Observable<Event[]> {
+  //   const roundIds$ = this.roundService.getIdsByGameId(id);
+  //   return roundIds$.pipe(
+  //     switchMap(roundIds =>
+  //       from(this.repo.find({ where: [{ game: { id }}, { round: In(roundIds) }], order: { datetime: 'ASC' }, relations: ['player', 'eventType', 'game', 'round'], withDeleted: true }))),
+  //   );
+  // }
+
+  findOne(id: string): Observable<Event> {
+    return from(this.repo.findOne({ where: { id }, relations: ['player', 'eventType'], withDeleted: true }));
   }
 
   countByEventTypeId(eventTypeId: string): Observable<number> {
     return from(this.repo.countBy({ eventType: { id: eventTypeId } }));
   }
 
-  update(id: string, dto: UpdateEventDto): Observable<EventDto> {
+  update(id: string, dto: UpdateEventDto): Observable<Event> {
     return from(this.repo.preload({ id, ...UpdateEventDto.mapForeignKeys(dto) })).pipe(
       ensureExistence(),
       switchMap(entity => from(this.repo.save(entity))),
