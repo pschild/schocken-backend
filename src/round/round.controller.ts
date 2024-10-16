@@ -5,7 +5,6 @@ import { map } from 'rxjs/operators';
 import { CreateRoundDto } from './dto/create-round.dto';
 import { CreateRoundResponse } from './dto/create-round.response';
 import { RoundDto } from './dto/round.dto';
-import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { UpdateRoundDto } from './dto/update-round.dto';
 import { RoundService } from './round.service';
 
@@ -52,15 +51,6 @@ export class RoundController {
   @ApiProduces('text/plain')
   remove(@Param('id') id: string): Observable<string> {
     return this.service.remove(id);
-  }
-
-  // TODO: auslagern in round-details.controller
-  @Patch(':id/attendees')
-  @ApiOkResponse({ type: RoundDto })
-  updateAttendees(@Param('id') id: string, @Body() dto: UpdateAttendanceDto): Observable<RoundDto> {
-    return this.service.updateAttendees(id, dto).pipe(
-      map(RoundDto.fromEntity)
-    );
   }
 
 }

@@ -22,6 +22,9 @@ export class EventTypeOverviewDto {
   @ApiPropertyOptional({ type: String, example: 'Augenzahl' })
   multiplicatorUnit?: string;
 
+  @ApiProperty({ type: Boolean })
+  hasComment: boolean;
+
   @ApiPropertyOptional({ type: Number })
   eventCount: number;
 
@@ -33,6 +36,7 @@ export class EventTypeOverviewDto {
       penaltyValue: +entity.penaltyValue,
       penaltyUnit: entity.penaltyUnit,
       multiplicatorUnit: entity.multiplicatorUnit,
+      hasComment: entity.hasComment,
       eventCount: +entity.count,
     } : null;
   }

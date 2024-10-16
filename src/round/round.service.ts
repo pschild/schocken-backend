@@ -49,12 +49,18 @@ export class RoundService {
   }
 
   getByGameId(gameId: string): Observable<Round[]> {
-    return from(this.repo.find({ where: { game: { id: gameId } }, order: { datetime: 'ASC' }, relations: ['events', 'events.player', 'events.eventType', 'attendees', 'finalists'], withDeleted: true }));
+    return from(this.repo.find({ where: { game: { id: gameId } }, order: { datetime: 'ASC', events: { datetime: 'ASC' } }, relations: ['events', 'events.player', 'events.eventType', 'attendees', 'finalists'], withDeleted: true }));
+  }
+
+  getLatestByGameId(gameId: string): Observable<Round | null> {
+    return from(this.repo.find({ where: { game: { id: gameId } }, order: { datetime: 'DESC' }, take: 1, relations: ['attendees'] })).pipe(
+      map(rounds => rounds && rounds.length ? rounds[0] : null),
+    );
   }
 
   // TODO: auslagern in round-detail.service
   getDetails(id: string): Observable<Round> {
-    return from(this.repo.findOne({ where: { id }, relations: ['events', 'events.player', 'events.eventType', 'attendees', 'finalists'], withDeleted: true }));
+    return from(this.repo.findOne({ where: { id }, relations: ['events', 'events.player', 'events.eventType', 'attendees', 'finalists'], order: { events: { datetime: 'ASC' } }, withDeleted: true }));
   }
 
   update(id: string, dto: UpdateRoundDto): Observable<Round> {

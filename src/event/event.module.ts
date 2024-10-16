@@ -4,6 +4,7 @@ import { EventTypeModule } from '../event-type/event-type.module';
 import { GameModule } from '../game/game.module';
 import { Event } from '../model/event.entity';
 import { RoundModule } from '../round/round.module';
+import { EventDetailsController } from './event-detail.controller';
 import { EventController } from './event.controller';
 import { EventService } from './event.service';
 import { EventEntitySubscriber } from './event.subscriber';
@@ -15,7 +16,7 @@ import { EventEntitySubscriber } from './event.subscriber';
     RoundModule,
     EventTypeModule
   ],
-  controllers: [EventController],
+  controllers: [EventController, EventDetailsController],
   providers: [EventService, EventEntitySubscriber],
 })
 export class EventModule {}

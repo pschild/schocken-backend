@@ -1,8 +1,11 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { Observable } from 'rxjs';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
+import { Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { CreateDetailRoundResponse } from './dto/create-detail-round.response';
+import { CreateRoundDto } from './dto/create-round.dto';
 import { RoundDetailDto } from './dto/round-detail.dto';
+import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { UpdateFinalistsDto } from './dto/update-finalists.dto';
 import { RoundService } from './round.service';
 
@@ -10,6 +13,18 @@ import { RoundService } from './round.service';
 @Controller('round-details')
 export class RoundDetailsController {
   constructor(private readonly service: RoundService) {}
+
+  @Post()
+  @ApiBody({ type: CreateRoundDto })
+  @ApiCreatedResponse({ type: CreateDetailRoundResponse })
+  create(@Body() dto: CreateRoundDto): Observable<CreateDetailRoundResponse> {
+    return this.service.getLatestByGameId(dto.gameId).pipe(
+      switchMap(latestRound => this.service.create({ ...dto, attendees: latestRound ? latestRound.attendees.map(att => att.id) : [] })),
+      switchMap(response => this.getDetails(response.round.id).pipe(
+        map(round => ({ ...response, round }))
+      )),
+    );
+  }
 
   @Get(':gameId')
   @ApiOkResponse({ type: [RoundDetailDto] })
@@ -27,12 +42,27 @@ export class RoundDetailsController {
     );
   }
 
+  @Patch(':id/attendees')
+  @ApiOkResponse({ type: RoundDetailDto })
+  updateAttendees(@Param('id') id: string, @Body() dto: UpdateAttendanceDto): Observable<RoundDetailDto> {
+    return this.service.updateAttendees(id, dto).pipe(
+      map(RoundDetailDto.fromEntity)
+    );
+  }
+
   @Patch(':id/finalists')
   @ApiOkResponse({ type: RoundDetailDto })
   updateFinalists(@Param('id') id: string, @Body() dto: UpdateFinalistsDto): Observable<RoundDetailDto> {
     return this.service.updateFinalists(id, dto).pipe(
       map(RoundDetailDto.fromEntity)
     );
+  }
+
+  @Delete(':id')
+  @ApiOkResponse({ type: String })
+  @ApiProduces('text/plain')
+  remove(@Param('id') id: string): Observable<string> {
+    return this.service.remove(id);
   }
 
 }
