@@ -42,6 +42,10 @@ export class RoundService {
     return from(this.repo.findOneOrFail({ where: { id }, relations: ['game', 'attendees', 'finalists'], withDeleted: true }));
   }
 
+  findOneWithGame(id: string): Observable<Round> {
+    return from(this.repo.findOneOrFail({ where: { id }, relations: ['game'], withDeleted: true }));
+  }
+
   getIdsByGameId(gameId: string): Observable<string[]> {
     return from(this.repo.find({ where: { game: { id: gameId } }, withDeleted: true })).pipe(
       map(rounds => rounds.map(round => round.id))

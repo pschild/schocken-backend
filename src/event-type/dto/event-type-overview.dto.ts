@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EventType } from '../../model/event-type.entity';
 import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
 import { EventTypeContext } from '../enum/event-type-context.enum';
+import { EventTypeTrigger } from '../enum/event-type-trigger.enum';
 
 export class EventTypeOverviewDto {
   @ApiProperty({ type: String, format: 'uuid' })
@@ -12,6 +13,9 @@ export class EventTypeOverviewDto {
 
   @ApiProperty({ enum: EventTypeContext, example: EventTypeContext.ROUND })
   context: EventTypeContext;
+
+  @ApiPropertyOptional({ enum: EventTypeTrigger, example: EventTypeTrigger.SCHOCK_AUS })
+  trigger?: EventTypeTrigger;
 
   @ApiPropertyOptional({ type: Number })
   penaltyValue?: number;
@@ -33,6 +37,7 @@ export class EventTypeOverviewDto {
       id: entity.id,
       description: entity.description,
       context: entity.context,
+      trigger: entity.trigger,
       penaltyValue: +entity.penaltyValue,
       penaltyUnit: entity.penaltyUnit,
       multiplicatorUnit: entity.multiplicatorUnit,

@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { defaultIfEmpty, filter, forkJoin, from, Observable, switchMap } from 'rxjs';
+import { concat, defaultIfEmpty, filter, forkJoin, from, Observable, switchMap, toArray } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CelebrationDto, isCelebration } from '../celebration';
 import { ensureExistence } from '../ensure-existence.operator';
 import { EventTypeService } from '../event-type/event-type.service';
 import { GameService } from '../game/game.service';
 import { Event } from '../model/event.entity';
 import { RoundService } from '../round/round.service';
+import { BulkCreateEventsDto } from './dto/bulk-create-events.dto';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventContext } from './enum/event-context.enum';
@@ -27,7 +28,7 @@ export class EventService {
   create(dto: CreateEventDto): Observable<{ event: Event; celebration?: CelebrationDto; warning?: string }> {
     const referenceDate$ = dto.context === EventContext.GAME
       ? this.gameService.findOne(dto.gameId).pipe(map(game => game.datetime.toISOString()))
-      : this.roundService.findOne(dto.roundId).pipe(map(round => round.game.datetime.toISOString()));
+      : this.roundService.findOneWithGame(dto.roundId).pipe(map(round => round.game.datetime.toISOString()));
 
     return referenceDate$.pipe(
       switchMap(referenceDate => this.eventTypeService.findValidPenalty(dto.eventTypeId, dto.context, new Date(referenceDate))),
@@ -37,6 +38,21 @@ export class EventService {
           map(({ event, celebration }) => ({ event, celebration, warning })),
         );
       })
+    );
+  }
+
+  bulkCreate(dto: BulkCreateEventsDto): Observable<{ event: Event; celebration?: CelebrationDto; warning?: string }[]> {
+    const { datetime, context, gameId, roundId, eventTypeId, playerIds } = dto;
+    // Important: use concat instead of forkJoin to avoid transaction problems :-(
+    return concat(...playerIds.map(playerId => this.create({
+      playerId,
+      context,
+      roundId,
+      gameId,
+      eventTypeId,
+      datetime,
+    }))).pipe(
+      toArray()
     );
   }
 

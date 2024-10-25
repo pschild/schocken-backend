@@ -22,7 +22,7 @@ export class CreateRoundDto {
     return {
       ...dto,
       game: { id: dto.gameId },
-      attendees: dto.attendees.map(id => ({ id })),
+      ...(dto.attendees ? { attendees: dto.attendees.map(id => ({ id })) } : {}),
     } as unknown as Round;
   }
 }

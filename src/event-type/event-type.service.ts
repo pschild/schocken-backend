@@ -64,7 +64,7 @@ export class EventTypeService {
       })),
       map(({ current, revision }) => {
         return this.penaltyIsOutdated(current, revision)
-          ? { penaltyValue: revision.penaltyValue, penaltyUnit: revision.penaltyUnit, warning: `Penalty valid at ${format(referenceDate, 'dd.MM.yyyy HH:mm:ss')}: ${revision.penaltyValue} ${revision.penaltyUnit}, penalty valid now: ${current.penaltyValue} ${current.penaltyUnit}` }
+          ? { penaltyValue: revision.penaltyValue, penaltyUnit: revision.penaltyUnit, warning: `Der aktuelle Betrag der Strafe (${current.penaltyValue || '-'} ${current.penaltyUnit || ''}) wurde automatisch auf den zum Zeitpunkt des Spiels gültigen Betrag (${revision.penaltyValue || '-'} ${revision.penaltyUnit || ''} am/um ${format(referenceDate, 'dd.MM.yyyy HH:mm:ss')}) angepasst.` }
           : { penaltyValue: current.penaltyValue, penaltyUnit: current.penaltyUnit };
       }),
     );
