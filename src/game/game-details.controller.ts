@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
+import { ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { GameDetailFullDto } from './dto/game-detail-full.dto';
@@ -38,5 +38,12 @@ export class GameDetailsController {
     return this.gameDetailService.update(id, dto).pipe(
       map(GameDetailDto.fromEntity)
     );
+  }
+
+  @Delete(':id')
+  @ApiOkResponse({ type: String })
+  @ApiProduces('text/plain')
+  remove(@Param('id') id: string): Observable<string> {
+    return this.gameDetailService.remove(id);
   }
 }

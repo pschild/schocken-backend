@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { from, Observable, switchMap } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Game } from '../model/game.entity';
@@ -34,6 +35,13 @@ export class GameDetailService {
       ensureExistence(),
       switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),
+    );
+  }
+
+  remove(id: string): Observable<string> {
+    return from(this.repo.findOneByOrFail({ id })).pipe(
+      switchMap(entity => from(this.repo.remove(entity))),
+      map(() => id)
     );
   }
 

@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { GameOverviewOfYearDto } from './dto/game-overview-of-year.dto';
 import { GameOverviewDto } from './dto/game-overview.dto';
 import { GameOverviewService } from './game-overview.service';
 
@@ -11,10 +12,12 @@ export class GameOverviewController {
   constructor(private readonly overviewService: GameOverviewService) {}
 
   @Get()
-  @ApiOkResponse({ type: [GameOverviewDto] })
-  getOverview(): Observable<GameOverviewDto[]> {
+  @ApiOkResponse({ type: [GameOverviewOfYearDto] })
+  getOverview(): Observable<GameOverviewOfYearDto[]> {
     return this.overviewService.getOverview().pipe(
-      map(GameOverviewDto.fromEntities)
+      map(overviewItems =>
+        overviewItems.map(item => ({...item, games: GameOverviewDto.fromEntities(item.games)}))
+      )
     );
   }
 }
