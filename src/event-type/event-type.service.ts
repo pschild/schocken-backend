@@ -33,24 +33,6 @@ export class EventTypeService {
     return from(this.repo.find({ relations: ['revisions'] }));
   }
 
-  /**
-   * Queries all event types by given context and sorts them by their frequency.
-   * @param context
-   */
-  getOverviewByContext(context: EventTypeContext): Observable<EventType[]> {
-    return from(
-      this.repo.createQueryBuilder('et')
-        .select(['et.*', 'COUNT(e.id) as count'])
-        .where({ context })
-        .leftJoin(Event, 'e', 'e.eventTypeId = et.id')
-        .groupBy('et.id')
-        .addGroupBy('et.description')
-        .orderBy('count', 'DESC')
-        .addOrderBy('et.description', 'ASC')
-        .getRawMany<EventType & { count: number }>()
-    );
-  }
-
   findOne(id: string): Observable<EventType> {
     return from(this.repo.findOne({ where: { id }, relations: ['revisions'] }));
   }
@@ -72,6 +54,24 @@ export class EventTypeService {
 
   private penaltyIsOutdated(currentEntity: EventType, revision: EventTypeRevision): boolean {
     return revision && (currentEntity.penaltyValue !== revision.penaltyValue || currentEntity.penaltyUnit !== revision.penaltyUnit);
+  }
+
+  /**
+   * Queries all event types by given context and sorts them by their frequency.
+   * @param context
+   */
+  getOverviewByContext(context: EventTypeContext): Observable<(EventType & { count: number })[]> {
+    return from(
+      this.repo.createQueryBuilder('et')
+        .select(['et.*', 'COUNT(e.id) as count'])
+        .where({ context })
+        .leftJoin(Event, 'e', 'e.eventTypeId = et.id')
+        .groupBy('et.id')
+        .addGroupBy('et.description')
+        .orderBy('count', 'DESC')
+        .addOrderBy('et.description', 'ASC')
+        .getRawMany<EventType & { count: number }>()
+    );
   }
 
   update(id: string, dto: UpdateEventTypeDto): Observable<EventType> {

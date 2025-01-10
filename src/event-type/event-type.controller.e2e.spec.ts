@@ -70,14 +70,6 @@ describe('EventTypeController e2e', () => {
   describe('get', () => {
     it.each([
       [200, undefined],
-    ])('findOne request should return status=%p', async (status: number, errors: string[]) => {
-      const response = await request(app.getHttpServer()).get(`/event-type/${RANDOM_UUID()}`);
-      expect(response.status).toEqual(status);
-      expect(response.body.message).toEqual(errors);
-    });
-
-    it.each([
-      [200, undefined],
     ])('findAll request should return status=%p', async (status: number, errors: string[]) => {
       const response = await request(app.getHttpServer()).get(`/event-type`);
       expect(response.status).toEqual(status);

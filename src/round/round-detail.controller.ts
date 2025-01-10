@@ -7,21 +7,20 @@ import { CreateRoundDto } from './dto/create-round.dto';
 import { RoundDetailDto } from './dto/round-detail.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { UpdateFinalistsDto } from './dto/update-finalists.dto';
-import { RoundService } from './round.service';
+import { RoundDetailService } from './round-detail.service';
 
 @ApiTags('round-details')
 @Controller('round-details')
-export class RoundDetailsController {
-  constructor(private readonly service: RoundService) {}
+export class RoundDetailController {
+  constructor(private readonly service: RoundDetailService) {}
 
   @Post()
   @ApiBody({ type: CreateRoundDto })
   @ApiCreatedResponse({ type: CreateDetailRoundResponse })
   create(@Body() dto: CreateRoundDto): Observable<CreateDetailRoundResponse> {
-    return this.service.getLatestByGameId(dto.gameId).pipe(
-      switchMap(latestRound => this.service.create({ ...dto, attendees: latestRound ? latestRound.attendees.map(att => att.id) : [] })),
-      switchMap(response => this.getDetails(response.round.id).pipe(
-        map(round => ({ ...response, round }))
+    return this.service.create(dto).pipe(
+      switchMap(response => this.service.getDetails(response.round.id).pipe(
+        map(round => ({ ...response, round: RoundDetailDto.fromEntity(round) }))
       )),
     );
   }
@@ -29,7 +28,7 @@ export class RoundDetailsController {
   @Get(':gameId')
   @ApiOkResponse({ type: [RoundDetailDto] })
   getByGameId(@Param('gameId') gameId: string): Observable<RoundDetailDto[]> {
-    return this.service.getByGameId(gameId).pipe(
+    return this.service.findByGameId(gameId).pipe(
       map(RoundDetailDto.fromEntities)
     );
   }

@@ -5,17 +5,15 @@ import { Repository } from 'typeorm';
 import { Game } from '../model/game.entity';
 import { MockType, RANDOM_UUID, TestData } from '../test.utils';
 import { PlaceType } from './enum/place-type.enum';
-import { GameService } from './game.service';
+import { GameDetailService } from './game-detail.service';
 
-describe('GameService', () => {
-  let service: GameService;
+describe('GameDetailService', () => {
+  let service: GameDetailService;
   let repositoryMock: MockType<Repository<Game>>;
 
   const repositoryMockFactory: () => MockType<Repository<Game>> = jest.fn(() => ({
     findOne: jest.fn(),
-    findOneOrFail: jest.fn(),
     findOneByOrFail: jest.fn(),
-    find: jest.fn(),
     save: jest.fn(),
     preload: jest.fn(),
     remove: jest.fn(),
@@ -24,12 +22,12 @@ describe('GameService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        GameService,
+        GameDetailService,
         { provide: getRepositoryToken(Game), useFactory: repositoryMockFactory },
       ],
     }).compile();
 
-    service = module.get(GameService);
+    service = module.get(GameDetailService);
     repositoryMock = module.get(getRepositoryToken(Game));
   });
 
@@ -40,32 +38,34 @@ describe('GameService', () => {
   describe('create', () => {
     it('should create a new entity successfully', async () => {
       const entity = TestData.game();
-      repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
+      repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.create({ placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere' }));
       expect(result).toEqual(entity);
-      expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });
   });
 
-  it('should find one entity', async () => {
-    const entity = TestData.game();
-    repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve(entity));
+  describe('query', () => {
+    it('should find one entity', async () => {
+      const entity = TestData.game();
+      repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
 
-    const result = await firstValueFrom(service.findOne(entity.id));
-    expect(result).toEqual(entity);
-    expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
-  });
+      const result = await firstValueFrom(service.findOne(entity.id));
+      expect(result).toEqual(entity);
+      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+    });
 
-  it('should find all entities', async () => {
-    const entity = TestData.game();
-    repositoryMock.find.mockReturnValue(Promise.resolve([entity]));
+    it('should get datetime of game', async () => {
+      const entity = TestData.game();
+      repositoryMock.findOne.mockReturnValue(Promise.resolve(entity));
 
-    const result = await firstValueFrom(service.findAll());
-    expect(result).toEqual([entity]);
-    expect(repositoryMock.find).toHaveBeenCalledTimes(1);
+      const result = await firstValueFrom(service.getDatetime(entity.id));
+      expect(result).toEqual(entity.datetime);
+      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('update', () => {
@@ -77,13 +77,13 @@ describe('GameService', () => {
 
     it('should update an entity successfully', async () => {
       const entity = TestData.game();
-      repositoryMock.findOneOrFail.mockReturnValue(Promise.resolve( entity))
+      repositoryMock.findOne.mockReturnValue(Promise.resolve( entity))
       repositoryMock.preload.mockReturnValue(Promise.resolve(entity));
       repositoryMock.save.mockReturnValue(Promise.resolve(entity));
 
       const result = await firstValueFrom(service.update(entity.id, { placeType: PlaceType.AWAY, placeOfAwayGame: 'anywhere' }));
       expect(result).toEqual(entity);
-      expect(repositoryMock.findOneOrFail).toHaveBeenCalledTimes(1);
+      expect(repositoryMock.findOne).toHaveBeenCalledTimes(1);
       expect(repositoryMock.preload).toHaveBeenCalledTimes(1);
       expect(repositoryMock.save).toHaveBeenCalledTimes(1);
     });

@@ -4,31 +4,29 @@ import { concat, defaultIfEmpty, filter, forkJoin, from, Observable, switchMap, 
 import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { CelebrationDto, isCelebration } from '../celebration';
-import { ensureExistence } from '../ensure-existence.operator';
 import { EventTypeService } from '../event-type/event-type.service';
-import { GameService } from '../game/game.service';
+import { GameDetailService } from '../game/game-detail.service';
 import { Event } from '../model/event.entity';
-import { RoundService } from '../round/round.service';
+import { RoundDetailService } from '../round/round-detail.service';
 import { BulkCreateEventsDto } from './dto/bulk-create-events.dto';
 import { CreateEventDto } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
 import { EventContext } from './enum/event-context.enum';
 
 @Injectable()
-export class EventService {
+export class EventDetailService {
 
   constructor(
     @InjectRepository(Event) private readonly repo: Repository<Event>,
-    private readonly gameService: GameService,
-    private readonly roundService: RoundService,
+    private readonly gameDetailService: GameDetailService,
+    private readonly roundDetailService: RoundDetailService,
     private readonly eventTypeService: EventTypeService
   ) {
   }
 
   create(dto: CreateEventDto): Observable<{ event: Event; celebration?: CelebrationDto; warning?: string }> {
     const referenceDate$ = dto.context === EventContext.GAME
-      ? this.gameService.findOne(dto.gameId).pipe(map(game => game.datetime.toISOString()))
-      : this.roundService.findOneWithGame(dto.roundId).pipe(map(round => round.game.datetime.toISOString()));
+      ? this.gameDetailService.getDatetime(dto.gameId).pipe(map(datetime => datetime.toISOString()))
+      : this.roundDetailService.getGameDatetime(dto.roundId).pipe(map(datetime => datetime.toISOString()));
 
     return referenceDate$.pipe(
       switchMap(referenceDate => this.eventTypeService.findValidPenalty(dto.eventTypeId, dto.context, new Date(referenceDate))),
@@ -38,21 +36,6 @@ export class EventService {
           map(({ event, celebration }) => ({ event, celebration, warning })),
         );
       })
-    );
-  }
-
-  bulkCreate(dto: BulkCreateEventsDto): Observable<{ event: Event; celebration?: CelebrationDto; warning?: string }[]> {
-    const { datetime, context, gameId, roundId, eventTypeId, playerIds } = dto;
-    // Important: use concat instead of forkJoin to avoid transaction problems :-(
-    return concat(...playerIds.map(playerId => this.create({
-      playerId,
-      context,
-      roundId,
-      gameId,
-      eventTypeId,
-      datetime,
-    }))).pipe(
-      toArray()
     );
   }
 
@@ -67,31 +50,26 @@ export class EventService {
     );
   }
 
-  findAll(): Observable<Event[]> {
-    return from(this.repo.find());
-  }
-
-  // findAllByGameId(id: string): Observable<Event[]> {
-  //   const roundIds$ = this.roundService.getIdsByGameId(id);
-  //   return roundIds$.pipe(
-  //     switchMap(roundIds =>
-  //       from(this.repo.find({ where: [{ game: { id }}, { round: In(roundIds) }], order: { datetime: 'ASC' }, relations: ['player', 'eventType', 'game', 'round'], withDeleted: true }))),
-  //   );
-  // }
-
-  findOne(id: string): Observable<Event> {
-    return from(this.repo.findOne({ where: { id }, relations: ['player', 'eventType'], withDeleted: true }));
-  }
-
-  countByEventTypeId(eventTypeId: string): Observable<number> {
+  private countByEventTypeId(eventTypeId: string): Observable<number> {
     return from(this.repo.countBy({ eventType: { id: eventTypeId } }));
   }
 
-  update(id: string, dto: UpdateEventDto): Observable<Event> {
-    return from(this.repo.preload({ id, ...UpdateEventDto.mapForeignKeys(dto) })).pipe(
-      ensureExistence(),
-      switchMap(entity => from(this.repo.save(entity))),
-      switchMap(() => this.findOne(id)),
+  private findOne(id: string): Observable<Event> {
+    return from(this.repo.findOne({ where: { id }, relations: ['player', 'eventType'], withDeleted: true }));
+  }
+
+  bulkCreate(dto: BulkCreateEventsDto): Observable<{ event: Event; celebration?: CelebrationDto; warning?: string }[]> {
+    const { datetime, context, gameId, roundId, eventTypeId, playerIds } = dto;
+    // Important: use concat instead of forkJoin to avoid transaction problems :-(
+    return concat(...playerIds.map(playerId => this.create({
+      playerId,
+      context,
+      roundId,
+      gameId,
+      eventTypeId,
+      datetime,
+    }))).pipe(
+      toArray()
     );
   }
 

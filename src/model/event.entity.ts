@@ -14,10 +14,10 @@ export class Event extends BaseEntity {
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   datetime: Date;
 
-  @Column({ type: 'numeric', nullable: false, default: 1 })
+  @Column({ type: 'real', nullable: false, default: 1 })
   multiplicatorValue: number;
 
-  @Column({ type: 'numeric', nullable: true })
+  @Column({ type: 'real', nullable: true })
   penaltyValue: number;
 
   @Column({ type: 'enum', enum: PenaltyUnit, nullable: true })

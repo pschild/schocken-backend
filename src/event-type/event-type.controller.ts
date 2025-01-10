@@ -29,14 +29,6 @@ export class EventTypeController {
     );
   }
 
-  @Get(':id')
-  @ApiOkResponse({ type: EventTypeDto })
-  findOne(@Param('id') id: string): Observable<EventTypeDto> {
-    return this.service.findOne(id).pipe(
-      map(EventTypeDto.fromEntity)
-    );
-  }
-
   @Patch(':id')
   @ApiOkResponse({ type: EventTypeDto })
   update(@Param('id') id: string, @Body() dto: UpdateEventTypeDto): Observable<EventTypeDto> {

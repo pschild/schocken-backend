@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Game } from '../model/game.entity';
+import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 
 @Injectable()
@@ -15,18 +16,22 @@ export class GameDetailService {
   ) {
   }
 
+  create(dto: CreateGameDto): Observable<Game> {
+    return from(this.repo.save(CreateGameDto.mapForeignKeys(dto))).pipe(
+      switchMap(({ id }) => this.findOne(id)),
+    );
+  }
+
   findOne(id: string): Observable<Game> {
     return from(this.repo.findOne({ where: { id }, relations: ['hostedBy', 'events', 'events.player', 'events.eventType'], withDeleted: true })).pipe(
       ensureExistence(),
     );
   }
 
-  /**
-   * @deprecated
-   */
-  findOneFull(id: string): Observable<Game> {
-    return from(this.repo.findOne({ where: { id }, relations: ['rounds', 'hostedBy', 'events', 'events.player', 'events.eventType', 'rounds.events', 'rounds.events.player', 'rounds.events.eventType', 'rounds.attendees', 'rounds.finalists'], order: { rounds: { datetime: 'ASC' } }, withDeleted: true })).pipe(
+  getDatetime(id: string): Observable<Date> {
+    return from(this.repo.findOne({ select: ['datetime'], where: { id }})).pipe(
       ensureExistence(),
+      map(game => game.datetime),
     );
   }
 

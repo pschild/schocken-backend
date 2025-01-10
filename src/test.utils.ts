@@ -2,10 +2,12 @@ import { DataType, newDb } from 'pg-mem';
 import { DataSource } from 'typeorm';
 import { v4 } from 'uuid';
 import { EventTypeContext } from './event-type/enum/event-type-context.enum';
+import { EventTypeRevisionType } from './event-type/enum/event-type-revision-type.enum';
 import { EventTypeTrigger } from './event-type/enum/event-type-trigger.enum';
 import { EventContext } from './event/enum/event-context.enum';
 import { PlaceType } from './game/enum/place-type.enum';
 import { BaseEntity } from './model/base.entity';
+import { EventTypeRevision } from './model/event-type-revision.entity';
 import { EventType } from './model/event-type.entity';
 import { Event } from './model/event.entity';
 import { Game } from './model/game.entity';
@@ -22,10 +24,31 @@ export const RANDOM_UUID = () => v4();
 
 export const RANDOM_STRING = (length: number) => [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
 
+let dataSource: DataSource;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getDockerDataSource = async () => {
+  if (dataSource) {
+    return dataSource;
+  }
+  dataSource = new DataSource({
+    type: 'postgres',
+    host: process.env.DATABASE_HOST,
+    port: Number(process.env.DATABASE_PORT),
+    database: process.env.DATABASE_DB,
+    username: process.env.DATABASE_USER,
+    password: process.env.DATABASE_PASSWORD,
+    entities: [Game, Round, Player, Event, EventType, EventTypeRevision],
+  });
+  await dataSource.initialize();
+  await dataSource.synchronize();
+  return dataSource;
+};
+
 /**
  * Setup a data source for in-memory postgres used by integration tests.
  * @param entities Pass your entities
  * @param withMigration If `true` the migrations are run, otherwise entity syncing is enabled.
+ * @deprecated
  */
 export const setupDataSource = async (entities: unknown[], withMigration = false) => {
   const db = newDb({
@@ -83,9 +106,18 @@ export const setupDataSource = async (entities: unknown[], withMigration = false
 };
 
 export const truncateAllTables = async (source: DataSource) => {
-  const entities = source.entityMetadatas;
-  const tableNames = entities.map(entity => `"${entity.tableName}"`);
-  await Promise.all(tableNames.map(name => source.query(`TRUNCATE ${name} CASCADE`)));
+  /**
+   * We cannot use TRUNCATE because that leads to deadlock errors...
+   * TODO: think about using https://github.com/node-ex/showcase--nx-nestjs--typeorm-postgresql--api-tests-with-testcontainers-db/blob/4c0e5ff6f986e9347b16bae481aca63f54d58a1a/apps/app-nest-1/jest/standalone/setupFilesAfterEnv/setupDatabaseConnection.ts#L58
+   */
+  await source.query(`DELETE FROM "finals"`);
+  await source.query(`DELETE FROM "attendances"`);
+  await source.query(`DELETE FROM "event"`);
+  await source.query(`DELETE FROM "event_type_revision"`);
+  await source.query(`DELETE FROM "event_type"`);
+  await source.query(`DELETE FROM "round"`);
+  await source.query(`DELETE FROM "game"`);
+  await source.query(`DELETE FROM "player"`);
 };
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -157,6 +189,21 @@ export namespace TestData {
       penaltyValue: 0.5,
       penaltyUnit: PenaltyUnit.EURO,
       revisions: []
+    };
+  }
+
+  export function eventTypeRevision(type: EventTypeRevisionType = EventTypeRevisionType.INSERT): EventTypeRevision {
+    return {
+      ...createBaseEntity(false),
+      type,
+      description: 'some event',
+      context: EventTypeContext.ROUND,
+      hasComment: false,
+      multiplicatorUnit: 'some unit',
+      trigger: EventTypeTrigger.START_NEW_ROUND,
+      penaltyValue: 0.5,
+      penaltyUnit: PenaltyUnit.EURO,
+      eventType: null,
     };
   }
 

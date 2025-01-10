@@ -9,6 +9,7 @@ export function getWarnings(round: Round): string[] {
   const finalistIds = (round.finalists || []).map(p => p.id);
   const notFinalistIds = attendeeIds.filter(id => !finalistIds.includes(id));
   const verlorenEvents = round.events?.length ? round.events.filter(e => e.eventType?.trigger === EventTypeTrigger.START_NEW_ROUND) : [];
+  const verliererIds = verlorenEvents.map(e => e.player.id);
   const schockAusEvents = round.events?.length ? round.events.filter(e => e.eventType?.trigger === EventTypeTrigger.SCHOCK_AUS) : [];
   const playerIdsWithSchockAus = schockAusEvents.map(e => e.player.id);
   const schockAusStrafeEvents = round.events?.length ? round.events.filter(e => e.eventType?.trigger === EventTypeTrigger.SCHOCK_AUS_PENALTY) : [];
@@ -43,6 +44,10 @@ export function getWarnings(round: Round): string[] {
 
   if (schockAusStrafeEvents.length && !schockAusEvents.length) {
     warnings.push(`Es gibt ${schockAusStrafeEvents.length} Schock-Aus-Strafe(n), aber keinen Schock-Aus`);
+  }
+
+  if (schockAusEvents.length === 1 && verlorenEvents.length >= 1 && verliererIds.includes(playerIdsWithSchockAus[0])) {
+    warnings.push(`Der einzige Spieler mit einem Schock-Aus kann nicht verlieren`);
   }
 
   return warnings;

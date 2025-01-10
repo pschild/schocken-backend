@@ -1,29 +1,21 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { differenceInMilliseconds } from 'date-fns';
 import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
-import { EventTypeRevision } from '../model/event-type-revision.entity';
-import { EventType } from '../model/event-type.entity';
-import { Event } from '../model/event.entity';
-import { Game } from '../model/game.entity';
-import { Round } from '../model/round.entity';
 import { Player } from '../model/player.entity';
-import { RANDOM_UUID, setupDataSource, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
+import { getDockerDataSource, RANDOM_UUID, truncateAllTables, UUID_V4_REGEX } from '../test.utils';
 import { DuplicatePlayerNameException } from './exception/duplicate-player-name.exception';
 import { PlayerService } from './player.service';
-import { differenceInMilliseconds } from 'date-fns';
 import { PlayerSubscriber } from './player.subscriber';
 
-/**
- * Blueprint for how to test a service using an in-memory database in background.
- */
 describe('PlayerService integration', () => {
   let service: PlayerService;
   let source: DataSource;
   let repo: Repository<Player>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, Event, EventType, EventTypeRevision]);
+    source = await getDockerDataSource();
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -48,10 +40,6 @@ describe('PlayerService integration', () => {
 
   afterEach(async () => {
     await truncateAllTables(source);
-  })
-
-  afterAll(async () => {
-    await source.destroy();
   });
 
   it('should be defined', () => {
@@ -64,9 +52,9 @@ describe('PlayerService integration', () => {
       expect(result).toBeTruthy();
       expect(result.id).toMatch(UUID_V4_REGEX);
       expect(result.name).toBe('John');
-      expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(500);
-      expect(differenceInMilliseconds(new Date(), new Date(result.registered))).toBeLessThan(500);
+      expect(differenceInMilliseconds(new Date(), new Date(result.createDateTime))).toBeLessThan(1000);
+      expect(differenceInMilliseconds(new Date(), new Date(result.lastChangedDateTime))).toBeLessThan(1000);
+      expect(differenceInMilliseconds(new Date(), new Date(result.registered))).toBeLessThan(1000);
       expect(result.active).toBe(true);
     });
 

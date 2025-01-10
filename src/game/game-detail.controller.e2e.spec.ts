@@ -4,28 +4,27 @@ import { of } from 'rxjs';
 import * as request from 'supertest';
 import { RANDOM_STRING, RANDOM_UUID } from '../test.utils';
 import { PlaceType } from './enum/place-type.enum';
-import { GameController } from './game.controller';
-import { GameService } from './game.service';
+import { GameDetailController } from './game-detail.controller';
+import { GameDetailService } from './game-detail.service';
 
-describe('GameController e2e', () => {
+describe('GameDetailController e2e', () => {
   let app: INestApplication;
-  const gameService = {
+  const service = {
     create: jest.fn(() => of(null)),
     findOne: jest.fn(() => of(null)),
-    findAll: jest.fn(() => of([])),
     update: jest.fn(() => of(null)),
     remove: jest.fn(),
   };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      controllers: [GameController],
+      controllers: [GameDetailController],
       providers: [
-        GameService,
+        GameDetailService,
       ]
     })
-      .overrideProvider(GameService)
-      .useValue(gameService)
+      .overrideProvider(GameDetailService)
+      .useValue(service)
       .compile();
 
     app = moduleRef.createNestApplication().useGlobalPipes(new ValidationPipe({ transform: true }));
@@ -53,9 +52,9 @@ describe('GameController e2e', () => {
     ])('request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
       let response;
       if (body) {
-        response = await request(app.getHttpServer()).post('/game').send(body);
+        response = await request(app.getHttpServer()).post('/game-details').send(body);
       } else {
-        response = await request(app.getHttpServer()).post('/game');
+        response = await request(app.getHttpServer()).post('/game-details');
       }
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
@@ -66,15 +65,7 @@ describe('GameController e2e', () => {
     it.each([
       [200, undefined],
     ])('findOne request should return status=%p', async (status: number, errors: string[]) => {
-      const response = await request(app.getHttpServer()).get(`/game/${RANDOM_UUID()}`);
-      expect(response.status).toEqual(status);
-      expect(response.body.message).toEqual(errors);
-    });
-
-    it.each([
-      [200, undefined],
-    ])('findAll request should return status=%p', async (status: number, errors: string[]) => {
-      const response = await request(app.getHttpServer()).get(`/game`);
+      const response = await request(app.getHttpServer()).get(`/game-details/${RANDOM_UUID()}`);
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
     });
@@ -97,9 +88,9 @@ describe('GameController e2e', () => {
     ])('update request with body %p should return status=%p and errors=%p', async (body: object, status: number, errors: string[]) => {
       let response;
       if (body) {
-        response = await request(app.getHttpServer()).patch(`/game/${RANDOM_UUID()}`).send(body);
+        response = await request(app.getHttpServer()).patch(`/game-details/${RANDOM_UUID()}`).send(body);
       } else {
-        response = await request(app.getHttpServer()).patch(`/game/${RANDOM_UUID()}`);
+        response = await request(app.getHttpServer()).patch(`/game-details/${RANDOM_UUID()}`);
       }
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
@@ -110,7 +101,7 @@ describe('GameController e2e', () => {
     it.each([
       [200, undefined],
     ])('request should return status=%p', async (status: number, errors: string[]) => {
-      const response = await request(app.getHttpServer()).delete(`/game/${RANDOM_UUID()}`);
+      const response = await request(app.getHttpServer()).delete(`/game-details/${RANDOM_UUID()}`);
       expect(response.status).toEqual(status);
       expect(response.body.message).toEqual(errors);
     });

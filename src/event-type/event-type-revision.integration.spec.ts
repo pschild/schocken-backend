@@ -4,12 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { DataSource, Repository } from 'typeorm';
 import { EventTypeRevision } from '../model/event-type-revision.entity';
 import { EventType } from '../model/event-type.entity';
-import { Event } from '../model/event.entity';
-import { Game } from '../model/game.entity';
-import { Player } from '../model/player.entity';
-import { Round } from '../model/round.entity';
 import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
-import { setupDataSource, truncateAllTables } from '../test.utils';
+import { getDockerDataSource, truncateAllTables } from '../test.utils';
 import { EventTypeContext } from './enum/event-type-context.enum';
 import { EventTypeRevisionType } from './enum/event-type-revision-type.enum';
 import { EventTypeService } from './event-type.service';
@@ -18,11 +14,10 @@ import { EventTypeSubscriber } from './event-type.subscriber';
 describe('EventTypeRevisionService integration', () => {
   let eventTypeService: EventTypeService;
   let source: DataSource;
-  let repo: Repository<EventType>;
   let revisionRepo: Repository<EventTypeRevision>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, Event, EventType, EventTypeRevision]);
+    source = await getDockerDataSource();
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -46,16 +41,11 @@ describe('EventTypeRevisionService integration', () => {
       .compile();
 
     eventTypeService = moduleRef.get(EventTypeService);
-    repo = moduleRef.get<Repository<EventType>>(getRepositoryToken(EventType));
     revisionRepo = moduleRef.get<Repository<EventTypeRevision>>(getRepositoryToken(EventTypeRevision));
   });
 
   afterEach(async () => {
     await truncateAllTables(source);
-  })
-
-  afterAll(async () => {
-    await source.destroy();
   });
 
   describe('creation', () => {

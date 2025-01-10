@@ -6,12 +6,12 @@ import { BulkCreateEventsDto } from './dto/bulk-create-events.dto';
 import { CreateDetailEventResponse } from './dto/create-detail-event.response';
 import { CreateEventDto } from './dto/create-event.dto';
 import { EventDetailDto } from './dto/event-detail.dto';
-import { EventService } from './event.service';
+import { EventDetailService } from './event-detail.service';
 
 @ApiTags('event-details')
 @Controller('event-details')
-export class EventDetailsController {
-  constructor(private readonly service: EventService) {}
+export class EventDetailController {
+  constructor(private readonly service: EventDetailService) {}
 
   @Post()
   @ApiBody({ type: CreateEventDto })

@@ -1,14 +1,13 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import * as fs from 'fs';
 import { DataSource, Repository } from 'typeorm';
-import { EventTypeRevision } from '../../src/model/event-type-revision.entity';
 import { EventType } from '../../src/model/event-type.entity';
 import { Event } from '../../src/model/event.entity';
 import { Game } from '../../src/model/game.entity';
 import { Player } from '../../src/model/player.entity';
 import { Round } from '../../src/model/round.entity';
-import { setupDataSource, truncateAllTables } from '../../src/test.utils';
-import * as fs from 'fs';
+import { getDockerDataSource, truncateAllTables } from '../../src/test.utils';
 
 describe('Dump of production data', () => {
   let source: DataSource;
@@ -20,7 +19,7 @@ describe('Dump of production data', () => {
   let eventRepo: Repository<Event>;
 
   beforeAll(async () => {
-    source = await setupDataSource([Game, Round, Player, Event, EventType, EventTypeRevision]);
+    source = await getDockerDataSource();
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -81,7 +80,7 @@ describe('Dump of production data', () => {
     expect(await eventTypeRepo.count()).toEqual(29);
     expect(await eventRepo.count()).toEqual(13653);
 
-    expect((await source.manager.query("SELECT COUNT(*) FROM attendances"))[0].count).toEqual(13682);
-    expect((await source.manager.query("SELECT COUNT(*) FROM finals"))[0].count).toEqual(307);
+    expect((await source.manager.query("SELECT COUNT(*) FROM attendances"))[0].count).toEqual('13682');
+    expect((await source.manager.query("SELECT COUNT(*) FROM finals"))[0].count).toEqual('307');
   });
 });
