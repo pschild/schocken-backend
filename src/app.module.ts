@@ -7,6 +7,7 @@ import { RoundModule } from './round/round.module';
 import { GameModule } from './game/game.module';
 import { EventModule } from './event/event.module';
 import { EventTypeModule } from './event-type/event-type.module';
+import { StatisticsModule } from './statistics/statistics.module';
 import * as winston from 'winston';
 
 @Module({
@@ -54,6 +55,7 @@ import * as winston from 'winston';
     GameModule,
     EventModule,
     EventTypeModule,
+    StatisticsModule,
   ],
 })
 export class AppModule {}

@@ -42,7 +42,7 @@ const seed = async () => {
   const importedRows = (importData as any).rows;
 
   console.log(`import-Datei ermittelt durch GET .../couchdb/schocken-remote-prod/_all_docs?include_docs=true`);
-  console.log(`Stand der import-Datei: 02.11.2024`);
+  console.log(`Stand der import-Datei: 13.01.2025`);
   console.log(`Importing event types...`);
   rows = importedRows.filter(row => row.id.startsWith('EVENT_TYPE__'));
   insertResults = rows.map(async row => {
