@@ -32,6 +32,12 @@ export class StatisticsController {
       this.service.mostExpensiveRoundAveragePerGame(config),
       this.service.hostsTable(config),
       this.service.attendancesTable(config),
+      this.service.recordsPerGame(config),
+      this.service.eventTypeStreaks(config, 'WITHOUT_EVENT'),
+      this.service.eventTypeStreaks(config, 'WITH_EVENT'),
+      this.service.penaltyStreak(config, 'NO_PENALTY'),
+      this.service.penaltyStreak(config, 'AT_LEAST_ONE_PENALTY'),
+      this.service.attendanceStreak(config),
     ]).then(([
       gameCount,
       roundCount,
@@ -44,6 +50,12 @@ export class StatisticsController {
       mostExpensiveRoundAveragePerGame,
       hostsTable,
       attendancesTable,
+      recordsPerGame,
+      noStreaks,
+      streaks,
+      noPenaltyStreak,
+      penaltyStreak,
+      attendanceStreak
     ]) => ({
       gameCount,
       roundCount,
@@ -56,6 +68,12 @@ export class StatisticsController {
       mostExpensiveRoundAveragePerGame,
       hostsTable,
       attendancesTable,
+      recordsPerGame,
+      noStreaks,
+      streaks,
+      noPenaltyStreak,
+      penaltyStreak,
+      attendanceStreak
     }));
   }
 

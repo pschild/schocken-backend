@@ -133,7 +133,7 @@ function mapToEventType(raw: any): Partial<EventType> {
     description: raw.doc.description,
     context: raw.doc.context,
     multiplicatorUnit: raw.doc.multiplicatorUnit,
-    trigger: mapToTriggerEnum(raw.doc.trigger),
+    trigger: mapToTriggerEnum(raw.doc),
     hasComment: raw.doc.hasComment,
     penaltyValue: raw.doc.penalty?.value,
     penaltyUnit: mapToPenaltyUnitEnum(raw.doc.penalty?.unit),
@@ -150,7 +150,7 @@ function mapToEventTypeRevision(raw: any, historyItem: any, type: EventTypeRevis
     description: historyItem.eventType.description,
     context: historyItem.eventType.context,
     multiplicatorUnit: historyItem.eventType.multiplicatorUnit,
-    trigger: mapToTriggerEnum(historyItem.eventType.trigger),
+    trigger: mapToTriggerEnum(historyItem.eventType),
     hasComment: historyItem.eventType.hasComment,
     penaltyValue: historyItem.eventType.penalty?.value,
     penaltyUnit: mapToPenaltyUnitEnum(historyItem.eventType.penalty?.unit),
@@ -242,17 +242,28 @@ function mapToPlaceType(raw: string): PlaceType {
   }
 }
 
-function mapToTriggerEnum(raw: string): EventTypeTrigger {
-  switch (raw) {
-    case 'START_NEW_ROUND':
-      return EventTypeTrigger.START_NEW_ROUND;
-    case 'SCHOCK_AUS':
-      return EventTypeTrigger.SCHOCK_AUS;
-    case 'SCHOCK_AUS_PENALTY':
-      return EventTypeTrigger.SCHOCK_AUS_PENALTY;
-    default:
-      return null;
+function mapToTriggerEnum(rawDoc: { trigger: string; description: string }): EventTypeTrigger {
+  if (!!rawDoc.trigger) {
+    switch (rawDoc.trigger) {
+      case 'START_NEW_ROUND':
+        return EventTypeTrigger.VERLOREN;
+      case 'SCHOCK_AUS':
+        return EventTypeTrigger.SCHOCK_AUS;
+      case 'SCHOCK_AUS_PENALTY':
+        return EventTypeTrigger.SCHOCK_AUS_STRAFE;
+    }
   }
+
+  if (!!rawDoc.description) {
+    switch (rawDoc.description) {
+      case 'Lustwurf':
+        return EventTypeTrigger.LUSTWURF;
+      case '2-2-1':
+        return EventTypeTrigger.ZWEI_ZWEI_EINS;
+    }
+  }
+
+  return null;
 }
 
 function mapToPenaltyUnitEnum(raw: string): PenaltyUnit {

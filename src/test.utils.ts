@@ -185,7 +185,7 @@ export namespace TestData {
       context: EventTypeContext.ROUND,
       hasComment: false,
       multiplicatorUnit: 'some unit',
-      trigger: EventTypeTrigger.START_NEW_ROUND,
+      trigger: EventTypeTrigger.VERLOREN,
       penaltyValue: 0.5,
       penaltyUnit: PenaltyUnit.EURO,
       revisions: []
@@ -200,7 +200,7 @@ export namespace TestData {
       context: EventTypeContext.ROUND,
       hasComment: false,
       multiplicatorUnit: 'some unit',
-      trigger: EventTypeTrigger.START_NEW_ROUND,
+      trigger: EventTypeTrigger.VERLOREN,
       penaltyValue: 0.5,
       penaltyUnit: PenaltyUnit.EURO,
       eventType: null,

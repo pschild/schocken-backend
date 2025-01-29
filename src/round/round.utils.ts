@@ -8,11 +8,11 @@ export function getWarnings(round: Round): string[] {
   const attendeeIds = (round.attendees || []).map(p => p.id);
   const finalistIds = (round.finalists || []).map(p => p.id);
   const notFinalistIds = attendeeIds.filter(id => !finalistIds.includes(id));
-  const verlorenEvents = round.events?.length ? round.events.filter(e => e.eventType?.trigger === EventTypeTrigger.START_NEW_ROUND) : [];
+  const verlorenEvents = round.events?.length ? round.events.filter(e => e.eventType?.trigger === EventTypeTrigger.VERLOREN) : [];
   const verliererIds = verlorenEvents.map(e => e.player.id);
   const schockAusEvents = round.events?.length ? round.events.filter(e => e.eventType?.trigger === EventTypeTrigger.SCHOCK_AUS) : [];
   const playerIdsWithSchockAus = schockAusEvents.map(e => e.player.id);
-  const schockAusStrafeEvents = round.events?.length ? round.events.filter(e => e.eventType?.trigger === EventTypeTrigger.SCHOCK_AUS_PENALTY) : [];
+  const schockAusStrafeEvents = round.events?.length ? round.events.filter(e => e.eventType?.trigger === EventTypeTrigger.SCHOCK_AUS_STRAFE) : [];
 
   if (!round.attendees || !round.attendees.length) {
     warnings.push(`Die Runde hat keine Teilnehmer`);
