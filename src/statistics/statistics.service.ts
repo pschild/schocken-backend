@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { max } from 'date-fns';
 import { groupBy, maxBy, orderBy, sumBy } from 'lodash';
 import { Between, DataSource, In, Not, Repository } from 'typeorm';
 import { memoizeAsync } from 'utils-decorators';
@@ -33,6 +34,7 @@ export class StatisticsService {
     @InjectDataSource() readonly dataSource: DataSource,
     @InjectRepository(Game) private readonly gameRepo: Repository<Game>,
     @InjectRepository(Round) private readonly roundRepo: Repository<Round>,
+    @InjectRepository(Event) private readonly eventRepo: Repository<Event>,
     @InjectRepository(EventType) private readonly eventTypeRepo: Repository<EventType>,
     @InjectRepository(Player) private readonly playerRepo: Repository<Player>,
   ) {
@@ -90,7 +92,60 @@ export class StatisticsService {
 
   // level 0
   @Cached(CACHE_TTL)
-  async gamesWithRoundsAndEvents(gameIds: string[], playerIds: string[]): Promise<{ id: string; datetime: Date; rounds: Round[]; events: Event[] }[]> {
+  async roundIdsByGameId(gameIds: string[]): Promise<{ gameId: string; roundIds: string[] }[]> {
+    const result = await this.roundRepo.find({
+      select: { id: true, game: { id: true } },
+      where: { game: { id: In(gameIds) } },
+      order: { datetime: 'ASC' },
+      relations: ['game']
+    });
+    const groupedByGameId = groupBy(result, e => e.game.id);
+    return Object.entries(groupedByGameId).map(([gameId, rounds]) => ({
+      gameId,
+      roundIds: rounds.map(r => r.id)
+    }));
+  }
+
+  // level 0
+  @Cached(CACHE_TTL)
+  async roundIdsByEventTypeId(gameIds: string[], eventTypeId: string): Promise<{ gameId: string; roundIds: string[] }[]> {
+    const roundIds = await this.roundIds(gameIds);
+    const result = await this.dataSource.query(`
+        SELECT DISTINCT "roundId", round."gameId", round.datetime
+        FROM event
+        LEFT JOIN round ON event."roundId" = round.id
+        WHERE "eventTypeId" = '${eventTypeId}'
+        AND "roundId" IN (${roundIds.map(id => `'${id}'`).join(',')})
+        ORDER BY round.datetime
+    `);
+    const groupedByGameId = groupBy(result, 'gameId');
+    return Object.entries(groupedByGameId).map(([gameId, gameIdAndRoundIdItems]) => ({
+      gameId,
+      roundIds: gameIdAndRoundIdItems.map(r => r.roundId)
+    }));
+  }
+
+  // level 0
+  @Cached(CACHE_TTL)
+  async eventTypeCountsByPlayerId(gameIds: string[], playerIds: string[], eventTypeIds?: string[]): Promise<{ playerId: string; count: number }[]> {
+    const roundIds = await this.roundIds(gameIds);
+    const result = await this.dataSource.query(`
+        SELECT "playerId", "eventTypeId", count(*)
+        FROM event
+        WHERE (
+          "roundId" IN (${roundIds.map(id => `'${id}'`).join(',')})
+          OR "gameId" IN (${gameIds.map(id => `'${id}'`).join(',')})
+        )
+        AND "playerId" IN (${playerIds.map(id => `'${id}'`).join(',')})
+        ${eventTypeIds ? `AND "eventTypeId" IN '${eventTypeIds.map(id => `'${id}'`).join(',')}' ` : ''}
+        GROUP BY "playerId", "eventTypeId"
+    `);
+    return result.map(({ playerId, count }) => ({ playerId, count: +count }));
+  }
+
+  // level 0
+  @Cached(CACHE_TTL)
+  async gamesWithRoundsAndEvents(gameIds: string[], playerIds?: string[]): Promise<{ id: string; datetime: Date; rounds: Round[]; events: Event[] }[]> {
     const result = await this.gameRepo.find({
       where: { id: In(gameIds) },
       select: {
@@ -121,14 +176,35 @@ export class StatisticsService {
     });
 
     // Filtering in SQL too complicated at the moment...
-    return result.map(game => ({
-      ...game,
-      events: game.events.filter(e => playerIds.includes(e.player.id)),
-      rounds: game.rounds.map(round => ({
-        ...round,
-        events: round.events.filter(e => playerIds.includes(e.player.id))
-      }))
-    }));
+    if (!!playerIds && playerIds.length > 0) {
+      return result.map(game => ({
+        ...game,
+        events: game.events.filter(e => playerIds.includes(e.player.id)),
+        rounds: game.rounds.map(round => ({
+          ...round,
+          events: round.events.filter(e => playerIds.includes(e.player.id))
+        }))
+      }));
+    }
+    return result;
+  }
+
+  // level 0
+  @Cached(CACHE_TTL)
+  async euroPenaltiesByPlayer(gameIds: string[], playerIds: string[]): Promise<{ playerId: string; context: EventTypeContext; penalty: string; }[]> {
+    const roundIds = await this.roundIds(gameIds);
+
+    return this.dataSource.query(`
+        SELECT "playerId", context, SUM("multiplicatorValue" * "penaltyValue") AS penalty
+        FROM event
+        WHERE "penaltyUnit" = 'EURO'
+        AND (
+          "roundId" IN (${roundIds.map(id => `'${id}'`).join(',')})
+          OR "gameId" IN (${gameIds.map(id => `'${id}'`).join(',')})
+        )
+        AND "playerId" IN (${playerIds.map(id => `'${id}'`).join(',')})
+        GROUP BY "playerId", context
+    `);
   }
 
   // level 0
@@ -142,6 +218,36 @@ export class StatisticsService {
     return this.dataSource.query(`
         SELECT count(*), "playerId"
         FROM attendances
+        WHERE "roundId" IN (${roundIds.map(id => `'${id}'`).join(',')})
+        AND "playerId" IN (${playerIds.map(id => `'${id}'`).join(',')})
+        GROUP BY "playerId"
+    `);
+  }
+
+  // level 0
+  @Cached(CACHE_TTL)
+  async getDatetimeOfEarliestFinal(): Promise<Date> {
+    const result = await this.dataSource.query(`
+        SELECT datetime
+        FROM finals
+        LEFT JOIN round ON finals."roundId" = round.id
+        ORDER BY datetime
+        LIMIT 1
+    `);
+    return result[0].datetime;
+  }
+
+  // level 0
+  @Cached(CACHE_TTL)
+  async finalsByPlayerId(gameIds: string[], playerIds: string[]): Promise<{ count: string; playerId: string; }[]> {
+    const roundIds = await this.roundIds(gameIds);
+    if (gameIds.length === 0 || roundIds.length === 0) {
+      return Promise.resolve([]);
+    }
+
+    return this.dataSource.query(`
+        SELECT count(*), "playerId"
+        FROM finals
         WHERE "roundId" IN (${roundIds.map(id => `'${id}'`).join(',')})
         AND "playerId" IN (${playerIds.map(id => `'${id}'`).join(',')})
         GROUP BY "playerId"
@@ -295,7 +401,7 @@ export class StatisticsService {
   }
 
   // level -1
-  async attendancesTable({ fromDate, toDate, onlyActivePlayers }): Promise<{ id: string; name: string; count: number; quote: number }[]> {
+  async attendancesTable({ fromDate, toDate, onlyActivePlayers }): Promise<{ name: string; count: number; quote: number }[]> {
     const gameIds = await this.gameIds(fromDate, toDate);
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
@@ -303,11 +409,32 @@ export class StatisticsService {
     const roundCount = await this.countRounds({ fromDate, toDate });
     const attendances = await this.attendancesByPlayerId(gameIds, playerIds);
     return attendances.map(playerInfo => ({
-      id: playerInfo.playerId,
       name: this.findPropertyById(players, playerInfo.playerId, 'name'),
       count: +playerInfo.count,
       quote: +playerInfo.count / roundCount
     }));
+  }
+
+  // level -1
+  async finalsTable({ fromDate, toDate, onlyActivePlayers }): Promise<{ name: string; count: number; quote: number }[]> {
+    const gameIds = await this.gameIds(fromDate, toDate);
+    const playerIds = await this.playerIds(onlyActivePlayers);
+    const players = await this.players(onlyActivePlayers);
+    const datetimeOfEarliestFinal = await this.getDatetimeOfEarliestFinal();
+
+    // ATTENTION: We need to calculate the attended rounds from the date of the first final!
+    const gameIdsSinceFirstFinal = await this.gameIds(max([fromDate, datetimeOfEarliestFinal]), toDate);
+    const attendancesSinceFirstFinal = await this.attendancesByPlayerId(gameIdsSinceFirstFinal, playerIds);
+
+    const finals = await this.finalsByPlayerId(gameIds, playerIds);
+    return finals.map(playerInfo => {
+      const roundCount = +attendancesSinceFirstFinal.find(p => p.playerId === playerInfo.playerId)?.count || 0;
+      return {
+        name: this.findPropertyById(players, playerInfo.playerId, 'name'),
+        count: +playerInfo.count,
+        quote: roundCount ? +playerInfo.count / roundCount : 0,
+      };
+    });
   }
 
   // level -1
@@ -337,6 +464,21 @@ export class StatisticsService {
     const roundsIds = await this.roundIds(gameIds);
 
     return (roundsIds.length / gameIds.length) || undefined;
+  }
+
+  // level -1
+  async maxRoundsPerGame({ fromDate, toDate }): Promise<{ id: string; roundCount: number; datetime: Date; }> {
+    const gameIds = await this.gameIds(fromDate, toDate);
+
+    const gameWithMaxRounds = maxBy(
+      (await this.gamesWithRoundsAndEvents(gameIds)),
+      game => game.rounds.length
+    );
+    return {
+      id: gameWithMaxRounds.id,
+      roundCount: gameWithMaxRounds.rounds.length,
+      datetime: gameWithMaxRounds.datetime,
+    };
   }
 
   // level -1
@@ -517,6 +659,26 @@ export class StatisticsService {
     return orderBy(streaks, ['streak', 'datetime'], ['desc', 'desc']);
   }
 
+  async getSchockAusStreak({ fromDate, toDate }): Promise<unknown> {
+    const gameIds = await this.gameIds(fromDate, toDate);
+    const games = await this.games(fromDate, toDate);
+    const eventTypes = await this.eventTypes();
+    const schockAusEventTypeId = eventTypes.find(t => t.trigger === EventTypeTrigger.SCHOCK_AUS).id;
+
+    const roundIdsByGameId = await this.roundIdsByGameId(gameIds);
+    const roundIdsBySchockAus = await this.roundIdsByEventTypeId(gameIds, schockAusEventTypeId);
+    const streaks = roundIdsByGameId.map(({ gameId, roundIds }) => {
+      const schockAusRoundIds = roundIdsBySchockAus.find(i => i.gameId === gameId).roundIds;
+      const streak = calculateMaxStreak(roundIds, schockAusRoundIds);
+      return {
+        gameId,
+        datetime: this.findPropertyById(games, gameId, 'datetime'),
+        streak: streak.length
+      };
+    });
+    return maxBy(streaks, 'streak');
+  }
+
   async attendanceStreak({ fromDate, toDate, onlyActivePlayers }): Promise<unknown> {
     const gameIds = await this.gameIds(fromDate, toDate);
     const playerIds = await this.playerIds(onlyActivePlayers);
@@ -544,6 +706,58 @@ export class StatisticsService {
     });
 
     return orderBy(streaks, ['streak', 'datetime'], ['desc', 'desc']);
+  }
+
+  async penaltyByPlayerTable({ fromDate, toDate, onlyActivePlayers }): Promise<{ name: string; gameEventEuroSum: number; roundEventEuroSum: number; euroSum: number; quote: number; euroPerRound: number; }[]> {
+    const gameIds = await this.gameIds(fromDate, toDate);
+    const playerIds = await this.playerIds(onlyActivePlayers);
+    const players = await this.players(onlyActivePlayers);
+
+    const attendancesByPlayerId = await this.attendancesByPlayerId(gameIds, playerIds);
+
+    const allPenalties = await this.penaltySum({ fromDate, toDate, onlyActivePlayers });
+    const penaltySumEuro = penaltySumByUnit(allPenalties, PenaltyUnit.EURO);
+
+    const playerPenalties = await this.euroPenaltiesByPlayer(gameIds, playerIds);
+    return playerIds.map(playerId => {
+      const gameEventEuroSum = +playerPenalties.find(p => p.playerId === playerId && p.context === EventTypeContext.GAME)?.penalty || 0;
+      const roundEventEuroSum = +playerPenalties.find(p => p.playerId === playerId && p.context === EventTypeContext.ROUND)?.penalty || 0;
+      const euroSum = gameEventEuroSum + roundEventEuroSum;
+      const roundCountByPlayer = +attendancesByPlayerId.find(i => i.playerId === playerId)?.count;
+      return {
+        name: this.findPropertyById(players, playerId, 'name'),
+        gameEventEuroSum,
+        roundEventEuroSum,
+        euroSum,
+        quote: euroSum / penaltySumEuro,
+        euroPerRound: roundCountByPlayer ? euroSum / roundCountByPlayer : 0,
+      };
+    });
+  }
+
+  async eventTypeCountsByPlayer({ fromDate, toDate, onlyActivePlayers }, eventTypeIds: string[]): Promise<{ name: string; count: number }[]> {
+    const gameIds = await this.gameIds(fromDate, toDate);
+    const playerIds = await this.playerIds(onlyActivePlayers);
+    const players = await this.players(onlyActivePlayers);
+
+    return (await this.eventTypeCountsByPlayerId(gameIds, playerIds, eventTypeIds)).map(({ playerId, count }) => ({
+      name: this.findPropertyById(players, playerId, 'name'),
+      count
+    }));
+  }
+
+  async eventTypeCounts({ fromDate, toDate, onlyActivePlayers }): Promise<{ description: string; count: number }[]> {
+    const gameIds = await this.gameIds(fromDate, toDate);
+    const playerIds = await this.playerIds(onlyActivePlayers);
+    const eventTypes = await this.eventTypes();
+
+    const eventTypeCountsByPlayerId = await this.eventTypeCountsByPlayerId(gameIds, playerIds);
+    return Object.entries(groupBy(eventTypeCountsByPlayerId, 'eventTypeId')).map(([eventTypeId, info]) => {
+      return {
+        description: this.findPropertyById(eventTypes, eventTypeId, 'description'),
+        count: sumBy(info, 'count')
+      };
+    });
   }
 
   private findPropertyById(list: { id: string }[], id: string, property: string): string {
