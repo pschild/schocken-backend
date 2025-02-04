@@ -55,10 +55,6 @@ export const setupDataSource = async (entities: unknown[], withMigration = false
     autoCreateForeignKeyIndices: true,
   });
 
-  if (withMigration) {
-    db.createSchema('hoptimisten');
-  }
-
   db.public.registerFunction({
     implementation: () => 'test',
     name: 'current_database',
@@ -88,7 +84,6 @@ export const setupDataSource = async (entities: unknown[], withMigration = false
   const source = await db.adapters.createTypeormDataSource({
     type: 'postgres',
     ...(withMigration ? {
-      schema: 'hoptimisten',
       migrations: ['src/migration/*.ts']
     } : {}),
     entities,

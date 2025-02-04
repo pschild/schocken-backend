@@ -24,7 +24,6 @@ import * as winston from 'winston';
         username: configService.get<string>('DATABASE_USER'),
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_DB'),
-        schema: configService.get<string>('DATABASE_SCHEMA'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
       }),
       inject: [ConfigService],
