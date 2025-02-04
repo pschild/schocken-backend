@@ -44,6 +44,7 @@ export class StatisticsController {
       this.service.penaltyByPlayerTable(config),
       this.service.eventTypeCountsByPlayer(config, ['a7e6a6ac-0348-41df-9e36-1adc5eb12054']),
       this.service.eventTypeCounts(config),
+      this.service.schockAusEffectivityTable(config),
     ]).then(([
       gameCount,
       roundCount,
@@ -67,7 +68,8 @@ export class StatisticsController {
       attendanceStreak,
       penaltyByPlayerTable,
       eventTypeCountsByPlayer,
-      eventTypeCounts
+      eventTypeCounts,
+      schockAusEffectivityTable
     ]) => ({
       gameCount,
       roundCount,
@@ -91,7 +93,8 @@ export class StatisticsController {
       attendanceStreak,
       penaltyByPlayerTable,
       eventTypeCountsByPlayer,
-      eventTypeCounts
+      eventTypeCounts,
+      schockAusEffectivityTable
     }));
   }
 

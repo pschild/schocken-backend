@@ -137,10 +137,10 @@ export class StatisticsService {
           OR "gameId" IN (${gameIds.map(id => `'${id}'`).join(',')})
         )
         AND "playerId" IN (${playerIds.map(id => `'${id}'`).join(',')})
-        ${eventTypeIds ? `AND "eventTypeId" IN '${eventTypeIds.map(id => `'${id}'`).join(',')}' ` : ''}
+        ${eventTypeIds ? `AND "eventTypeId" IN (${eventTypeIds.map(id => `'${id}'`).join(',')}) ` : ''}
         GROUP BY "playerId", "eventTypeId"
     `);
-    return result.map(({ playerId, count }) => ({ playerId, count: +count }));
+    return result.map(({ playerId, eventTypeId, count }) => ({ playerId, eventTypeId, count: +count }));
   }
 
   // level 0
@@ -341,6 +341,38 @@ export class StatisticsService {
         ) s
         WHERE rnk = 1;
     `);
+  }
+
+  // level 0
+  @Cached(CACHE_TTL)
+  async schockAusEffectivity(gameIds: string[], playerIds: string[]): Promise<{ roundId: string; playerId: string; sasCount: number }[]> {
+    const roundIds = await this.roundIds(gameIds);
+    const eventTypes = await this.eventTypes();
+    const schockAusId = eventTypes.find(t => t.trigger === EventTypeTrigger.SCHOCK_AUS).id;
+    const schockAusStrafeId = eventTypes.find(t => t.trigger === EventTypeTrigger.SCHOCK_AUS_STRAFE).id;
+
+    const result = await this.dataSource.query(`
+        SELECT "roundId", "playerId", (
+            SELECT COUNT(*)
+            FROM event e
+            WHERE e."roundId" = event."roundId"
+            AND e."eventTypeId" = '${schockAusStrafeId}'
+            AND "playerId" IN(${playerIds.map(id => `'${id}'`).join(',')})
+        ) AS "sasCount"
+        FROM event
+        WHERE "roundId" IN (
+          SELECT "roundId"
+          FROM event
+          WHERE "eventTypeId" = '${schockAusId}'
+          AND "roundId" IN (${roundIds.map(id => `'${id}'`).join(',')})
+          GROUP BY "roundId"
+          HAVING COUNT(*) = 1
+        )
+        AND "eventTypeId" = '${schockAusId}'
+        AND "playerId" IN(${playerIds.map(id => `'${id}'`).join(',')})
+    `);
+
+    return result.map(({ roundId, playerId, sasCount }) => ({ roundId, playerId, sasCount: +sasCount }));
   }
 
   // level 1
@@ -756,6 +788,25 @@ export class StatisticsService {
       return {
         description: this.findPropertyById(eventTypes, eventTypeId, 'description'),
         count: sumBy(info, 'count')
+      };
+    });
+  }
+
+  async schockAusEffectivityTable({ fromDate, toDate, onlyActivePlayers }): Promise<unknown> {
+    const gameIds = await this.gameIds(fromDate, toDate);
+    const playerIds = await this.playerIds(onlyActivePlayers);
+    const players = await this.players(onlyActivePlayers);
+
+    const result = await this.schockAusEffectivity(gameIds, playerIds);
+    const grouped = groupBy(result, 'playerId');
+    return Object.entries(grouped).map(([playerId, info]) => {
+      const saCount = info.length;
+      const sasCount = sumBy(info, 'sasCount');
+      return {
+        name: this.findPropertyById(players, playerId, 'name'),
+        saCount,
+        sasCount,
+        quote: sasCount / saCount,
       };
     });
   }
