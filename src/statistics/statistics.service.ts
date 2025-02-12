@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { max } from 'date-fns';
-import { groupBy, maxBy, orderBy, sumBy } from 'lodash';
+import { groupBy, intersection, maxBy, orderBy, sumBy } from 'lodash';
 import { Between, DataSource, In, Not, Repository } from 'typeorm';
 import { memoizeAsync } from 'utils-decorators';
 import { EventTypeContext } from '../event-type/enum/event-type-context.enum';
@@ -18,7 +17,7 @@ import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { addPenalties, penaltySumByUnit, summarizePenalties } from '../penalty/penalty.utils';
 import { calculateMaxStreak } from './streak/streak.utils';
 
-const CACHE_TTL = 1000 * 60 * 60;
+const CACHE_TTL = 5000/* * 60 * 60*/;
 
 /**
  * Wrapper decorator for @memoizeAsync to disable caching during tests.
@@ -42,14 +41,15 @@ export class StatisticsService {
 
   // level 0
   @Cached(CACHE_TTL)
-  async games(fromDate: Date, toDate: Date): Promise<{ id: string; datetime: Date; }[]> {
-    return this.gameRepo.find({ select: ['id', 'datetime'], where: { datetime: Between(fromDate, toDate), excludeFromStatistics: false }, order: { datetime: 'ASC' } });
+  async gameIds(fromDate: Date, toDate: Date): Promise<string[]> {
+    const result = await this.gameRepo.find({ select: ['id'], where: { datetime: Between(fromDate, toDate), excludeFromStatistics: false }, order: { datetime: 'ASC' } });
+    return result.map(({ id }) => id);
   }
 
   // level 0
   @Cached(CACHE_TTL)
-  async gameIds(fromDate: Date, toDate: Date): Promise<string[]> {
-    return (await this.games(fromDate, toDate)).map(({ id }) => id);
+  async games(gameIds: string[]): Promise<{ id: string; datetime: Date; }[]> {
+    return this.gameRepo.find({ select: ['id', 'datetime'], where: { id: In(gameIds) }, order: { datetime: 'ASC' } });
   }
 
   // level 0
@@ -226,15 +226,21 @@ export class StatisticsService {
 
   // level 0
   @Cached(CACHE_TTL)
-  async getDatetimeOfEarliestFinal(): Promise<Date> {
+  async getGameIdsSinceFirstFinal(): Promise<string[]> {
     const result = await this.dataSource.query(`
-        SELECT datetime
-        FROM finals
-        LEFT JOIN round ON finals."roundId" = round.id
-        ORDER BY datetime
-        LIMIT 1
+        SELECT id, datetime
+        FROM game
+        WHERE datetime >= (
+            SELECT game.datetime
+            FROM game
+            LEFT JOIN round ON game.id = round."gameId"
+            LEFT JOIN finals ON round.id = finals."roundId"
+            WHERE finals."roundId" IS NOT NULL
+            ORDER BY game.datetime
+            LIMIT 1
+        )
     `);
-    return result[0].datetime;
+    return result.map(({ id }) => id);
   }
 
   // level 0
@@ -375,6 +381,91 @@ export class StatisticsService {
     return result.map(({ roundId, playerId, sasCount }) => ({ roundId, playerId, sasCount: +sasCount }));
   }
 
+  // level 0
+  @Cached(CACHE_TTL)
+  async getDataForPointsCalculation(gameIds: string[]): Promise<{
+    gameId: string;
+    roundId: string;
+    roundHasFinal: boolean;
+    roundHasSchockAus: boolean;
+    playerId: string;
+    isFinalist: boolean;
+    lustwurfCount: number;
+    zweiZweiEinsCount: number;
+    schockAusCount: number;
+    hasVerloren: boolean;
+  }[]> {
+    const eventTypes = await this.eventTypes();
+    const schockAusId = eventTypes.find(t => t.trigger === EventTypeTrigger.SCHOCK_AUS).id;
+    const zweiZweiEinsId = eventTypes.find(t => t.trigger === EventTypeTrigger.ZWEI_ZWEI_EINS).id;
+    const lustwurfId = eventTypes.find(t => t.trigger === EventTypeTrigger.LUSTWURF).id;
+    const verlorenId = eventTypes.find(t => t.trigger === EventTypeTrigger.VERLOREN).id;
+
+    const result = await this.dataSource.query(`
+        select
+            game.id as "gameId",
+            round.id as "roundId",
+            exists(
+                select 1
+                from finals
+                where "roundId" = round.id
+            ) as "roundHasFinal",
+            exists(
+                select 1
+                from event
+                where "roundId" = att."roundId"
+                and "eventTypeId" = '${schockAusId}'
+            ) as "roundHasSchockAus",
+            att."playerId",
+            exists(
+                select 1
+                from finals
+                where "roundId" = round.id
+                  and "playerId" = att."playerId"
+            ) as "isFinalist",
+            (
+                select count(*)
+                from event
+                where "playerId" = att."playerId"
+                  and "roundId" = att."roundId"
+                  and "eventTypeId" = '${lustwurfId}'
+            ) as "lustwurfCount",
+            (
+                select count(*)
+                from event
+                where "playerId" = att."playerId"
+                  and "roundId" = att."roundId"
+                  and "eventTypeId" = '${zweiZweiEinsId}'
+            ) as "zweiZweiEinsCount",
+            (
+                select count(*)
+                from event
+                where "playerId" = att."playerId"
+                  and "roundId" = att."roundId"
+                  and "eventTypeId" = '${schockAusId}'
+            ) as "schockAusCount",
+            exists(
+                select 1
+                from event
+                where "playerId" = att."playerId"
+                  and "roundId" = att."roundId"
+                  and "eventTypeId" = '${verlorenId}'
+            ) as "hasVerloren"
+        from game
+        left join round on game.id = round."gameId"
+        left join attendances att on round.id = att."roundId"
+        where game.id IN (${gameIds.map(id => `'${id}'`).join(',')})
+        order by round.datetime
+    `);
+
+    return result.map(row => ({
+      ...row,
+      zweiZweiEinsCount: +row.zweiZweiEinsCount,
+      lustwurfCount: +row.lustwurfCount,
+      schockAusCount: +row.schockAusCount,
+    }));
+  }
+
   // level 1
   @Cached(CACHE_TTL)
   async gamesWithPenalties(gameIds: string[], playerIds: string[]): Promise<{ id: string; datetime: Date; gamePenalties: PenaltyDto[]; roundPenalties: PenaltyDto[]; combinedPenalties: PenaltyDto[]; roundAverage: number; }[]> {
@@ -415,8 +506,7 @@ export class StatisticsService {
 
   // level 1
   @Cached(CACHE_TTL)
-  async penaltySum({ fromDate, toDate, onlyActivePlayers }): Promise<PenaltyDto[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async penaltySum(gameIds: string[], onlyActivePlayers: boolean): Promise<PenaltyDto[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
 
     return (await this.gamesWithPenalties(gameIds, playerIds))
@@ -425,20 +515,129 @@ export class StatisticsService {
   }
 
   // level 1
-  async countRounds({ fromDate, toDate }): Promise<number> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async countRounds(gameIds: string[]): Promise<number> {
     const roundIds = await this.roundIds(gameIds);
 
     return roundIds.length;
   }
 
+  // level 1
+  @Cached(CACHE_TTL)
+  async pointsPerGame(gameIds: string[], onlyActivePlayers: boolean): Promise<{ gameId: string; datetime: string; points: { playerId: string; name: string; attended: boolean; gamePoints: number; bonusPoints: number; penaltyPoints: number; gamePointsSum: number; points: number }[] }[]> {
+    const pkteInfo = await this.getDataForPointsCalculation(gameIds);
+    const playerIds = await this.playerIds(onlyActivePlayers);
+    const players = await this.players(onlyActivePlayers);
+    const games = await this.games(gameIds);
+
+    const groupedByGameId = groupBy(pkteInfo, 'gameId');
+    return Object.entries(groupedByGameId).map(([gameId, itemsByGameId]) => {
+      const groupedByPlayerId = groupBy(itemsByGameId, 'playerId');
+      const pointsByAttendee = Object.entries(groupedByPlayerId).map(([playerId, itemsByPlayerId]) => {
+        const { gamePoints, bonusPoints, penaltyPoints, gamePointsSum } = itemsByPlayerId.map(item => {
+          const gamePoints = this.calculateGamePoints(item.roundHasFinal, item.roundHasSchockAus, item.isFinalist, item.hasVerloren, item.schockAusCount > 0);
+          const bonusPoints = this.calculateBonusPoints(item.schockAusCount);
+          const penaltyPoints = this.calculatePenaltyPoints(item.hasVerloren, item.lustwurfCount, item.zweiZweiEinsCount);
+          return {
+            gamePoints,
+            bonusPoints,
+            penaltyPoints,
+            gamePointsSum: gamePoints + bonusPoints + penaltyPoints,
+          }
+        })
+          .reduce((prev, curr) => {
+            return {
+              gamePoints: prev.gamePoints + curr.gamePoints,
+              bonusPoints: prev.bonusPoints + curr.bonusPoints,
+              penaltyPoints: prev.penaltyPoints + curr.penaltyPoints,
+              gamePointsSum: prev.gamePointsSum + curr.gamePointsSum,
+            }
+          });
+
+        return {
+          playerId,
+          name: this.findPropertyById(players, playerId, 'name'),
+          attended: true,
+          gamePoints,
+          bonusPoints,
+          penaltyPoints,
+          gamePointsSum,
+          points: undefined, // calculated in next step
+        };
+      });
+
+      const pointsByAttendeeWithPoints = orderBy(pointsByAttendee, ['gamePointsSum', 'gamePoints', 'bonusPoints', 'penaltyPoints'], ['desc', 'desc', 'desc', 'asc'])
+        .map((pointInfo, idx) => ({ ...pointInfo, points: this.calculatePoints(idx) }));
+
+      // add players who did not attend, in order to always show all players in table!
+      pointsByAttendeeWithPoints.push(
+        ...playerIds
+          .filter(id => !pointsByAttendee.find(i => i.playerId === id))
+          .map(id => ({
+            playerId: id,
+            name: this.findPropertyById(players, id, 'name'),
+            attended: false,
+            gamePoints: 0,
+            bonusPoints: 0,
+            penaltyPoints: 0,
+            gamePointsSum: 0,
+            points: 0,
+          }))
+      );
+
+      return {
+        gameId,
+        datetime: this.findPropertyById(games, gameId, 'datetime'),
+        points: orderBy(pointsByAttendeeWithPoints, ['points', 'gamePointsSum', 'gamePoints', 'bonusPoints', 'penaltyPoints', 'name'], ['desc', 'desc', 'desc', 'desc', 'asc', 'asc'])
+      };
+    });
+  }
+
+  private calculatePoints(idx: number): number {
+    const POINTS_FOR_RANKS = [7, 5, 4, 3, 2];
+    const POINTS_FOR_ATTENDANCE = 1;
+    return POINTS_FOR_RANKS[idx] || POINTS_FOR_ATTENDANCE;
+  }
+
+  private calculateGamePoints(
+    roundHasFinal: boolean,
+    roundHasSchockAus: boolean,
+    isFinalist: boolean,
+    isVerlierer: boolean,
+    playerHasSchockAus: boolean
+  ): number {
+    if (isVerlierer) {
+      return 0;
+    } else if ((roundHasFinal && isFinalist) || (!roundHasFinal && !playerHasSchockAus)) {
+      return 1;
+    } else if ((roundHasFinal && !isVerlierer && !isFinalist) || (!roundHasFinal && !isVerlierer && playerHasSchockAus) || (!roundHasFinal && !isVerlierer && !roundHasSchockAus)) {
+      return 3;
+    } else {
+      console.error(`Invalid combination of params: roundHasFinal=${roundHasFinal}, roundHasSchockAus=${roundHasSchockAus}, isFinalist=${isFinalist}, isVerlierer=${isVerlierer}, playerHasSchockAus=${playerHasSchockAus}`);
+    }
+  }
+
+  private calculateBonusPoints(schockAusCount: number): number {
+    const SCHOCK_AUS_FACTOR = 1;
+    return schockAusCount * SCHOCK_AUS_FACTOR;
+  }
+
+  private calculatePenaltyPoints(
+    isVerlierer: boolean,
+    lustwurfCount: number,
+    zweiZweiEinsCount: number
+  ): number {
+    const VERLOREN_FACTOR = 1;
+    const ZWEI_ZWEI_EINS_FACTOR = 1;
+    const LUSTWURF_FACTOR = 3;
+    return (isVerlierer ? -1 * VERLOREN_FACTOR : 0) - (zweiZweiEinsCount * ZWEI_ZWEI_EINS_FACTOR) - (lustwurfCount * LUSTWURF_FACTOR);
+  }
+
   // level -1
-  async attendancesTable({ fromDate, toDate, onlyActivePlayers }): Promise<{ name: string; count: number; quote: number }[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async attendancesTable(gameIds: string[], onlyActivePlayers: boolean): Promise<{ name: string; count: number; quote: number }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
 
-    const roundCount = await this.countRounds({ fromDate, toDate });
+    const roundCount = await this.countRounds(gameIds);
     const attendances = await this.attendancesByPlayerId(gameIds, playerIds);
     return attendances.map(playerInfo => ({
       name: this.findPropertyById(players, playerInfo.playerId, 'name'),
@@ -448,15 +647,14 @@ export class StatisticsService {
   }
 
   // level -1
-  async finalsTable({ fromDate, toDate, onlyActivePlayers }): Promise<{ name: string; count: number; quote: number }[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async finalsTable(gameIds: string[], onlyActivePlayers: boolean): Promise<{ name: string; count: number; quote: number }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
-    const datetimeOfEarliestFinal = await this.getDatetimeOfEarliestFinal();
+    const gameIdsSinceFirstFinal = await this.getGameIdsSinceFirstFinal();
 
     // ATTENTION: We need to calculate the attended rounds from the date of the first final!
-    const gameIdsSinceFirstFinal = await this.gameIds(max([fromDate, datetimeOfEarliestFinal]), toDate);
-    const attendancesSinceFirstFinal = await this.attendancesByPlayerId(gameIdsSinceFirstFinal, playerIds);
+    const filteredGameIds = intersection(gameIds, gameIdsSinceFirstFinal);
+    const attendancesSinceFirstFinal = await this.attendancesByPlayerId(filteredGameIds, playerIds);
 
     const finals = await this.finalsByPlayerId(gameIds, playerIds);
     return finals.map(playerInfo => {
@@ -470,8 +668,7 @@ export class StatisticsService {
   }
 
   // level -1
-  async hostsTable({ fromDate, toDate, onlyActivePlayers }): Promise<{ count: string; hostedById: string | null; placeType: PlaceType; }[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async hostsTable(gameIds: string[], onlyActivePlayers: boolean): Promise<{ count: string; hostedById: string | null; placeType: PlaceType; }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
 
@@ -491,17 +688,14 @@ export class StatisticsService {
   }
 
   // level -1
-  async averageRoundsPerGame({ fromDate, toDate }): Promise<number> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async averageRoundsPerGame(gameIds: string[]): Promise<number> {
     const roundsIds = await this.roundIds(gameIds);
 
     return (roundsIds.length / gameIds.length) || undefined;
   }
 
   // level -1
-  async maxRoundsPerGame({ fromDate, toDate }): Promise<{ id: string; roundCount: number; datetime: Date; }> {
-    const gameIds = await this.gameIds(fromDate, toDate);
-
+  async maxRoundsPerGame(gameIds: string[]): Promise<{ id: string; roundCount: number; datetime: Date; }> {
     const gameWithMaxRounds = maxBy(
       (await this.gamesWithRoundsAndEvents(gameIds)),
       game => game.rounds.length
@@ -514,23 +708,18 @@ export class StatisticsService {
   }
 
   // level -1
-  async countGames({ fromDate, toDate }): Promise<number> {
-    const gameIds = await this.gameIds(fromDate, toDate);
-
+  async countGames(gameIds: string[]): Promise<number> {
     return gameIds.length;
   }
 
   // level -1
-  async euroPerGame({ fromDate, toDate, onlyActivePlayers }): Promise<number> {
-    const gameIds = await this.gameIds(fromDate, toDate);
-
-    const penalties = await this.penaltySum({ fromDate, toDate, onlyActivePlayers });
+  async euroPerGame(gameIds: string[], onlyActivePlayers: boolean): Promise<number> {
+    const penalties = await this.penaltySum(gameIds, onlyActivePlayers);
     return (penaltySumByUnit(penalties, PenaltyUnit.EURO) / gameIds.length) || undefined;
   }
 
   // level -1
-  async euroPerRound({ fromDate, toDate, onlyActivePlayers }): Promise<number> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async euroPerRound(gameIds: string[], onlyActivePlayers: boolean): Promise<number> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const roundIds = await this.roundIds(gameIds);
 
@@ -540,8 +729,7 @@ export class StatisticsService {
   }
 
   // level -1
-  async mostExpensiveGame({ fromDate, toDate, onlyActivePlayers }): Promise<{ id: string; sum: number; }> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async mostExpensiveGame(gameIds: string[], onlyActivePlayers: boolean): Promise<{ id: string; sum: number; }> {
     const playerIds = await this.playerIds(onlyActivePlayers);
 
     // oldest (first) record wins!
@@ -552,8 +740,7 @@ export class StatisticsService {
   }
 
   // level -1
-  async mostExpensiveRoundAveragePerGame({ fromDate, toDate, onlyActivePlayers }): Promise<{ id: string; roundAverage: number; }> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async mostExpensiveRoundAveragePerGame(gameIds: string[], onlyActivePlayers: boolean): Promise<{ id: string; roundAverage: number; }> {
     const playerIds = await this.playerIds(onlyActivePlayers);
 
     // oldest (first) record wins!
@@ -564,8 +751,7 @@ export class StatisticsService {
   }
 
   // level -1
-  async mostExpensiveRound({ fromDate, toDate, onlyActivePlayers }): Promise<{ id: string; sum: number; }> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async mostExpensiveRound(gameIds: string[], onlyActivePlayers: boolean): Promise<{ id: string; sum: number; }> {
     const playerIds = await this.playerIds(onlyActivePlayers);
 
     // oldest (first) record wins!
@@ -573,12 +759,11 @@ export class StatisticsService {
   }
 
   // level -1
-  async recordsPerGame({ fromDate, toDate, onlyActivePlayers }): Promise<{ eventTypeId: string; description: string; records: { count: number; name: string; gameId: string; datetime: string }[] }[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async recordsPerGame(gameIds: string[], onlyActivePlayers: boolean): Promise<{ eventTypeId: string; description: string; records: { count: number; name: string; gameId: string; datetime: string }[] }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
     const eventTypes = await this.eventTypes();
-    const games = await this.games(fromDate, toDate);
+    const games = await this.games(gameIds);
 
     const maxEventCounts = await this.maxEventCounts(gameIds, playerIds);
     return Object.keys(EventTypeTrigger)
@@ -606,8 +791,7 @@ export class StatisticsService {
   }
 
   // level -1
-  async eventTypeStreaks({ fromDate, toDate, onlyActivePlayers }, mode: 'WITH_EVENT' | 'WITHOUT_EVENT'): Promise<{ eventTypeId: string; description: string; mode: 'WITH_EVENT' | 'WITHOUT_EVENT'; streaks: { eventTypeId: string; name: string; streak: number; isCurrent: boolean; lastRoundIdOfStreak: string; datetime: string; }[] }[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  async eventTypeStreaks(gameIds: string[], onlyActivePlayers: boolean, mode: 'WITH_EVENT' | 'WITHOUT_EVENT'): Promise<{ eventTypeId: string; description: string; mode: 'WITH_EVENT' | 'WITHOUT_EVENT'; streaks: { eventTypeId: string; name: string; streak: number; isCurrent: boolean; lastRoundIdOfStreak: string; datetime: string; }[] }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
     const eventTypes = await this.eventTypes();
@@ -656,8 +840,8 @@ export class StatisticsService {
     }));
   }
 
-  async penaltyStreak({ fromDate, toDate, onlyActivePlayers }, mode: 'NO_PENALTY' | 'AT_LEAST_ONE_PENALTY'): Promise<{ name: string; streak: number; isCurrent: boolean; lastRoundIdOfStreak: string; datetime: string; }[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  // level -1
+  async penaltyStreak(gameIds: string[], onlyActivePlayers: boolean, mode: 'NO_PENALTY' | 'AT_LEAST_ONE_PENALTY'): Promise<{ name: string; streak: number; isCurrent: boolean; lastRoundIdOfStreak: string; datetime: string; }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
     const rounds = await this.rounds(gameIds);
@@ -691,9 +875,9 @@ export class StatisticsService {
     return orderBy(streaks, ['streak', 'datetime'], ['desc', 'desc']);
   }
 
-  async getSchockAusStreak({ fromDate, toDate }): Promise<unknown> {
-    const gameIds = await this.gameIds(fromDate, toDate);
-    const games = await this.games(fromDate, toDate);
+  // level -1
+  async getSchockAusStreak(gameIds: string[]): Promise<{ gameId: string; datetime: string; streak: number; }> {
+    const games = await this.games(gameIds);
     const eventTypes = await this.eventTypes();
     const schockAusEventTypeId = eventTypes.find(t => t.trigger === EventTypeTrigger.SCHOCK_AUS).id;
 
@@ -711,8 +895,8 @@ export class StatisticsService {
     return maxBy(streaks, 'streak');
   }
 
-  async attendanceStreak({ fromDate, toDate, onlyActivePlayers }): Promise<unknown> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  // level -1
+  async attendanceStreak(gameIds: string[], onlyActivePlayers: boolean): Promise<{ name: string; streak: number; isCurrent: boolean; lastRoundIdOfStreak: string; datetime: string; }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
     const rounds = await this.rounds(gameIds);
@@ -740,14 +924,14 @@ export class StatisticsService {
     return orderBy(streaks, ['streak', 'datetime'], ['desc', 'desc']);
   }
 
-  async penaltyByPlayerTable({ fromDate, toDate, onlyActivePlayers }): Promise<{ name: string; gameEventEuroSum: number; roundEventEuroSum: number; euroSum: number; quote: number; euroPerRound: number; }[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  // level -1
+  async penaltyByPlayerTable(gameIds: string[], onlyActivePlayers: boolean): Promise<{ name: string; gameEventEuroSum: number; roundEventEuroSum: number; euroSum: number; quote: number; euroPerRound: number; }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
 
     const attendancesByPlayerId = await this.attendancesByPlayerId(gameIds, playerIds);
 
-    const allPenalties = await this.penaltySum({ fromDate, toDate, onlyActivePlayers });
+    const allPenalties = await this.penaltySum(gameIds, onlyActivePlayers);
     const penaltySumEuro = penaltySumByUnit(allPenalties, PenaltyUnit.EURO);
 
     const playerPenalties = await this.euroPenaltiesByPlayer(gameIds, playerIds);
@@ -767,8 +951,8 @@ export class StatisticsService {
     });
   }
 
-  async eventTypeCountsByPlayer({ fromDate, toDate, onlyActivePlayers }, eventTypeIds: string[]): Promise<{ name: string; count: number }[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  // level -1
+  async eventTypeCountsByPlayer(gameIds: string[], onlyActivePlayers: boolean, eventTypeIds: string[]): Promise<{ name: string; count: number }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
 
@@ -778,8 +962,8 @@ export class StatisticsService {
     }));
   }
 
-  async eventTypeCounts({ fromDate, toDate, onlyActivePlayers }): Promise<{ description: string; count: number }[]> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  // level -1
+  async eventTypeCounts(gameIds: string[], onlyActivePlayers: boolean): Promise<{ description: string; count: number }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const eventTypes = await this.eventTypes();
 
@@ -792,8 +976,8 @@ export class StatisticsService {
     });
   }
 
-  async schockAusEffectivityTable({ fromDate, toDate, onlyActivePlayers }): Promise<unknown> {
-    const gameIds = await this.gameIds(fromDate, toDate);
+  // level -1
+  async schockAusEffectivityTable(gameIds: string[], onlyActivePlayers: boolean): Promise<{ name: string; saCount: number; sasCount: number; quote: number; }[]> {
     const playerIds = await this.playerIds(onlyActivePlayers);
     const players = await this.players(onlyActivePlayers);
 
@@ -809,6 +993,37 @@ export class StatisticsService {
         quote: sasCount / saCount,
       };
     });
+  }
+
+  // level -1
+  async accumulatedPoints(gameIds: string[], onlyActivePlayers: boolean): Promise<{ gameId: string; datetime: string; points: { playerId: string; name: string; gamePoints: number; bonusPoints: number; penaltyPoints: number; gamePointsSum: number; points: number; tendency: number; }[] }[]> {
+    const pointsPerGame = await this.pointsPerGame(gameIds, onlyActivePlayers);
+    const accumulatedPointsPerGame = pointsPerGame.reduce((prev, curr) => {
+      const lastGame = prev.length > 0 ? prev[prev.length - 1] : null;
+      const accPoints = curr.points.map(({ playerId, name, gamePoints, bonusPoints, penaltyPoints, gamePointsSum, points }) => {
+        return {
+          playerId,
+          name,
+          gamePoints: gamePoints + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.gamePoints || 0 : 0),
+          bonusPoints: bonusPoints + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.bonusPoints || 0 : 0),
+          penaltyPoints: penaltyPoints + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.penaltyPoints || 0 : 0),
+          gamePointsSum: gamePointsSum + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.gamePointsSum || 0 : 0),
+          points: points + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.points || 0 : 0),
+        };
+      });
+      return [...prev, { ...curr, points: orderBy(accPoints, ['points', 'gamePointsSum', 'gamePoints', 'bonusPoints', 'penaltyPoints'], ['desc', 'desc', 'desc', 'desc', 'asc']) }];
+    }, []);
+
+    return accumulatedPointsPerGame.reduce((prev, curr) => {
+      const lastGame = prev.length > 0 ? prev[prev.length - 1] : null;
+      if (!lastGame) {
+        return [...prev, { ...curr, points: curr.points.map(item => ({ ...item, tendency: 0 })) }];
+      }
+      return [...prev, { ...curr, points: curr.points.map((item, idx) => {
+        const prevIdx = lastGame.points.findIndex(i => i.playerId === item.playerId);
+        return {...item, tendency: prevIdx - idx };
+      }) }];
+    }, []);
   }
 
   private findPropertyById(list: { id: string }[], id: string, property: string): string {

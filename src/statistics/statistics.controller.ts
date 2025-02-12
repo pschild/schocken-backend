@@ -1,5 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { StatisticsService } from './statistics.service';
 
 @ApiTags('statistics')
@@ -7,45 +7,81 @@ import { StatisticsService } from './statistics.service';
 export class StatisticsController {
   constructor(private readonly service: StatisticsService) {}
 
-  @Get()
-  @ApiOkResponse({ type: Number })
-  async countGames(
-    @Query('fromDate') fromDate: Date,
-    @Query('toDate') toDate: Date,
-    @Query('onlyActivePlayers') onlyActivePlayers: boolean
+  @Post('by-game-ids')
+  // @ApiOkResponse({ type: Number })
+  async statisticsByGameIds(
+    @Body() body: { gameIds: string[]; onlyActivePlayers: boolean }
   ): Promise<unknown> {
-    const config: { fromDate: Date, toDate: Date, onlyActivePlayers: boolean } = {
-      fromDate,
-      toDate,
-      onlyActivePlayers
-    };
+    const { gameIds, onlyActivePlayers } = body;
+    return this.getStatistics(gameIds, onlyActivePlayers);
+  }
 
+  @Post()
+  // @ApiOkResponse({ type: Number })
+  async statisticsByDateSpan(
+    @Body() body: { fromDate: Date; toDate: Date; onlyActivePlayers: boolean }
+  ): Promise<unknown> {
+    const { fromDate, toDate, onlyActivePlayers } = body;
+    const gameIds = await this.service.gameIds(fromDate, toDate);
+    return this.getStatistics(gameIds, onlyActivePlayers);
+  }
+
+  private getStatistics(gameIds: string[], onlyActivePlayers: boolean): Promise<unknown> {
     return Promise.all([
-      this.service.countGames(config),
-      this.service.countRounds(config),
-      this.service.averageRoundsPerGame(config),
-      this.service.maxRoundsPerGame(config),
-      this.service.penaltySum(config),
-      this.service.euroPerGame(config),
-      this.service.euroPerRound(config),
-      this.service.mostExpensiveRound(config),
-      this.service.mostExpensiveGame(config),
-      this.service.mostExpensiveRoundAveragePerGame(config),
-      this.service.hostsTable(config),
-      this.service.attendancesTable(config),
-      this.service.finalsTable(config),
-      this.service.recordsPerGame(config),
-      this.service.eventTypeStreaks(config, 'WITHOUT_EVENT'),
-      this.service.eventTypeStreaks(config, 'WITH_EVENT'),
-      this.service.penaltyStreak(config, 'NO_PENALTY'),
-      this.service.penaltyStreak(config, 'AT_LEAST_ONE_PENALTY'),
-      this.service.getSchockAusStreak(config),
-      this.service.attendanceStreak(config),
-      this.service.penaltyByPlayerTable(config),
-      this.service.eventTypeCountsByPlayer(config, ['a7e6a6ac-0348-41df-9e36-1adc5eb12054']),
-      this.service.eventTypeCounts(config),
-      this.service.schockAusEffectivityTable(config),
+      this.service.countGames(gameIds),
+      this.service.countRounds(gameIds),
+      this.service.averageRoundsPerGame(gameIds),
+      this.service.maxRoundsPerGame(gameIds),
+      this.service.penaltySum(gameIds, onlyActivePlayers),
+      this.service.euroPerGame(gameIds, onlyActivePlayers),
+      this.service.euroPerRound(gameIds, onlyActivePlayers),
+      this.service.mostExpensiveRound(gameIds, onlyActivePlayers),
+      this.service.mostExpensiveGame(gameIds, onlyActivePlayers),
+      this.service.mostExpensiveRoundAveragePerGame(gameIds, onlyActivePlayers),
+      this.service.hostsTable(gameIds, onlyActivePlayers),
+      this.service.attendancesTable(gameIds, onlyActivePlayers),
+      this.service.finalsTable(gameIds, onlyActivePlayers),
+      this.service.recordsPerGame(gameIds, onlyActivePlayers),
+      this.service.eventTypeStreaks(gameIds, onlyActivePlayers, 'WITHOUT_EVENT'),
+      this.service.eventTypeStreaks(gameIds, onlyActivePlayers, 'WITH_EVENT'),
+      this.service.penaltyStreak(gameIds, onlyActivePlayers, 'NO_PENALTY'),
+      this.service.penaltyStreak(gameIds, onlyActivePlayers, 'AT_LEAST_ONE_PENALTY'),
+      this.service.getSchockAusStreak(gameIds),
+      this.service.attendanceStreak(gameIds, onlyActivePlayers),
+      this.service.penaltyByPlayerTable(gameIds, onlyActivePlayers),
+      this.service.eventTypeCountsByPlayer(gameIds, onlyActivePlayers, ['a7e6a6ac-0348-41df-9e36-1adc5eb12054']),
+      this.service.eventTypeCounts(gameIds, onlyActivePlayers),
+      this.service.schockAusEffectivityTable(gameIds, onlyActivePlayers),
+      this.service.pointsPerGame(gameIds, onlyActivePlayers),
+      this.service.accumulatedPoints(gameIds, onlyActivePlayers),
     ]).then(([
+                                      gameCount,
+                                      roundCount,
+                                      averageRoundsPerGame,
+                                      maxRoundsPerGame,
+                                      penaltySum,
+                                      euroPerGame,
+                                      euroPerRound,
+                                      mostExpensiveRound,
+                                      mostExpensiveGame,
+                                      mostExpensiveRoundAveragePerGame,
+                                      hostsTable,
+                                      attendancesTable,
+                                      finalsTable,
+                                      recordsPerGame,
+                                      noStreaks,
+                                      streaks,
+                                      noPenaltyStreak,
+                                      penaltyStreak,
+                                      schockAusStreak,
+                                      attendanceStreak,
+                                      penaltyByPlayerTable,
+                                      eventTypeCountsByPlayer,
+                                      eventTypeCounts,
+                                      schockAusEffectivityTable,
+                                      points,
+                                      accumulatedPoints
+                                    ]) => ({
       gameCount,
       roundCount,
       averageRoundsPerGame,
@@ -69,32 +105,9 @@ export class StatisticsController {
       penaltyByPlayerTable,
       eventTypeCountsByPlayer,
       eventTypeCounts,
-      schockAusEffectivityTable
-    ]) => ({
-      gameCount,
-      roundCount,
-      averageRoundsPerGame,
-      maxRoundsPerGame,
-      penaltySum,
-      euroPerGame,
-      euroPerRound,
-      mostExpensiveRound,
-      mostExpensiveGame,
-      mostExpensiveRoundAveragePerGame,
-      hostsTable,
-      attendancesTable,
-      finalsTable,
-      recordsPerGame,
-      noStreaks,
-      streaks,
-      noPenaltyStreak,
-      penaltyStreak,
-      schockAusStreak,
-      attendanceStreak,
-      penaltyByPlayerTable,
-      eventTypeCountsByPlayer,
-      eventTypeCounts,
-      schockAusEffectivityTable
+      schockAusEffectivityTable,
+      points,
+      accumulatedPoints
     }));
   }
 
