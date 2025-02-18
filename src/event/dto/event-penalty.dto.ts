@@ -12,7 +12,7 @@ export class EventPenaltyDto {
   @ApiPropertyOptional({ enum: PenaltyUnit, example: PenaltyUnit.EURO })
   penaltyUnit?: PenaltyUnit;
 
-  static fromEntity(entity: Event): EventPenaltyDto {
+  static fromEntity(entity: Pick<Event, 'multiplicatorValue' | 'penaltyValue' | 'penaltyUnit'>): EventPenaltyDto {
     return {
       multiplicatorValue: +entity.multiplicatorValue,
       penaltyValue: +entity.penaltyValue,
@@ -20,7 +20,7 @@ export class EventPenaltyDto {
     };
   }
 
-  static fromEntities(entites: Event[]): EventPenaltyDto[] {
+  static fromEntities(entites: Pick<Event, 'multiplicatorValue' | 'penaltyValue' | 'penaltyUnit'>[]): EventPenaltyDto[] {
     return entites.map(e => EventPenaltyDto.fromEntity(e));
   }
 }
