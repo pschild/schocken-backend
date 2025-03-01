@@ -9,13 +9,19 @@ export class StreakDto {
   name: string;
 
   @ApiProperty({ type: Number })
-  streak: number;
+  maxStreak: number;
+
+  @ApiProperty({ type: Number })
+  currentStreak: number;
 
   @ApiProperty({ type: Boolean })
   isCurrent: boolean;
 
   @ApiProperty({ type: String, format: 'uuid' })
   lastRoundIdOfStreak: string;
+
+  @ApiProperty({ type: String, format: 'uuid' })
+  gameId: string;
 
   @ApiProperty({ type: Date })
   datetime: string;

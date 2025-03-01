@@ -9,5 +9,5 @@ export class SchockAusStreakDto {
   datetime: string;
 
   @ApiProperty({ type: Number })
-  streak: number;
+  maxStreak: number;
 }

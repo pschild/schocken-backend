@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { groupBy, maxBy, orderBy } from 'lodash';
+import { groupBy, maxBy } from 'lodash';
 import { EventTypeTrigger } from '../../event-type/enum/event-type-trigger.enum';
 import { EventTypeStreakDto, SchockAusStreakDto, StreakDto } from '../dto';
 import { EventTypesStatisticsService } from '../event-types/event-types-statistics.service';
@@ -9,7 +9,7 @@ import { RoundStatisticsService } from '../round/round-statistics.service';
 import { addRanking, findPropertyById } from '../statistics.utils';
 import { EventTypeStreakModeEnum } from './enum/event-type-streak-mode.enum';
 import { PenaltyStreakModeEnum } from './enum/penalty-streak-mode.enum';
-import { calculateMaxStreak } from './streak.utils';
+import { calculateCurrentStreak, calculateMaxStreak } from './streak.utils';
 
 @Injectable()
 export class StreakStatisticsService {
@@ -52,13 +52,20 @@ export class StreakStatisticsService {
       const streak = calculateMaxStreak(allRoundIds, roundIds);
       const lastAttendedRoundId = allRoundIds[allRoundIds.length - 1];
       const lastRoundIdOfStreak = streak[streak.length - 1];
+
+      if (findPropertyById(players, playerId, 'name') === 'Philippe' && mode === EventTypeStreakModeEnum.WITH_EVENT && eventTypeId === 'a7e6a6ac-0348-41df-9e36-1adc5eb12054') {
+        console.log(allRoundIds.slice(-10), roundIds.slice(-10));
+      }
+
       return {
         name: findPropertyById(players, playerId, 'name'),
         eventTypeId,
-        streak: streak.length,
+        maxStreak: streak.length,
+        currentStreak: calculateCurrentStreak(allRoundIds, roundIds),
         isCurrent: lastAttendedRoundId === lastRoundIdOfStreak,
         lastRoundIdOfStreak,
         datetime: findPropertyById(rounds, lastRoundIdOfStreak, 'datetime'),
+        gameId: findPropertyById(rounds, lastRoundIdOfStreak, 'gameId'),
       };
     });
 
@@ -69,9 +76,9 @@ export class StreakStatisticsService {
       mode,
       streaks: addRanking(
         streaks,
-        ['streak', 'datetime'],
+        ['maxStreak', 'datetime'],
         ['desc', 'desc']
-      ).map(({ rank, name, streak, isCurrent, lastRoundIdOfStreak, datetime }) => ({ rank, name, streak, isCurrent, lastRoundIdOfStreak, datetime }))
+      ).map(({ rank, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }) => ({ rank, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }))
     }));
   }
 
@@ -99,14 +106,16 @@ export class StreakStatisticsService {
       const lastRoundIdOfStreak = streak[streak.length - 1];
       return {
         name: findPropertyById(players, playerId, 'name'),
-        streak: streak.length,
+        maxStreak: streak.length,
+        currentStreak: calculateCurrentStreak(allRoundIds, roundIds),
         isCurrent: lastAttendedRoundId === lastRoundIdOfStreak,
         lastRoundIdOfStreak,
         datetime: findPropertyById(rounds, lastRoundIdOfStreak, 'datetime'),
+        gameId: findPropertyById(rounds, lastRoundIdOfStreak, 'gameId'),
       };
     });
 
-    return addRanking(streaks, ['streak', 'datetime'], ['desc', 'desc']);
+    return addRanking(streaks, ['maxStreak', 'datetime'], ['desc', 'desc']);
   }
 
   async getSchockAusStreak(gameIds: string[]): Promise<SchockAusStreakDto> {
@@ -117,15 +126,15 @@ export class StreakStatisticsService {
     const roundIdsByGameId = await this.roundStatisticsService.roundIdsByGameId(gameIds);
     const roundIdsBySchockAus = await this.roundStatisticsService.roundIdsByEventTypeId(gameIds, schockAusEventTypeId);
     const streaks = roundIdsByGameId.map(({ gameId, roundIds }) => {
-      const schockAusRoundIds = roundIdsBySchockAus.find(i => i.gameId === gameId).roundIds;
+      const schockAusRoundIds = roundIdsBySchockAus.find(i => i.gameId === gameId)?.roundIds || [];
       const streak = calculateMaxStreak(roundIds, schockAusRoundIds);
       return {
         gameId,
         datetime: findPropertyById(games, gameId, 'datetime'),
-        streak: streak.length
+        maxStreak: streak.length
       };
     });
-    return maxBy(streaks, 'streak');
+    return maxBy(streaks, 'maxStreak');
   }
 
   async attendanceStreak(gameIds: string[], onlyActivePlayers: boolean): Promise<StreakDto[]> {
@@ -146,14 +155,16 @@ export class StreakStatisticsService {
       const lastRoundIdOfStreak = streak[streak.length - 1];
       return {
         name: findPropertyById(players, playerId, 'name'),
-        streak: streak.length,
+        maxStreak: streak.length,
+        currentStreak: calculateCurrentStreak(allRoundIds, roundIds),
         isCurrent: lastAttendedRoundId === lastRoundIdOfStreak,
         lastRoundIdOfStreak,
         datetime: findPropertyById(rounds, lastRoundIdOfStreak, 'datetime'),
+        gameId: findPropertyById(rounds, lastRoundIdOfStreak, 'gameId'),
       };
     });
 
-    return addRanking(streaks, ['streak', 'datetime'], ['desc', 'desc']);
+    return addRanking(streaks, ['maxStreak', 'datetime'], ['desc', 'desc']);
   }
 
 }

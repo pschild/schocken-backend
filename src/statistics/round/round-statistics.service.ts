@@ -25,8 +25,16 @@ export class RoundStatisticsService {
   }
 
   @Cached()
-  async rounds(gameIds: string[]): Promise<{ id: string; datetime: Date; }[]> {
-    return this.roundRepo.find({ select: ['id', 'datetime'], where: { game: { id: In(gameIds) } }, order: { datetime: 'ASC' } });
+  async rounds(gameIds: string[]): Promise<{ id: string; gameId: string; datetime: string; }[]> {
+    if (gameIds.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.dataSource.query(`
+        SELECT id, "gameId", datetime
+        FROM round
+        WHERE "gameId" IN (${gameIds.map(id => `'${id}'`).join(',')})
+        ORDER BY datetime
+    `);
   }
 
   @Cached()
@@ -47,6 +55,17 @@ export class RoundStatisticsService {
       gameId,
       roundIds: rounds.map(r => r.id)
     }));
+  }
+
+  @Cached()
+  async gameIdByRoundId(gameIds: string[], roundId: string): Promise<string | null> {
+    const roundIdsByGameId = await this.roundIdsByGameId(gameIds);
+    roundIdsByGameId.forEach(item => {
+      if (item.roundIds.includes(roundId)) {
+        return item.gameId;
+      }
+    });
+    return null;
   }
 
   @Cached()

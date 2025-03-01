@@ -24,3 +24,27 @@ export function calculateMaxStreak(full: string[], parts: string[]): string[] {
   }
   return maxStreakElements;
 }
+
+export function calculateCurrentStreak(full: string[], parts: string[]): number {
+  if (parts.length === 0) {
+    return 0;
+  }
+
+  let counter = 0;
+  // let idxInFull = full.lastIndexOf(parts[parts.length - 1]);
+  let idxInFull = full.length - 1;
+  if (idxInFull >= 0) {
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const elementInFull = full[idxInFull];
+      const elementInPart = parts[i];
+      if (elementInPart === elementInFull) {
+        counter++;
+        idxInFull--;
+      } else {
+        break;
+      }
+    }
+    return counter;
+  }
+  throw new Error(`Could not find element ${parts[parts.length - 1]} in full list!`);
+}
