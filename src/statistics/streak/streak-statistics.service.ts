@@ -14,6 +14,11 @@ import { calculateCurrentStreak, calculateMaxStreak } from './streak.utils';
 @Injectable()
 export class StreakStatisticsService {
 
+  /**
+   * Bestimmt, ob es bei gleicher Höhe "besser" ist, einen Rekord initial aufgestellt (`false`) oder ihn eingestellt zu haben (`true`).
+   */
+  private LATEST_RECORDS_FIRST = true;
+
   constructor(
     private playerStatisticsService: PlayerStatisticsService,
     private eventTypesStatisticsService: EventTypesStatisticsService,
@@ -53,10 +58,6 @@ export class StreakStatisticsService {
       const lastAttendedRoundId = allRoundIds[allRoundIds.length - 1];
       const lastRoundIdOfStreak = streak[streak.length - 1];
 
-      if (findPropertyById(players, playerId, 'name') === 'Philippe' && mode === EventTypeStreakModeEnum.WITH_EVENT && eventTypeId === 'a7e6a6ac-0348-41df-9e36-1adc5eb12054') {
-        console.log(allRoundIds.slice(-10), roundIds.slice(-10));
-      }
-
       return {
         name: findPropertyById(players, playerId, 'name'),
         eventTypeId,
@@ -77,7 +78,7 @@ export class StreakStatisticsService {
       streaks: addRanking(
         streaks,
         ['maxStreak', 'datetime'],
-        ['desc', 'desc']
+        ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']
       ).map(({ rank, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }) => ({ rank, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }))
     }));
   }
@@ -115,7 +116,7 @@ export class StreakStatisticsService {
       };
     });
 
-    return addRanking(streaks, ['maxStreak', 'datetime'], ['desc', 'desc']);
+    return addRanking(streaks, ['maxStreak', 'datetime'], ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']);
   }
 
   async getSchockAusStreak(gameIds: string[]): Promise<SchockAusStreakDto> {
@@ -164,7 +165,7 @@ export class StreakStatisticsService {
       };
     });
 
-    return addRanking(streaks, ['maxStreak', 'datetime'], ['desc', 'desc']);
+    return addRanking(streaks, ['maxStreak', 'datetime'], ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']);
   }
 
 }
