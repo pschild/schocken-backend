@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
+import { PermissionGuard } from './auth/guard/permission.guard';
+import { RoleGuard } from './auth/guard/role.guard';
 import { PlayerModule } from './player/player.module';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import { RoundModule } from './round/round.module';
@@ -15,6 +20,7 @@ import * as winston from 'winston';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    AuthModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -56,5 +62,19 @@ import * as winston from 'winston';
     EventTypeModule,
     StatisticsModule,
   ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RoleGuard,
+    }
+  ]
 })
 export class AppModule {}

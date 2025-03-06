@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+import { Permission } from '../auth/model/permission.enum';
+import { Permissions } from '../auth/decorator/permission.decorator';
 import { PenaltyDto } from '../penalty/dto/penalty.dto';
 import { AttendanceStatisticsService } from './attendance/attendance-statistics.service';
 import {
@@ -166,12 +168,14 @@ export class StatisticsController {
   ) {}
 
   @Get('all-games')
+  @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: [GameIdsWithDatetimeDto] })
   async allGames(): Promise<GameIdsWithDatetimeDto[]> {
     return this.gameStatisticsService.games();
   }
 
   @Post('games-rounds')
+  @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: GamesAndRoundsStatisticsResponseDto })
   async gamesAndRoundsStatistics(@Body() body: StatisticsRequestDto): Promise<GamesAndRoundsStatisticsResponseDto> {
     const { fromDate, toDate, gameIds } = body;
@@ -187,6 +191,7 @@ export class StatisticsController {
   }
 
   @Post('event-types')
+  @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: EventTypesStatisticsResponseDto })
   async eventTypeStatistics(@Body() body: StatisticsRequestDto): Promise<EventTypesStatisticsResponseDto> {
     const { fromDate, toDate, gameIds, onlyActivePlayers } = body;
@@ -201,6 +206,7 @@ export class StatisticsController {
   }
 
   @Post('event-type-counts')
+  @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: [CountByNameDto] })
   async eventTypeCountsByPlayer(
     @Body() body: StatisticsRequestDto & { eventTypeId: string; }
@@ -211,6 +217,7 @@ export class StatisticsController {
   }
 
   @Post('penalty')
+  @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: PenaltyStatisticsResponseDto })
   async penaltyStatistics(@Body() body: StatisticsRequestDto): Promise<PenaltyStatisticsResponseDto> {
     const { fromDate, toDate, gameIds, onlyActivePlayers } = body;
@@ -229,6 +236,7 @@ export class StatisticsController {
   }
 
   @Post('streaks')
+  @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: StreakStatisticsResponseDto })
   async streakStatistics(@Body() body: StatisticsRequestDto): Promise<StreakStatisticsResponseDto> {
     const { fromDate, toDate, gameIds, onlyActivePlayers } = body;
@@ -246,6 +254,7 @@ export class StatisticsController {
   }
 
   @Post('points')
+  @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: PointsStatisticsResponseDto })
   async pointsStatistics(@Body() body: StatisticsRequestDto): Promise<PointsStatisticsResponseDto> {
     const { fromDate, toDate, gameIds, onlyActivePlayers } = body;
@@ -259,6 +268,7 @@ export class StatisticsController {
   }
 
   @Post('hosts')
+  @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: HostStatisticsResponseDto })
   async hostStatistics(@Body() body: StatisticsRequestDto): Promise<HostStatisticsResponseDto> {
     const { fromDate, toDate, gameIds, onlyActivePlayers } = body;
@@ -271,6 +281,7 @@ export class StatisticsController {
   }
 
   @Post('attendances')
+  @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: AttendancesStatisticsResponseDto })
   async attendancesStatistics(@Body() body: StatisticsRequestDto): Promise<AttendancesStatisticsResponseDto> {
     const { fromDate, toDate, gameIds, onlyActivePlayers } = body;
