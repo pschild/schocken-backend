@@ -131,6 +131,7 @@ export namespace TestData {
       ...createBaseEntity(deleted),
       name: 'John',
       active,
+      auth0UserId: null,
       registered: new Date(),
       hostedGames: []
     };

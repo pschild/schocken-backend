@@ -13,6 +13,9 @@ export class Player extends BaseEntity {
   @Column({ default: true })
   active: boolean;
 
+  @Column({ nullable: true, length: 64 })
+  auth0UserId: string;
+
   @OneToMany(() => Game, game => game.hostedBy)
   hostedGames: Game[];
 }

@@ -18,6 +18,12 @@ export class CreatePlayerDto {
   @IsBoolean()
   active?: boolean;
 
+  @ApiPropertyOptional({ type: String, maxLength: 64 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  auth0UserId?: string;
+
   static mapForeignKeys(dto: CreatePlayerDto): Player {
     return {
       ...dto

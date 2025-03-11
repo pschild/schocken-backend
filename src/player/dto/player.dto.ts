@@ -24,6 +24,9 @@ export class PlayerDto {
   @ApiProperty({ type: Boolean })
   active: boolean;
 
+  @ApiPropertyOptional({ type: String, maxLength: 64, nullable: true })
+  auth0UserId?: string;
+
   @ApiPropertyOptional({ type: [GameDto] })
   hostedGames?: GameDto[];
 
@@ -36,6 +39,7 @@ export class PlayerDto {
       name: entity.name,
       registered: entity.registered.toISOString(),
       active: entity.active,
+      auth0UserId: entity.auth0UserId,
       ...(entity.hostedGames ? { hostedGames: GameDto.fromEntities(entity.hostedGames) } : {}),
     } : null;
   }
