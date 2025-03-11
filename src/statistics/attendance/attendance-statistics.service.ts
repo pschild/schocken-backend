@@ -64,6 +64,7 @@ export class AttendanceStatisticsService {
     const attendances = await this.attendancesByPlayerId(gameIds, playerIds);
     return addRanking(
       attendances.map(playerInfo => ({
+        playerId: playerInfo.playerId,
         name: findPropertyById(players, playerInfo.playerId, 'name'),
         count: playerInfo.count,
         quote: playerInfo.count / roundCount.count
@@ -87,6 +88,7 @@ export class AttendanceStatisticsService {
       finals.map(playerInfo => {
         const roundCount = attendancesSinceFirstFinal.find(p => p.playerId === playerInfo.playerId)?.count || 0;
         return {
+          playerId: playerInfo.playerId,
           name: findPropertyById(players, playerInfo.playerId, 'name'),
           count: playerInfo.count,
           quote: roundCount ? playerInfo.count / roundCount : 0,

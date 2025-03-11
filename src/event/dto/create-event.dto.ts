@@ -11,10 +11,10 @@ export class CreateEventDto {
   @IsString()
   datetime?: string;
 
-  @ApiPropertyOptional({ type: Number, minimum: 1 })
+  @ApiPropertyOptional({ type: Number, minimum: 0 })
   @IsOptional()
   @IsNumber()
-  @Min(1)
+  @Min(0)
   multiplicatorValue?: number;
 
   @ApiPropertyOptional({ type: String })

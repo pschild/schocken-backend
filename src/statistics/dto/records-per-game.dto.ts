@@ -8,6 +8,9 @@ export class RecordDto {
   @ApiProperty({ type: String })
   datetime: string;
 
+  @ApiProperty({ type: String, format: 'uuid' })
+  playerId: string;
+
   @ApiProperty({ type: String })
   name: string;
 

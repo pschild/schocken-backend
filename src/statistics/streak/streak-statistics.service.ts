@@ -59,6 +59,7 @@ export class StreakStatisticsService {
       const lastRoundIdOfStreak = streak[streak.length - 1];
 
       return {
+        playerId,
         name: findPropertyById(players, playerId, 'name'),
         eventTypeId,
         maxStreak: streak.length,
@@ -79,7 +80,7 @@ export class StreakStatisticsService {
         streaks,
         ['maxStreak', 'datetime'],
         ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']
-      ).map(({ rank, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }) => ({ rank, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }))
+      ).map(({ rank, playerId, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }) => ({ rank, playerId, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }))
     }));
   }
 
@@ -106,6 +107,7 @@ export class StreakStatisticsService {
       const lastAttendedRoundId = allRoundIds[allRoundIds.length - 1];
       const lastRoundIdOfStreak = streak[streak.length - 1];
       return {
+        playerId,
         name: findPropertyById(players, playerId, 'name'),
         maxStreak: streak.length,
         currentStreak: calculateCurrentStreak(allRoundIds, roundIds),
@@ -155,6 +157,7 @@ export class StreakStatisticsService {
       const lastAttendedRoundId = roundIds[roundIds.length - 1];
       const lastRoundIdOfStreak = streak[streak.length - 1];
       return {
+        playerId,
         name: findPropertyById(players, playerId, 'name'),
         maxStreak: streak.length,
         currentStreak: calculateCurrentStreak(allRoundIds, roundIds),

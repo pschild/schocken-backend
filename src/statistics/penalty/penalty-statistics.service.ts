@@ -119,6 +119,7 @@ export class PenaltyStatisticsService {
         const euroSum = gameEventEuroSum + roundEventEuroSum;
         const roundCountByPlayer = attendancesByPlayerId.find(i => i.playerId === playerId)?.count;
         return {
+          playerId,
           name: findPropertyById(players, playerId, 'name'),
           gameEventEuroSum,
           roundEventEuroSum,

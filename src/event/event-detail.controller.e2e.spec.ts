@@ -39,7 +39,7 @@ describe('EventDetailController e2e', () => {
   describe('create', () => {
     it.each([
       [null, 400, ['context is not valid in combination with gameId, roundId', 'context must be one of the following values: GAME, ROUND', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
-      [{ multiplicatorValue: -1, comment: RANDOM_STRING(129) }, 400, ['multiplicatorValue must not be less than 1', 'comment must be shorter than or equal to 128 characters', 'context is not valid in combination with gameId, roundId', 'context must be one of the following values: GAME, ROUND', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
+      [{ multiplicatorValue: -1, comment: RANDOM_STRING(129) }, 400, ['multiplicatorValue must not be less than 0', 'comment must be shorter than or equal to 128 characters', 'context is not valid in combination with gameId, roundId', 'context must be one of the following values: GAME, ROUND', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
       [{ multiplicatorValue: 10, comment: RANDOM_STRING(128), context: 'invalid' }, 400, ['context is not valid in combination with gameId, roundId', 'context must be one of the following values: GAME, ROUND', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
       [{ multiplicatorValue: 10, comment: RANDOM_STRING(128), context: EventContext.GAME, gameId: 'invalid-uuid', playerId: 'invalid-uuid', eventTypeId: 'invalid-uuid' }, 400, ['gameId must be a UUID', 'playerId must be a UUID', 'eventTypeId must be a UUID']],
       [{ context: EventContext.GAME, roundId: RANDOM_UUID(), playerId: RANDOM_UUID(), eventTypeId: RANDOM_UUID() }, 400, ['context is not valid in combination with gameId, roundId']],

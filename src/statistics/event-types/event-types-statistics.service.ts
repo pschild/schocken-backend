@@ -6,7 +6,8 @@ import { Cached } from '../../decorator/cached.decorator';
 import { EventTypeContext } from '../../event-type/enum/event-type-context.enum';
 import { EventTypeTrigger } from '../../event-type/enum/event-type-trigger.enum';
 import { EventType } from '../../model/event-type.entity';
-import { CountByNameDto, RecordsPerGameDto, SchockAusEffectivityTableDto } from '../dto';
+import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
+import { CountByNameDto, EventTypeCountsDto, RecordsPerGameDto, SchockAusEffectivityTableDto } from '../dto';
 import { GameStatisticsService } from '../game/game-statistics.service';
 import { PlayerStatisticsService } from '../player/player-statistics.service';
 import { RoundStatisticsService } from '../round/round-statistics.service';
@@ -58,6 +59,27 @@ export class EventTypesStatisticsService {
       ['count'],
       ['desc']
     );
+  }
+
+  @Cached()
+  async eventTypeCountsWithPenaltySum(gameIds: string[], playerIds: string[]): Promise<{ id: string, description: string, count: number, penaltyUnit: PenaltyUnit, penalty: number }[]> {
+    const roundIds = await this.roundStatisticsService.roundIds(gameIds);
+    if (gameIds.length === 0 || roundIds.length === 0) {
+      return Promise.resolve([]);
+    }
+    const result = await this.dataSource.query(`
+        SELECT event_type.id, description, count(event.id), event."penaltyUnit", SUM("multiplicatorValue" * event."penaltyValue") AS penalty
+        FROM event_type
+        LEFT JOIN event ON event_type.id = event."eventTypeId"
+        WHERE (
+            "roundId" IN (${roundIds.map(id => `'${id}'`).join(',')})
+            OR "gameId" IN (${gameIds.map(id => `'${id}'`).join(',')})
+        )
+        AND "playerId" IN (${playerIds.map(id => `'${id}'`).join(',')})
+        GROUP BY event_type.id, description, event."penaltyUnit"
+    `);
+
+    return result.map(({ id, description, count, penaltyUnit, penalty }) => ({ id, description, count: +count, penaltyUnit, penalty: +penalty }));
   }
 
   @Cached()
@@ -144,6 +166,7 @@ export class EventTypesStatisticsService {
             return {
               count,
               gameId,
+              playerId,
               name: findPropertyById(players, playerId, 'name'),
               datetime: findPropertyById(games, gameId, 'datetime'),
             };
@@ -157,22 +180,15 @@ export class EventTypesStatisticsService {
     const players = await this.playerStatisticsService.players(onlyActivePlayers);
 
     return (await this.eventTypeCountsByPlayerId(gameIds, playerIds, eventTypeId)).map(({ playerId, count }) => ({
+      id: playerId,
       name: findPropertyById(players, playerId, 'name'),
       count
     }));
   }
 
-  async eventTypeCounts(gameIds: string[], onlyActivePlayers: boolean): Promise<CountByNameDto[]> {
+  async eventTypeCounts(gameIds: string[], onlyActivePlayers: boolean): Promise<EventTypeCountsDto[]> {
     const playerIds = await this.playerStatisticsService.playerIds(onlyActivePlayers);
-    const eventTypes = await this.eventTypes();
-
-    const eventTypeCountsByPlayerId = await this.eventTypeCountsByPlayerId(gameIds, playerIds);
-    return Object.entries(groupBy(eventTypeCountsByPlayerId, 'eventTypeId')).map(([eventTypeId, info]) => {
-      return {
-        name: findPropertyById(eventTypes, eventTypeId, 'description'),
-        count: sumBy(info, 'count')
-      };
-    });
+    return this.eventTypeCountsWithPenaltySum(gameIds, playerIds);
   }
 
   async schockAusEffectivityTable(gameIds: string[], onlyActivePlayers: boolean): Promise<SchockAusEffectivityTableDto[]> {
@@ -186,6 +202,7 @@ export class EventTypesStatisticsService {
         const saCount = info.length;
         const sasCount = sumBy(info, 'sasCount');
         return {
+          playerId,
           name: findPropertyById(players, playerId, 'name'),
           saCount,
           sasCount,

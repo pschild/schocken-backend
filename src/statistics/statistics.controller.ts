@@ -8,6 +8,7 @@ import {
   AccumulatedPointsPerGameDto,
   CountByNameDto,
   CountDto,
+  EventTypeCountsDto,
   EventTypeStreakDto,
   HostsTableDto,
   MostExpensiveGameDto,
@@ -76,8 +77,8 @@ export class EventTypesStatisticsResponseDto {
   @ApiProperty({ type: [RecordsPerGameDto] })
   recordsPerGame: RecordsPerGameDto[];
 
-  @ApiProperty({ type: [CountByNameDto] })
-  eventTypeCounts: CountByNameDto[];
+  @ApiProperty({ type: [EventTypeCountsDto] })
+  eventTypeCounts: EventTypeCountsDto[];
 
   @ApiProperty({ type: [SchockAusEffectivityTableDto] })
   schockAusEffectivityTable: SchockAusEffectivityTableDto[];

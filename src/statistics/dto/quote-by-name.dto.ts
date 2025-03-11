@@ -5,6 +5,9 @@ export class QuoteByNameDto {
   @ApiProperty({ type: Number })
   rank: number;
 
+  @ApiProperty({ type: String, format: 'uuid' })
+  playerId: string;
+
   @ApiProperty({ type: String })
   name: string;
 
