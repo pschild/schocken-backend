@@ -4,6 +4,8 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Logger } from 'winston';
+import { Permissions } from '../auth/decorator/permission.decorator';
+import { Permission } from '../auth/model/permission.enum';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { PlayerDto } from './dto/player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
@@ -20,6 +22,7 @@ export class PlayerController {
   }
 
   @Post()
+  @Permissions([Permission.CREATE_PLAYERS])
   @ApiBody({ type: CreatePlayerDto })
   @ApiCreatedResponse({ type: PlayerDto })
   @ApiBadRequestResponse({ description: 'When a player with given name already exists.' })
@@ -30,6 +33,7 @@ export class PlayerController {
   }
 
   @Get(':id')
+  @Permissions([Permission.READ_PLAYERS])
   @ApiOkResponse({ type: PlayerDto })
   public findOne(@Param('id') id: string): Observable<PlayerDto> {
     return this.service.findOne(id).pipe(
@@ -37,7 +41,16 @@ export class PlayerController {
     );
   }
 
+  @Get('/by-user-id/:id')
+  @Permissions([Permission.READ_PLAYERS])
+  @ApiOkResponse({ type: String })
+  @ApiProduces('text/plain')
+  public getPlayerIdByUserId(@Param('id') id: string): Observable<string> {
+    return this.service.getPlayerIdByUserId(id);
+  }
+
   @Get()
+  @Permissions([Permission.READ_PLAYERS])
   @ApiOkResponse({ type: [PlayerDto] })
   public findAll(): Observable<PlayerDto[]> {
     return this.service.findAll().pipe(
@@ -46,6 +59,7 @@ export class PlayerController {
   }
 
   @Patch(':id')
+  @Permissions([Permission.UPDATE_PLAYERS])
   @ApiBody({ type: UpdatePlayerDto })
   @ApiOkResponse({ type: PlayerDto })
   @ApiBadRequestResponse({ description: 'When a player with given name already exists.' })
@@ -57,6 +71,7 @@ export class PlayerController {
   }
 
   @Delete(':id')
+  @Permissions([Permission.DELETE_PLAYERS])
   @ApiOkResponse({ type: String })
   @ApiProduces('text/plain')
   public remove(@Param('id') id: string): Observable<string> {

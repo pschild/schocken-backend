@@ -42,8 +42,8 @@ export class GameDetailController {
   }
 
   @Patch(':id')
-  @ApiOkResponse({ type: GameDetailDto })
   @Permissions([Permission.UPDATE_GAMES])
+  @ApiOkResponse({ type: GameDetailDto })
   update(@Param('id') id: string, @Body() dto: UpdateGameDto): Observable<GameDetailDto> {
     return this.service.update(id, dto).pipe(
       map(GameDetailDto.fromEntity)

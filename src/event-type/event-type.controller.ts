@@ -2,6 +2,8 @@ import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/commo
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Permissions } from '../auth/decorator/permission.decorator';
+import { Permission } from '../auth/model/permission.enum';
 import { CreateEventTypeDto } from './dto/create-event-type.dto';
 import { EventTypeDto } from './dto/event-type.dto';
 import { UpdateEventTypeDto } from './dto/update-event-type.dto';
@@ -13,6 +15,7 @@ export class EventTypeController {
   constructor(private readonly service: EventTypeService) {}
 
   @Post()
+  @Permissions([Permission.CREATE_EVENT_TYPES])
   @ApiBody({ type: CreateEventTypeDto })
   @ApiCreatedResponse({ type: EventTypeDto })
   create(@Body() dto: CreateEventTypeDto): Observable<EventTypeDto> {
@@ -22,6 +25,7 @@ export class EventTypeController {
   }
 
   @Get()
+  @Permissions([Permission.READ_EVENT_TYPES])
   @ApiOkResponse({ type: [EventTypeDto] })
   findAll(): Observable<EventTypeDto[]> {
     return this.service.findAll().pipe(
@@ -30,6 +34,7 @@ export class EventTypeController {
   }
 
   @Patch(':id')
+  @Permissions([Permission.UPDATE_EVENT_TYPES])
   @ApiOkResponse({ type: EventTypeDto })
   update(@Param('id') id: string, @Body() dto: UpdateEventTypeDto): Observable<EventTypeDto> {
     return this.service.update(id, dto).pipe(
@@ -38,6 +43,7 @@ export class EventTypeController {
   }
 
   @Delete(':id')
+  @Permissions([Permission.DELETE_EVENT_TYPES])
   @ApiOkResponse({ type: String })
   @ApiProduces('text/plain')
   remove(@Param('id') id: string): Observable<string> {

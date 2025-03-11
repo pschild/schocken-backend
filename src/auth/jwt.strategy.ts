@@ -7,9 +7,8 @@ import { User } from './model/user.model';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private configService: ConfigService
-  ) {
+
+  constructor(configService: ConfigService) {
     super({
       secretOrKeyProvider: passportJwtSecret({
         cache: true,

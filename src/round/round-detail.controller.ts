@@ -2,6 +2,8 @@ import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/commo
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { Observable, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Permissions } from '../auth/decorator/permission.decorator';
+import { Permission } from '../auth/model/permission.enum';
 import { CreateDetailRoundResponse } from './dto/create-detail-round.response';
 import { CreateRoundDto } from './dto/create-round.dto';
 import { RoundDetailDto } from './dto/round-detail.dto';
@@ -15,6 +17,7 @@ export class RoundDetailController {
   constructor(private readonly service: RoundDetailService) {}
 
   @Post()
+  @Permissions([Permission.CREATE_ROUNDS])
   @ApiBody({ type: CreateRoundDto })
   @ApiCreatedResponse({ type: CreateDetailRoundResponse })
   create(@Body() dto: CreateRoundDto): Observable<CreateDetailRoundResponse> {
@@ -26,6 +29,7 @@ export class RoundDetailController {
   }
 
   @Get(':gameId')
+  @Permissions([Permission.READ_ROUNDS, Permission.READ_GAMES])
   @ApiOkResponse({ type: [RoundDetailDto] })
   getByGameId(@Param('gameId') gameId: string): Observable<RoundDetailDto[]> {
     return this.service.findByGameId(gameId).pipe(
@@ -34,6 +38,7 @@ export class RoundDetailController {
   }
 
   @Get(':id/details')
+  @Permissions([Permission.READ_ROUNDS])
   @ApiOkResponse({ type: RoundDetailDto })
   getDetails(@Param('id') id: string): Observable<RoundDetailDto> {
     return this.service.getDetails(id).pipe(
@@ -42,6 +47,7 @@ export class RoundDetailController {
   }
 
   @Patch(':id/attendees')
+  @Permissions([Permission.UPDATE_ROUNDS])
   @ApiOkResponse({ type: RoundDetailDto })
   updateAttendees(@Param('id') id: string, @Body() dto: UpdateAttendanceDto): Observable<RoundDetailDto> {
     return this.service.updateAttendees(id, dto).pipe(
@@ -50,6 +56,7 @@ export class RoundDetailController {
   }
 
   @Patch(':id/finalists')
+  @Permissions([Permission.UPDATE_ROUNDS])
   @ApiOkResponse({ type: RoundDetailDto })
   updateFinalists(@Param('id') id: string, @Body() dto: UpdateFinalistsDto): Observable<RoundDetailDto> {
     return this.service.updateFinalists(id, dto).pipe(
@@ -58,6 +65,7 @@ export class RoundDetailController {
   }
 
   @Delete(':id')
+  @Permissions([Permission.DELETE_ROUNDS])
   @ApiOkResponse({ type: String })
   @ApiProduces('text/plain')
   remove(@Param('id') id: string): Observable<string> {

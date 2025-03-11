@@ -2,6 +2,8 @@ import { Body, Controller, Delete, Param, Post } from '@nestjs/common';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Permissions } from '../auth/decorator/permission.decorator';
+import { Permission } from '../auth/model/permission.enum';
 import { BulkCreateEventsDto } from './dto/bulk-create-events.dto';
 import { CreateDetailEventResponse } from './dto/create-detail-event.response';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -14,6 +16,7 @@ export class EventDetailController {
   constructor(private readonly service: EventDetailService) {}
 
   @Post()
+  @Permissions([Permission.CREATE_EVENTS])
   @ApiBody({ type: CreateEventDto })
   @ApiCreatedResponse({ type: CreateDetailEventResponse })
   create(@Body() dto: CreateEventDto): Observable<CreateDetailEventResponse> {
@@ -23,6 +26,7 @@ export class EventDetailController {
   }
 
   @Post('bulk')
+  @Permissions([Permission.CREATE_EVENTS])
   @ApiBody({ type: BulkCreateEventsDto })
   @ApiCreatedResponse({ type: [CreateDetailEventResponse] })
   createMany(@Body() dto: BulkCreateEventsDto): Observable<CreateDetailEventResponse[]> {
@@ -32,6 +36,7 @@ export class EventDetailController {
   }
 
   @Delete(':id')
+  @Permissions([Permission.DELETE_EVENTS])
   @ApiOkResponse({ type: String })
   @ApiProduces('text/plain')
   remove(@Param('id') id: string): Observable<string> {

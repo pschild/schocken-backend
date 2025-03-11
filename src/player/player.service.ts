@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { from, Observable, switchMap } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { defaultIfEmpty, from, Observable, switchMap } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Player } from '../model/player.entity';
@@ -32,6 +32,14 @@ export class PlayerService {
 
   public findAllActive(): Observable<Player[]> {
     return from(this.repo.findBy({ active: true }));
+  }
+
+  public getPlayerIdByUserId(userId: string): Observable<string> {
+    return from(this.repo.findOneBy({auth0UserId: userId})).pipe(
+      filter(entity => !!entity),
+      map(entity => entity.id),
+      defaultIfEmpty(null),
+    );
   }
 
   public update(id: string, dto: UpdatePlayerDto): Observable<Player> {
