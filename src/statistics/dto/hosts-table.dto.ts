@@ -3,9 +3,6 @@ import { PlaceType } from '../../game/enum/place-type.enum';
 
 export class HostsTableDto {
 
-  @ApiProperty({ type: Number })
-  rank: number;
-
   @ApiProperty({ type: String, format: 'uuid', nullable: true })
   hostedById: string | null;
 

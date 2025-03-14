@@ -5,7 +5,7 @@ import { PlaceType } from '../../game/enum/place-type.enum';
 import { Game } from '../../model/game.entity';
 import { HostsTableDto } from '../dto';
 import { PlayerStatisticsService } from '../player/player-statistics.service';
-import { addRanking, findPropertyById } from '../statistics.utils';
+import { findPropertyById } from '../statistics.utils';
 
 @Injectable()
 export class HostingStatisticsService {
@@ -29,15 +29,11 @@ export class HostingStatisticsService {
       .addGroupBy('"placeType"')
       .getRawMany();
 
-    return addRanking(
-      result.map(entry => ({
-        ...entry,
-        ...(entry.placeType === PlaceType.HOME ? { name: findPropertyById(players, entry.hostedById, 'name') } : {}),
-        count: +entry.count,
-      })),
-      ['count'],
-      ['desc']
-    );
+    return result.map(entry => ({
+      ...entry,
+      ...(entry.placeType === PlaceType.HOME ? { name: findPropertyById(players, entry.hostedById, 'name') } : {}),
+      count: +entry.count,
+    }));
   }
 
 }

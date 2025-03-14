@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PointsDto {
 
@@ -11,11 +11,8 @@ export class PointsDto {
   @ApiProperty({ type: String })
   name: string;
 
-  @ApiProperty({ type: Boolean })
-  attended: boolean;
-
   @ApiProperty({ type: Number })
-  gamePoints: number;
+  roundPoints: number;
 
   @ApiProperty({ type: Number })
   bonusPoints: number;
@@ -24,10 +21,13 @@ export class PointsDto {
   penaltyPoints: number;
 
   @ApiProperty({ type: Number })
-  gamePointsSum: number;
+  gamePoints: number;
 
   @ApiProperty({ type: Number })
   points: number;
+
+  @ApiPropertyOptional({ type: Number })
+  tendency?: number;
 }
 
 export class PointsPerGameDto {

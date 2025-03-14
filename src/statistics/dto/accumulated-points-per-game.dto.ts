@@ -1,8 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PointsPerGameDto } from './points-per-game.dto';
+import { PointsDto } from './points-per-game.dto';
 
-export class AccumulatedPointsPerGameDto extends PointsPerGameDto {
+export class AccumulatedPointsPerGameDto {
 
-  @ApiProperty({ type: Number })
-  tendency: number;
+  @ApiProperty({ type: String, format: 'uuid' })
+  gameId: string;
+
+  @ApiProperty({ type: String })
+  datetime: string;
+
+  @ApiProperty({ type: [PointsDto] })
+  points: PointsDto[];
 }

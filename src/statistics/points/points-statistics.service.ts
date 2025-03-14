@@ -9,7 +9,7 @@ import { EventTypesStatisticsService } from '../event-types/event-types-statisti
 import { GameStatisticsService } from '../game/game-statistics.service';
 import { PlayerStatisticsService } from '../player/player-statistics.service';
 import { addRanking, findPropertyById } from '../statistics.utils';
-import { calculateBonusPoints, calculateGamePoints, calculatePenaltyPoints, calculatePoints } from './points.utils';
+import { calculateBonusPoints, calculateRoundPoints, calculatePenaltyPoints, calculatePoints } from './points.utils';
 
 @Injectable()
 export class PointsStatisticsService {
@@ -120,23 +120,23 @@ export class PointsStatisticsService {
     return Object.entries(groupedByGameId).map(([gameId, itemsByGameId]) => {
       const groupedByPlayerId = groupBy(itemsByGameId, 'playerId');
       const pointsByAttendee = Object.entries(groupedByPlayerId).map(([playerId, itemsByPlayerId]) => {
-        const { gamePoints, bonusPoints, penaltyPoints, gamePointsSum } = itemsByPlayerId.map(item => {
-          const gamePoints = calculateGamePoints(item.roundHasFinal, item.roundHasSchockAus, item.isFinalist, item.hasVerloren, item.schockAusCount > 0);
+        const { roundPoints, bonusPoints, penaltyPoints, gamePoints } = itemsByPlayerId.map(item => {
+          const roundPoints = calculateRoundPoints(item.roundHasFinal, item.roundHasSchockAus, item.isFinalist, item.hasVerloren, item.schockAusCount > 0);
           const bonusPoints = calculateBonusPoints(item.schockAusCount);
           const penaltyPoints = calculatePenaltyPoints(item.hasVerloren, item.lustwurfCount, item.zweiZweiEinsCount);
           return {
-            gamePoints,
+            roundPoints,
             bonusPoints,
             penaltyPoints,
-            gamePointsSum: gamePoints + bonusPoints + penaltyPoints,
+            gamePoints: roundPoints + bonusPoints + penaltyPoints,
           }
         })
           .reduce((prev, curr) => {
             return {
-              gamePoints: prev.gamePoints + curr.gamePoints,
+              roundPoints: prev.roundPoints + curr.roundPoints,
               bonusPoints: prev.bonusPoints + curr.bonusPoints,
               penaltyPoints: prev.penaltyPoints + curr.penaltyPoints,
-              gamePointsSum: prev.gamePointsSum + curr.gamePointsSum,
+              gamePoints: prev.gamePoints + curr.gamePoints,
             }
           });
 
@@ -144,10 +144,10 @@ export class PointsStatisticsService {
           playerId,
           name: findPropertyById(players, playerId, 'name'),
           attended: true,
-          gamePoints,
+          roundPoints,
           bonusPoints,
           penaltyPoints,
-          gamePointsSum,
+          gamePoints,
           points: undefined, // calculated in next step
         };
       });
@@ -160,24 +160,24 @@ export class PointsStatisticsService {
             playerId: id,
             name: findPropertyById(players, id, 'name'),
             attended: false,
-            gamePoints: 0,
+            roundPoints: 0,
             bonusPoints: 0,
             penaltyPoints: 0,
-            gamePointsSum: 0,
+            gamePoints: 0,
             points: undefined, // calculated in next step
           }))
       );
 
       const pointsByAttendeeWithPoints = addRanking(
         pointsByAttendee,
-        ['gamePointsSum', 'gamePoints', 'bonusPoints', 'penaltyPoints'],
+        ['gamePoints', 'roundPoints', 'bonusPoints', 'penaltyPoints'],
         ['desc', 'desc', 'desc', 'asc']
       ).map(pointInfo => ({ ...pointInfo, points: calculatePoints(pointInfo.rank, pointInfo.attended) }));
 
       return {
         gameId,
         datetime: findPropertyById(games, gameId, 'datetime'),
-        points: orderBy(pointsByAttendeeWithPoints, ['points', 'gamePointsSum', 'gamePoints', 'bonusPoints', 'penaltyPoints', 'name'], ['desc', 'desc', 'desc', 'desc', 'asc', 'asc'])
+        points: orderBy(pointsByAttendeeWithPoints, ['points', 'gamePoints', 'roundPoints', 'bonusPoints', 'penaltyPoints', 'name'], ['desc', 'desc', 'desc', 'desc', 'asc', 'asc'])
       };
     });
   }
@@ -186,14 +186,14 @@ export class PointsStatisticsService {
     const pointsPerGame = await this.pointsPerGame(gameIds, onlyActivePlayers);
     const accumulatedPointsPerGame = pointsPerGame.reduce((prev, curr) => {
       const lastGame = prev.length > 0 ? prev[prev.length - 1] : null;
-      const accPoints = curr.points.map(({ playerId, name, gamePoints, bonusPoints, penaltyPoints, gamePointsSum, points }) => {
+      const accPoints = curr.points.map(({ playerId, name, roundPoints, bonusPoints, penaltyPoints, gamePoints, points }) => {
         return {
           playerId,
           name,
-          gamePoints: gamePoints + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.gamePoints || 0 : 0),
+          roundPoints: roundPoints + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.roundPoints || 0 : 0),
           bonusPoints: bonusPoints + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.bonusPoints || 0 : 0),
           penaltyPoints: penaltyPoints + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.penaltyPoints || 0 : 0),
-          gamePointsSum: gamePointsSum + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.gamePointsSum || 0 : 0),
+          gamePoints: gamePoints + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.gamePoints || 0 : 0),
           points: points + (lastGame ? lastGame.points.find(i => i.playerId === playerId)?.points || 0 : 0),
         };
       });
@@ -201,7 +201,7 @@ export class PointsStatisticsService {
         ...prev,
         {
           ...curr,
-          points: addRanking(accPoints, ['points', 'gamePointsSum', 'gamePoints', 'bonusPoints', 'penaltyPoints'], ['desc', 'desc', 'desc', 'desc', 'asc'])
+          points: addRanking(accPoints, ['points', 'gamePoints', 'roundPoints', 'bonusPoints', 'penaltyPoints'], ['desc', 'desc', 'desc', 'desc', 'asc'])
         }
       ];
     }, []);

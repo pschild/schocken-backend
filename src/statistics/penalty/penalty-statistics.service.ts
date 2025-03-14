@@ -73,9 +73,16 @@ export class PenaltyStatisticsService {
 
   async mostExpensiveRound(gameIds: string[], onlyActivePlayers: boolean): Promise<MostExpensiveRoundDto> {
     const playerIds = await this.playerStatisticsService.playerIds(onlyActivePlayers);
+    const rounds = await this.roundStatisticsService.rounds(gameIds);
 
     // oldest (first) record wins!
-    return maxBy(await this.roundStatisticsService.roundsWithPenalties(gameIds, playerIds), item => item.sum);
+    const maxValue = maxBy(await this.roundStatisticsService.roundsWithPenalties(gameIds, playerIds), item => item.sum);
+    return maxValue ? {
+      gameId: findPropertyById(rounds, maxValue.id, 'gameId'),
+      roundId: maxValue.id,
+      datetime: maxValue.datetime,
+      sum: maxValue.sum,
+    } : null;
   }
 
   async mostExpensiveRoundAveragePerGame(gameIds: string[], onlyActivePlayers: boolean): Promise<MostExpensiveRoundAveragePerGameDto> {

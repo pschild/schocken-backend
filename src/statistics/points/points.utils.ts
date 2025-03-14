@@ -7,7 +7,7 @@ export function calculatePoints(rank: number, attended: boolean): number {
   return POINTS_FOR_RANKS[rank - 1] || POINTS_FOR_ATTENDANCE;
 }
 
-export function calculateGamePoints(
+export function calculateRoundPoints(
   roundHasFinal: boolean,
   roundHasSchockAus: boolean,
   isFinalist: boolean,

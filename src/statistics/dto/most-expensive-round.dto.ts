@@ -3,7 +3,10 @@ import { ApiProperty } from '@nestjs/swagger';
 export class MostExpensiveRoundDto {
 
   @ApiProperty({ type: String, format: 'uuid' })
-  id: string;
+  gameId: string;
+
+  @ApiProperty({ type: String, format: 'uuid' })
+  roundId: string;
 
   @ApiProperty({ type: Date })
   datetime: Date;
