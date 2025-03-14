@@ -1,10 +1,9 @@
-version: '3.9'
-
 name: schocken
 
 networks:
   schocken:
     name: schocken
+    external: true  # important for Cloudflare to access services via tunnel
 
 volumes:
   schocken-pgdata:
@@ -13,8 +12,8 @@ volumes:
 services:
   postgres:
     image: postgres:15.7
-    restart: always
     container_name: schocken-postgres
+    restart: unless-stopped
     networks:
       - schocken
     environment:
@@ -36,9 +35,33 @@ services:
     image: schocken-backend:latest
     build:
       context: ../
-    restart: always
+    restart: unless-stopped
     container_name: schocken-backend
     networks:
       - schocken
     ports:
       - 3000:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflare-tunnel
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    networks:
+      - schocken
+
+  proxy:
+    image: nginx:latest
+    container_name: proxy
+    ports:
+      - 80:80
+    restart: unless-stopped
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
+    networks:
+      - schocken
