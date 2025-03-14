@@ -57,9 +57,9 @@ services:
 
   proxy:
     image: nginx:latest
-    container_name: proxy
+    container_name: schocken-proxy
     ports:
-      - 80:80
+      - 8000:80
     restart: unless-stopped
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
