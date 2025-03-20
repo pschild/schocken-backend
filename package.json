@@ -29,8 +29,8 @@
     "migration:run": "npx typeorm-ts-node-commonjs migration:run -d  ./src/database/data-source.ts",
     "migration:revert": "npx typeorm-ts-node-commonjs migration:revert -d ./src/database/data-source.ts",
     "docker:build": "docker build -t schocken-backend .",
-    "docker:retag": "docker tag schocken-backend:latest philippeschild/hoptimisten:latest",
-    "docker:push": "docker push philippeschild/hoptimisten:latest",
+    "docker:retag": "docker tag schocken-backend:latest philippeschild/hoptimisten-backend:latest",
+    "docker:push": "docker push philippeschild/hoptimisten-backend:latest",
     "docker:release": "npm run docker:build && npm run docker:retag && npm run docker:push",
     "docker:run": "docker run -p3001:3000 schocken-backend"
   },

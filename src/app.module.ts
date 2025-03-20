@@ -39,8 +39,8 @@ import { UserModule } from './user/user.module';
       useFactory: (configService: ConfigService) => ({
         transports: [
           new winston.transports.File({
-            filename: `${process.cwd()}/${configService.get('LOG_PATH')}`,
-            level: 'error',
+            dirname: `logs`,
+            filename: `app.log`,
             format: winston.format.combine(
               winston.format.timestamp(),
               winston.format.json(),

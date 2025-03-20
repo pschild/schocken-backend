@@ -8,9 +8,12 @@ import { SpelunkerModule } from 'nestjs-spelunker';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  printDependencyTree(app);
-  configureSwagger(app);
+  if (process.env.NODE_ENV !== 'production') {
+    printDependencyTree(app);
+    configureSwagger(app);
+  }
 
+  app.setGlobalPrefix('/api');
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
   app.enableCors();
