@@ -16,7 +16,7 @@ import {
   MostExpensiveRoundDto,
   PenaltyByPlayerTableDto,
   PointsPerGameDto,
-  QuoteByNameDto,
+  QuoteByNameDto, RecordDto,
   RecordsPerGameDto,
   RoundCountByGameIdDto,
   SchockAusEffectivityTableDto,
@@ -137,6 +137,12 @@ export class PointsStatisticsResponseDto {
 
   @ApiProperty({ type: [AccumulatedPointsPerGameDto] })
   accumulatedPoints: AccumulatedPointsPerGameDto[];
+
+  @ApiProperty({ type: [RecordDto] })
+  maxGamePoints: RecordDto[];
+
+  @ApiProperty({ type: [RecordDto] })
+  minGamePoints: RecordDto[];
 }
 
 export class HostStatisticsResponseDto {
@@ -261,11 +267,13 @@ export class StatisticsController {
     const { fromDate, toDate, gameIds, onlyActivePlayers } = body;
     const selectedGameIds = await this.validateAndGetGameIds(fromDate, toDate, gameIds);
 
-    const [pointsPerGame, accumulatedPoints] = await Promise.all([
+    const [pointsPerGame, accumulatedPoints, maxGamePoints, minGamePoints] = await Promise.all([
       this.pointsStatisticsService.pointsPerGame(selectedGameIds, onlyActivePlayers),
       this.pointsStatisticsService.accumulatedPoints(selectedGameIds, onlyActivePlayers),
+      this.pointsStatisticsService.maxGamePoints(selectedGameIds, onlyActivePlayers),
+      this.pointsStatisticsService.minGamePoints(selectedGameIds, onlyActivePlayers),
     ]);
-    return { pointsPerGame, accumulatedPoints };
+    return { pointsPerGame, accumulatedPoints, maxGamePoints, minGamePoints };
   }
 
   @Post('hosts')

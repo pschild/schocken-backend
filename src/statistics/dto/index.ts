@@ -6,6 +6,7 @@ export * from './round-count-by-game-id.dto';
 export * from './hosts-table.dto';
 export * from './quote-by-name.dto';
 export * from './records-per-game.dto';
+export * from './record.dto';
 export * from './event-type-streak.dto';
 export * from './event-type-counts.dto';
 export * from './streak.dto';

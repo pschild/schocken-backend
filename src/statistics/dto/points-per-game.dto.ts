@@ -26,6 +26,9 @@ export class PointsDto {
   @ApiProperty({ type: Number })
   points: number;
 
+  @ApiPropertyOptional({ type: Boolean })
+  attended?: boolean;
+
   @ApiPropertyOptional({ type: Number })
   tendency?: number;
 }

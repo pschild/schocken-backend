@@ -26,3 +26,35 @@ export function addRanking<I>(items: I[], properties: (keyof I)[], orders?: ('as
   }
   return rankedItems;
 }
+
+export function multiMinBy<T>(items: T[], projectionFn: (item: T) => number): T[] {
+  let minValue = Infinity;
+  let resultItems = [];
+  items.forEach(item => {
+    const currentValue = projectionFn(item);
+    if (currentValue < minValue) {
+      minValue = currentValue;
+      resultItems = [item];
+    } else if (currentValue === minValue) {
+      resultItems.push(item);
+    }
+  });
+
+  return resultItems;
+}
+
+export function multiMaxBy<T>(items: T[], projectionFn: (item: T) => number): T[] {
+  let maxValue = -Infinity;
+  let resultItems = [];
+  items.forEach(item => {
+    const currentValue = projectionFn(item);
+    if (currentValue > maxValue) {
+      maxValue = currentValue;
+      resultItems = [item];
+    } else if (currentValue === maxValue) {
+      resultItems.push(item);
+    }
+  });
+
+  return resultItems;
+}

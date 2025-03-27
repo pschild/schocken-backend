@@ -4,11 +4,11 @@ import { groupBy, orderBy } from 'lodash';
 import { DataSource } from 'typeorm';
 import { Cached } from '../../decorator/cached.decorator';
 import { EventTypeTrigger } from '../../event-type/enum/event-type-trigger.enum';
-import { AccumulatedPointsPerGameDto, PointsPerGameDto } from '../dto';
+import { AccumulatedPointsPerGameDto, PointsPerGameDto, RecordDto } from '../dto';
 import { EventTypesStatisticsService } from '../event-types/event-types-statistics.service';
 import { GameStatisticsService } from '../game/game-statistics.service';
 import { PlayerStatisticsService } from '../player/player-statistics.service';
-import { addRanking, findPropertyById } from '../statistics.utils';
+import { addRanking, findPropertyById, multiMaxBy, multiMinBy } from '../statistics.utils';
 import { calculateBonusPoints, calculateRoundPoints, calculatePenaltyPoints, calculatePoints } from './points.utils';
 
 @Injectable()
@@ -182,6 +182,28 @@ export class PointsStatisticsService {
     });
   }
 
+  @Cached()
+  async flattenedPointsSinceFirstFinal(gameIds: string[], onlyActivePlayers: boolean): Promise<{ gameId: string; datetime: string; playerId: string; name: string; gamePoints: number }[]> {
+    const pointsPerGame = await this.pointsPerGame(gameIds, onlyActivePlayers);
+    const gameIdsSinceFirstFinal = await this.gameStatisticsService.getGameIdsSinceFirstFinal();
+
+    return pointsPerGame
+      .filter(game => gameIdsSinceFirstFinal.includes(game.gameId))
+      .map(game => {
+        return game.points
+          .filter(player => player.attended)
+          .map(player => ({
+              gameId: game.gameId,
+              datetime: game.datetime,
+              playerId: player.playerId,
+              name: player.name,
+              gamePoints: player.gamePoints,
+            })
+          );
+      })
+      .flat();
+  }
+
   async accumulatedPoints(gameIds: string[], onlyActivePlayers: boolean): Promise<AccumulatedPointsPerGameDto[]> {
     const pointsPerGame = await this.pointsPerGame(gameIds, onlyActivePlayers);
     const accumulatedPointsPerGame = pointsPerGame.reduce((prev, curr) => {
@@ -216,6 +238,20 @@ export class PointsStatisticsService {
           return {...item, tendency: prevRank - item.rank };
         }) }];
     }, []);
+  }
+
+  async maxGamePoints(gameIds: string[], onlyActivePlayers: boolean): Promise<RecordDto[]> {
+    return multiMaxBy(
+      await this.flattenedPointsSinceFirstFinal(gameIds, onlyActivePlayers),
+      item => item.gamePoints
+    ).map(({ gamePoints, ...props }) => ({ ...props, count: gamePoints }));
+  }
+
+  async minGamePoints(gameIds: string[], onlyActivePlayers: boolean): Promise<RecordDto[]> {
+    return multiMinBy(
+      await this.flattenedPointsSinceFirstFinal(gameIds, onlyActivePlayers),
+      item => item.gamePoints
+    ).map(({ gamePoints, ...props }) => ({ ...props, count: gamePoints }));;
   }
 
 }
