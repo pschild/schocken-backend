@@ -10,4 +10,7 @@ export class CountByNameDto {
 
   @ApiProperty({ type: Number })
   count: number;
+
+  @ApiProperty({ type: Number })
+  quote: number;
 }

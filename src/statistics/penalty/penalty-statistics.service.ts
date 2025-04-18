@@ -132,7 +132,7 @@ export class PenaltyStatisticsService {
           roundEventEuroSum,
           euroSum,
           quote: euroSum / penaltySumEuro,
-          euroPerRound: roundCountByPlayer ? euroSum / roundCountByPlayer : 0,
+          euroPerRound: roundCountByPlayer ? roundEventEuroSum / roundCountByPlayer : 0,
         };
       }),
       ['euroSum', 'euroPerRound'],

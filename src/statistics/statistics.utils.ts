@@ -1,6 +1,6 @@
 import { orderBy } from 'lodash';
 
-export function findPropertyById(list: { id: string }[], id: string, property: string): string {
+export function findPropertyById<T = string>(list: { id: string }[], id: string, property: string): T {
   return list.find(item => item.id === id)?.[property];
 }
 

@@ -7,6 +7,25 @@ export function calculatePoints(rank: number, attended: boolean): number {
   return POINTS_FOR_RANKS[rank - 1] || POINTS_FOR_ATTENDANCE;
 }
 
+/**
+ * Punkteberechnung erfolgt nach folgendem Schema:
+ *
+ * Finale?
+ * Ja
+ * - Verlierer 0P
+ * - alle Nicht-Finalisten 3P
+ * - alle Finalisten, die nicht verloren haben 1P (egal ob Finale per SA beendet wurde oder nicht)
+ *
+ * Nein
+ * - Verlierer 0P
+ * - SA?
+ *    Ja
+ *    - alle Spieler mit SA 3P
+ *    - alle anderen 1P
+ *
+ *    Nein (nur möglich bei "Verloren mit allen Deckeln")
+ *    - alle anderen 3P
+ */
 export function calculateRoundPoints(
   roundHasFinal: boolean,
   roundHasSchockAus: boolean,

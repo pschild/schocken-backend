@@ -7,6 +7,7 @@ import { EventTypeContext } from '../../event-type/enum/event-type-context.enum'
 import { EventTypeTrigger } from '../../event-type/enum/event-type-trigger.enum';
 import { EventType } from '../../model/event-type.entity';
 import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
+import { AttendanceStatisticsService } from '../attendance/attendance-statistics.service';
 import { CountByNameDto, EventTypeCountsDto, RecordsPerGameDto, SchockAusEffectivityTableDto } from '../dto';
 import { GameStatisticsService } from '../game/game-statistics.service';
 import { PlayerStatisticsService } from '../player/player-statistics.service';
@@ -22,6 +23,7 @@ export class EventTypesStatisticsService {
     private gameStatisticsService: GameStatisticsService,
     @Inject(forwardRef(() => RoundStatisticsService)) private roundStatisticsService: RoundStatisticsService,
     private playerStatisticsService: PlayerStatisticsService,
+    @Inject(forwardRef(() => AttendanceStatisticsService)) private attendanceStatisticsService: AttendanceStatisticsService,
   ) {
   }
 
@@ -38,9 +40,9 @@ export class EventTypesStatisticsService {
   }
 
   @Cached()
-  async eventTypeCountsByPlayerId(gameIds: string[], playerIds: string[], eventTypeId?: string): Promise<{ rank: number; playerId: string; eventTypeId: string; count: number }[]> {
+  async eventTypeCountsByPlayerId(gameIds: string[], playerIds: string[], eventTypeId: string): Promise<{ rank: number; playerId: string; eventTypeId: string; count: number }[]> {
     const roundIds = await this.roundStatisticsService.roundIds(gameIds);
-    if (gameIds.length === 0 || roundIds.length === 0) {
+    if (gameIds.length === 0 || roundIds.length === 0 || !eventTypeId) {
       return Promise.resolve([]);
     }
     const result = await this.dataSource.query(`
@@ -51,7 +53,7 @@ export class EventTypesStatisticsService {
           OR "gameId" IN (${gameIds.map(id => `'${id}'`).join(',')})
         )
         AND "playerId" IN (${playerIds.map(id => `'${id}'`).join(',')})
-        ${eventTypeId ? `AND "eventTypeId" = '${eventTypeId}' ` : ''}
+        AND "eventTypeId" = '${eventTypeId}'
         GROUP BY "playerId", "eventTypeId"
     `);
     return addRanking(
@@ -178,11 +180,13 @@ export class EventTypesStatisticsService {
   async eventTypeCountsByPlayer(gameIds: string[], onlyActivePlayers: boolean, eventTypeId: string): Promise<CountByNameDto[]> {
     const playerIds = await this.playerStatisticsService.playerIds(onlyActivePlayers);
     const players = await this.playerStatisticsService.players(onlyActivePlayers);
+    const attendances = await this.attendanceStatisticsService.attendancesByPlayerId(gameIds, playerIds);
 
     return (await this.eventTypeCountsByPlayerId(gameIds, playerIds, eventTypeId)).map(({ playerId, count }) => ({
       id: playerId,
       name: findPropertyById(players, playerId, 'name'),
-      count
+      count,
+      quote: count / attendances.find(item => item.playerId === playerId)?.count
     }));
   }
 

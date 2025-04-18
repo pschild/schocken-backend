@@ -57,6 +57,12 @@ export class StatisticsRequestDto {
   onlyActivePlayers: boolean;
 }
 
+export class EventTypeStatisticsRequestDto extends StatisticsRequestDto {
+
+  @ApiProperty({ type: String })
+  eventTypeId: string;
+}
+
 export class GamesAndRoundsStatisticsResponseDto {
 
   @ApiProperty({ type: CountDto })
@@ -215,9 +221,7 @@ export class StatisticsController {
   @Post('event-type-counts')
   @Permissions([Permission.READ_STATISTICS])
   @ApiOkResponse({ type: [CountByNameDto] })
-  async eventTypeCountsByPlayer(
-    @Body() body: StatisticsRequestDto & { eventTypeId: string; }
-  ): Promise<CountByNameDto[]> {
+  async eventTypeCountsByPlayer(@Body() body: EventTypeStatisticsRequestDto): Promise<CountByNameDto[]> {
     const { fromDate, toDate, onlyActivePlayers, eventTypeId } = body;
     const gameIds = await this.gameStatisticsService.gameIds(fromDate, toDate);
     return this.eventTypesStatisticsService.eventTypeCountsByPlayer(gameIds, onlyActivePlayers, eventTypeId);
