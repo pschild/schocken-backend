@@ -1,15 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { Cache } from 'cache-manager';
 import { groupBy, orderBy } from 'lodash';
 import { DataSource } from 'typeorm';
-import { Cached } from '../../decorator/cached.decorator';
+import { MemoizeWithCacheManager } from '../../decorator/cached.decorator';
 import { EventTypeTrigger } from '../../event-type/enum/event-type-trigger.enum';
 import { AccumulatedPointsPerGameDto, PointsPerGameDto, RecordDto } from '../dto';
+import { LiveGamePointsTableDto } from '../dto/live-game-points-table.dto';
 import { EventTypesStatisticsService } from '../event-types/event-types-statistics.service';
 import { GameStatisticsService } from '../game/game-statistics.service';
 import { PlayerStatisticsService } from '../player/player-statistics.service';
 import { addRanking, findPropertyById, multiMaxBy, multiMinBy } from '../statistics.utils';
-import { calculateBonusPoints, calculateRoundPoints, calculatePenaltyPoints, calculatePoints } from './points.utils';
+import { calculateBonusPoints, calculatePenaltyPoints, calculatePoints, calculateRoundPoints } from './points.utils';
 
 @Injectable()
 export class PointsStatisticsService {
@@ -19,10 +22,11 @@ export class PointsStatisticsService {
     private playerStatisticsService: PlayerStatisticsService,
     private eventTypesStatisticsService: EventTypesStatisticsService,
     private gameStatisticsService: GameStatisticsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async getDataForPointsCalculation(gameIds: string[]): Promise<{
     gameId: string;
     roundId: string;
@@ -98,6 +102,7 @@ export class PointsStatisticsService {
         left join round on game.id = round."gameId"
         left join attendances att on round.id = att."roundId"
         where game.id IN (${gameIds.map(id => `'${id}'`).join(',')})
+        and att."playerId" is not null
         order by round.datetime
     `);
 
@@ -109,7 +114,7 @@ export class PointsStatisticsService {
     }));
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async pointsPerGame(gameIds: string[], onlyActivePlayers: boolean): Promise<PointsPerGameDto[]> {
     const pkteInfo = await this.getDataForPointsCalculation(gameIds);
     const playerIds = await this.playerStatisticsService.playerIds(onlyActivePlayers);
@@ -152,11 +157,18 @@ export class PointsStatisticsService {
         };
       });
 
+      const pointsByAttendeeWithPoints = addRanking(
+        pointsByAttendee,
+        ['gamePoints', 'roundPoints', 'bonusPoints', 'penaltyPoints'],
+        ['desc', 'desc', 'desc', 'asc']
+      ).map(pointInfo => ({ ...pointInfo, points: calculatePoints(pointInfo.rank) }));
+
       // add players who did not attend, in order to always show all players in table!
-      pointsByAttendee.push(
+      pointsByAttendeeWithPoints.push(
         ...playerIds
           .filter(id => !pointsByAttendee.find(i => i.playerId === id))
           .map(id => ({
+            rank: null,
             playerId: id,
             name: findPropertyById(players, id, 'name'),
             attended: false,
@@ -164,15 +176,9 @@ export class PointsStatisticsService {
             bonusPoints: 0,
             penaltyPoints: 0,
             gamePoints: 0,
-            points: undefined, // calculated in next step
+            points: 0,
           }))
       );
-
-      const pointsByAttendeeWithPoints = addRanking(
-        pointsByAttendee,
-        ['gamePoints', 'roundPoints', 'bonusPoints', 'penaltyPoints'],
-        ['desc', 'desc', 'desc', 'asc']
-      ).map(pointInfo => ({ ...pointInfo, points: calculatePoints(pointInfo.rank, pointInfo.attended) }));
 
       return {
         gameId,
@@ -182,7 +188,7 @@ export class PointsStatisticsService {
     });
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async flattenedPointsSinceFirstFinal(gameIds: string[], onlyActivePlayers: boolean): Promise<{ gameId: string; datetime: string; playerId: string; name: string; gamePoints: number }[]> {
     const pointsPerGame = await this.pointsPerGame(gameIds, onlyActivePlayers);
     const gameIdsSinceFirstFinal = await this.gameStatisticsService.getGameIdsSinceFirstFinal();
@@ -252,6 +258,27 @@ export class PointsStatisticsService {
       await this.flattenedPointsSinceFirstFinal(gameIds, onlyActivePlayers),
       item => item.gamePoints
     ).map(({ gamePoints, ...props }) => ({ ...props, count: gamePoints }));;
+  }
+
+  async liveGamePointsTable(gameId: string): Promise<LiveGamePointsTableDto[]> {
+    const previousGameIdsOfYear = await this.gameStatisticsService.previousGameIdsOfYear(gameId);
+    const [pointsPerGame, accumulatedPoints] = await Promise.all([
+      this.pointsPerGame([gameId], true),
+      this.accumulatedPoints(previousGameIdsOfYear, true),
+    ]);
+
+    if (!pointsPerGame.length) {
+      return null;
+    }
+
+    return pointsPerGame[0].points.map(pointInfo => {
+      const { rank, points } = accumulatedPoints[accumulatedPoints.length - 1].points.find(({ playerId }) => playerId === pointInfo.playerId);
+      return {
+        ...pointInfo,
+        rankYear: rank,
+        pointsYear: points,
+      }
+    });
   }
 
 }

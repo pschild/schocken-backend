@@ -1,8 +1,10 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { Cache } from 'cache-manager';
 import { groupBy, sumBy } from 'lodash';
 import { DataSource, Repository } from 'typeorm';
-import { Cached } from '../../decorator/cached.decorator';
+import { MemoizeWithCacheManager } from '../../decorator/cached.decorator';
 import { EventTypeContext } from '../../event-type/enum/event-type-context.enum';
 import { EventTypeTrigger } from '../../event-type/enum/event-type-trigger.enum';
 import { EventType } from '../../model/event-type.entity';
@@ -24,22 +26,23 @@ export class EventTypesStatisticsService {
     @Inject(forwardRef(() => RoundStatisticsService)) private roundStatisticsService: RoundStatisticsService,
     private playerStatisticsService: PlayerStatisticsService,
     @Inject(forwardRef(() => AttendanceStatisticsService)) private attendanceStatisticsService: AttendanceStatisticsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async eventTypes(): Promise<{ id: string; description: string; context: EventTypeContext; trigger: EventTypeTrigger; penaltyValue: number; }[]> {
     return this.eventTypeRepo.find({ select: ['id', 'description', 'context', 'trigger', 'penaltyValue'], withDeleted: true });
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async getRoundEventTypeIdsWithPenalty(): Promise<string[]> {
     return (await this.eventTypes())
       .filter(type => type.context === EventTypeContext.ROUND && !!type.penaltyValue)
       .map(({ id }) => id);
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async eventTypeCountsByPlayerId(gameIds: string[], playerIds: string[], eventTypeId: string): Promise<{ rank: number; playerId: string; eventTypeId: string; count: number }[]> {
     const roundIds = await this.roundStatisticsService.roundIds(gameIds);
     if (gameIds.length === 0 || roundIds.length === 0 || !eventTypeId) {
@@ -63,7 +66,7 @@ export class EventTypesStatisticsService {
     );
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async eventTypeCountsWithPenaltySum(gameIds: string[], playerIds: string[]): Promise<{ id: string, description: string, count: number, penaltyUnit: PenaltyUnit, penalty: number }[]> {
     const roundIds = await this.roundStatisticsService.roundIds(gameIds);
     if (gameIds.length === 0 || roundIds.length === 0) {
@@ -84,7 +87,7 @@ export class EventTypesStatisticsService {
     return result.map(({ id, description, count, penaltyUnit, penalty }) => ({ id, description, count: +count, penaltyUnit, penalty: +penalty }));
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async maxEventCounts(gameIds: string[], playerIds: string[]): Promise<{ count: number; eventTypeId: string; gameId: string; playerId: string; }[]> {
     if (gameIds.length === 0 || playerIds.length === 0) {
       return Promise.resolve([]);
@@ -110,7 +113,7 @@ export class EventTypesStatisticsService {
     return result.map(({ playerId, gameId, eventTypeId, count }) => ({ playerId, gameId, eventTypeId, count: +count }));
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async schockAusEffectivity(gameIds: string[], playerIds: string[]): Promise<{ roundId: string; playerId: string; sasCount: number }[]> {
     const roundIds = await this.roundStatisticsService.roundIds(gameIds);
     if (gameIds.length === 0 || roundIds.length === 0) {

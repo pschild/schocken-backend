@@ -1,5 +1,7 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+import { Cache } from 'cache-manager';
 import { Permission } from '../auth/model/permission.enum';
 import { Permissions } from '../auth/decorator/permission.decorator';
 import { PenaltyDto } from '../penalty/dto/penalty.dto';
@@ -23,6 +25,7 @@ import {
   SchockAusStreakDto,
   StreakDto
 } from './dto';
+import { LiveGamePointsTableDto } from './dto/live-game-points-table.dto';
 import { EventTypesStatisticsService } from './event-types/event-types-statistics.service';
 import { GameStatisticsService } from './game/game-statistics.service';
 import { HostingStatisticsService } from './hosting/hosting-statistics.service';
@@ -40,6 +43,12 @@ export class GameIdsWithDatetimeDto {
 
   @ApiProperty({ type: Date })
   datetime: Date;
+}
+
+export class LiveGameStatisticsRequestDto {
+
+  @ApiProperty({ type: String })
+  gameId: string;
 }
 
 export class StatisticsRequestDto {
@@ -166,6 +175,27 @@ export class AttendancesStatisticsResponseDto {
   finalsTable: QuoteByNameDto[];
 }
 
+export class LiveGameStatisticsResponseDto {
+
+  @ApiProperty({ type: [PenaltyDto] })
+  penaltySum: PenaltyDto[];
+
+  @ApiProperty({ type: CountDto })
+  euroPerRound: CountDto;
+
+  @ApiProperty({ type: [PenaltyByPlayerTableDto] })
+  penaltyByPlayerTable: PenaltyByPlayerTableDto[];
+
+  @ApiProperty({ type: SchockAusStreakDto })
+  schockAusStreak: SchockAusStreakDto;
+
+  @ApiProperty({ type: [RecordsPerGameDto] })
+  recordsPerGame: RecordsPerGameDto[];
+
+  @ApiProperty({ type: [LiveGamePointsTableDto] })
+  pointsTable: LiveGamePointsTableDto[];
+}
+
 @ApiTags('statistics')
 @Controller('statistics')
 export class StatisticsController {
@@ -177,7 +207,8 @@ export class StatisticsController {
     private readonly attendanceStatisticsService: AttendanceStatisticsService,
     private readonly penaltyStatisticsService: PenaltyStatisticsService,
     private readonly streakStatisticsService: StreakStatisticsService,
-    private readonly pointsStatisticsService: PointsStatisticsService
+    private readonly pointsStatisticsService: PointsStatisticsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   @Get('all-games')
@@ -305,6 +336,27 @@ export class StatisticsController {
       this.attendanceStatisticsService.finalsTable(selectedGameIds, onlyActivePlayers),
     ]);
     return { attendancesTable, finalsTable };
+  }
+
+  @Post('live-game')
+  @Permissions([Permission.READ_STATISTICS])
+  @ApiOkResponse({ type: LiveGameStatisticsResponseDto })
+  async liveGameStatistics(@Body() body: LiveGameStatisticsRequestDto): Promise<LiveGameStatisticsResponseDto> {
+    const { gameId } = body;
+    const selectedGameIds = [gameId];
+
+    await this.cacheManager.clear();
+
+    const pointsTable = await this.pointsStatisticsService.liveGamePointsTable(gameId);
+
+    const [penaltySum, euroPerRound, penaltyByPlayerTable, schockAusStreak, recordsPerGame] = await Promise.all([
+      this.penaltyStatisticsService.penaltySum(selectedGameIds, true),
+      this.penaltyStatisticsService.euroPerRound(selectedGameIds, true),
+      this.penaltyStatisticsService.penaltyByPlayerTable(selectedGameIds, true),
+      this.streakStatisticsService.getSchockAusStreak(selectedGameIds),
+      this.eventTypesStatisticsService.recordsPerGame(selectedGameIds, true),
+    ]);
+    return { pointsTable, penaltySum, euroPerRound, penaltyByPlayerTable, schockAusStreak, recordsPerGame };
   }
 
   private async validateAndGetGameIds(fromDate: Date, toDate: Date, gameIds: string[]): Promise<string[]> {

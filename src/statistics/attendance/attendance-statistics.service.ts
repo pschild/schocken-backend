@@ -1,13 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { Cache } from 'cache-manager';
 import { intersection } from 'lodash';
 import { DataSource } from 'typeorm';
-import { Cached } from '../../decorator/cached.decorator';
+import { MemoizeWithCacheManager } from '../../decorator/cached.decorator';
 import { QuoteByNameDto } from '../dto';
 import { GameStatisticsService } from '../game/game-statistics.service';
 import { PlayerStatisticsService } from '../player/player-statistics.service';
 import { RoundStatisticsService } from '../round/round-statistics.service';
 import { addRanking, findPropertyById } from '../statistics.utils';
-import { InjectDataSource } from '@nestjs/typeorm';
 
 @Injectable()
 export class AttendanceStatisticsService {
@@ -17,10 +19,11 @@ export class AttendanceStatisticsService {
     private playerStatisticsService: PlayerStatisticsService,
     private gameStatisticsService: GameStatisticsService,
     private roundStatisticsService: RoundStatisticsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async finalsByPlayerId(gameIds: string[], playerIds: string[]): Promise<{ count: number; playerId: string; }[]> {
     const roundIds = await this.roundStatisticsService.roundIds(gameIds);
     if (gameIds.length === 0 || roundIds.length === 0) {
@@ -38,7 +41,7 @@ export class AttendanceStatisticsService {
     return result.map(({ playerId, count }) => ({ playerId, count: +count }));
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async attendancesByPlayerId(gameIds: string[], playerIds: string[]): Promise<{ count: number; playerId: string; }[]> {
     const roundIds = await this.roundStatisticsService.roundIds(gameIds);
     if (gameIds.length === 0 || roundIds.length === 0) {

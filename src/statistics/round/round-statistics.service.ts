@@ -1,8 +1,9 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { groupBy, maxBy } from 'lodash';
 import { DataSource, In, Repository } from 'typeorm';
-import { Cached } from '../../decorator/cached.decorator';
+import { MemoizeWithCacheManager } from '../../decorator/cached.decorator';
 import { EventPenaltyDto } from '../../event/dto/event-penalty.dto';
 import { Round } from '../../model/round.entity';
 import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
@@ -12,6 +13,7 @@ import { EventTypesStatisticsService } from '../event-types/event-types-statisti
 import { GameStatisticsService } from '../game/game-statistics.service';
 import { EventTypeStreakModeEnum } from '../streak/enum/event-type-streak-mode.enum';
 import { PenaltyStreakModeEnum } from '../streak/enum/penalty-streak-mode.enum';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class RoundStatisticsService {
@@ -21,10 +23,11 @@ export class RoundStatisticsService {
     @InjectRepository(Round) private readonly roundRepo: Repository<Round>,
     private gameStatisticsService: GameStatisticsService,
     @Inject(forwardRef(() => EventTypesStatisticsService)) private eventTypesStatisticsService: EventTypesStatisticsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async rounds(gameIds: string[]): Promise<{ id: string; gameId: string; datetime: string; }[]> {
     if (gameIds.length === 0) {
       return Promise.resolve([]);
@@ -37,12 +40,12 @@ export class RoundStatisticsService {
     `);
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async roundIds(gameIds: string[]): Promise<string[]> {
     return (await this.rounds(gameIds)).map(({ id }) => id);
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async roundIdsByGameId(gameIds: string[]): Promise<{ gameId: string; roundIds: string[] }[]> {
     const result = await this.roundRepo.find({
       select: { id: true, game: { id: true } },
@@ -57,7 +60,7 @@ export class RoundStatisticsService {
     }));
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async gameIdByRoundId(gameIds: string[], roundId: string): Promise<string | null> {
     const roundIdsByGameId = await this.roundIdsByGameId(gameIds);
     roundIdsByGameId.forEach(item => {
@@ -68,7 +71,7 @@ export class RoundStatisticsService {
     return null;
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async roundIdsByEventTypeId(gameIds: string[], eventTypeId: string): Promise<{ gameId: string; roundIds: string[] }[]> {
     const roundIds = await this.roundIds(gameIds);
     if (gameIds.length === 0 || roundIds.length === 0) {
@@ -89,7 +92,7 @@ export class RoundStatisticsService {
     }));
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async getOrderedRoundIdsByPlayerId(gameIds: string[], playerId: string): Promise<string[]> {
     const roundIds = await this.roundIds(gameIds);
     if (gameIds.length === 0 || roundIds.length === 0 || !playerId) {
@@ -107,7 +110,7 @@ export class RoundStatisticsService {
     return result.map(({ id }) => id);
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async getRoundIdsByPlayerAndEventType(gameIds: string[], eventTypeId: string, playerId: string, mode: EventTypeStreakModeEnum): Promise<string[]> {
     const roundIds = await this.roundIds(gameIds);
     if (gameIds.length === 0 || roundIds.length === 0) {
@@ -131,7 +134,7 @@ export class RoundStatisticsService {
     return result.map(({ roundId }) => roundId);
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async getRoundIdsByPlayerAndAnyPenalty(gameIds: string[], playerId: string, mode: PenaltyStreakModeEnum): Promise<string[]> {
     const roundIds = await this.roundIds(gameIds);
     if (gameIds.length === 0 || roundIds.length === 0) {
@@ -156,7 +159,7 @@ export class RoundStatisticsService {
     return result.map(({ roundId }) => roundId);
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async roundsWithPenalties(gameIds: string[], playerIds: string[]): Promise<{ id: string; datetime: Date; sum: number }[]> {
     const games = await this.gameStatisticsService.gamesWithRoundsAndEvents(gameIds, playerIds);
     return games

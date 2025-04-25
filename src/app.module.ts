@@ -1,3 +1,4 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -56,6 +57,7 @@ import { UserModule } from './user/user.module';
       }),
       inject: [ConfigService],
     }),
+    CacheModule.register({ isGlobal: true }),
     PlayerModule,
     RoundModule,
     GameModule,

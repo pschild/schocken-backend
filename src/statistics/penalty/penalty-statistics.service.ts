@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { Cache } from 'cache-manager';
 import { maxBy, sumBy } from 'lodash';
 import { DataSource } from 'typeorm';
-import { Cached } from '../../decorator/cached.decorator';
+import { MemoizeWithCacheManager } from '../../decorator/cached.decorator';
 import { EventTypeContext } from '../../event-type/enum/event-type-context.enum';
 import { PenaltyDto } from '../../penalty/dto/penalty.dto';
 import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
@@ -29,30 +31,33 @@ export class PenaltyStatisticsService {
     private attendanceStatisticsService: AttendanceStatisticsService,
     private gameStatisticsService: GameStatisticsService,
     private roundStatisticsService: RoundStatisticsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async euroPenaltiesByPlayer(gameIds: string[], playerIds: string[]): Promise<{ playerId: string; context: EventTypeContext; penalty: string; }[]> {
     const roundIds = await this.roundStatisticsService.roundIds(gameIds);
-    if (gameIds.length === 0 || roundIds.length === 0) {
+    if (gameIds.length === 0) {
       return Promise.resolve([]);
+    }
+
+    let gamesAndRoundsCondition = `"gameId" IN (${gameIds.map(id => `'${id}'`).join(',')})`;
+    if (roundIds.length > 0) {
+      gamesAndRoundsCondition = `"roundId" IN (${roundIds.map(id => `'${id}'`).join(',')}) OR ${gamesAndRoundsCondition}`
     }
 
     return this.dataSource.query(`
         SELECT "playerId", context, SUM("multiplicatorValue" * "penaltyValue") AS penalty
         FROM event
         WHERE "penaltyUnit" = 'EURO'
-        AND (
-          "roundId" IN (${roundIds.map(id => `'${id}'`).join(',')})
-          OR "gameId" IN (${gameIds.map(id => `'${id}'`).join(',')})
-        )
+        AND (${gamesAndRoundsCondition})
         AND "playerId" IN (${playerIds.map(id => `'${id}'`).join(',')})
         GROUP BY "playerId", context
     `);
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async penaltySum(gameIds: string[], onlyActivePlayers: boolean): Promise<PenaltyDto[]> {
     const playerIds = await this.playerStatisticsService.playerIds(onlyActivePlayers);
 

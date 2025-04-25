@@ -1,7 +1,4 @@
-export function calculatePoints(rank: number, attended: boolean): number {
-  if (!attended) {
-    return 0;
-  }
+export function calculatePoints(rank: number): number {
   const POINTS_FOR_RANKS = [7, 5, 4, 3, 2];
   const POINTS_FOR_ATTENDANCE = 1;
   return POINTS_FOR_RANKS[rank - 1] || POINTS_FOR_ATTENDANCE;

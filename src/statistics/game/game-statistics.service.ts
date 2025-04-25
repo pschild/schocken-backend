@@ -1,32 +1,46 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { Cache } from 'cache-manager';
+import { PenaltyDto } from 'src/penalty/dto/penalty.dto';
 import { Between, DataSource, In, Repository } from 'typeorm';
-import { Cached } from '../../decorator/cached.decorator';
+import { MemoizeWithCacheManager } from '../../decorator/cached.decorator';
 import { EventPenaltyDto } from '../../event/dto/event-penalty.dto';
+import { Event } from '../../model/event.entity';
 import { Game } from '../../model/game.entity';
 import { Round } from '../../model/round.entity';
-import { Event } from '../../model/event.entity';
 import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
 import { addPenalties, penaltySumByUnit, summarizePenalties } from '../../penalty/penalty.utils';
 import { CountDto } from '../dto';
-import { PenaltyDto } from 'src/penalty/dto/penalty.dto';
 
 @Injectable()
 export class GameStatisticsService {
 
   constructor(
     @InjectDataSource() readonly dataSource: DataSource,
-    @InjectRepository(Game) private readonly gameRepo: Repository<Game>
+    @InjectRepository(Game) private readonly gameRepo: Repository<Game>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async gameIds(fromDate: Date, toDate: Date): Promise<string[]> {
     const result = await this.gameRepo.find({ select: ['id'], where: { datetime: Between(fromDate, toDate), excludeFromStatistics: false }, order: { datetime: 'ASC' } });
     return result.map(({ id }) => id);
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
+  async previousGameIdsOfYear(gameId: string): Promise<string[]> {
+    const result = await this.dataSource.query(`
+        SELECT id
+        FROM game
+        WHERE EXTRACT(YEAR FROM datetime) = (SELECT EXTRACT(YEAR FROM datetime) FROM game WHERE id = '${gameId}')
+        AND datetime <= (SELECT datetime FROM game WHERE id = '${gameId}')
+    `);
+    return result.map(({ id }) => id);
+  }
+
+  @MemoizeWithCacheManager()
   async games(gameIds: string[] = []): Promise<{ id: string; datetime: Date; }[]> {
     return this.gameRepo.find({
       select: ['id', 'datetime'],
@@ -35,7 +49,7 @@ export class GameStatisticsService {
     });
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async gamesWithRoundsAndEvents(gameIds: string[], playerIds?: string[]): Promise<{ id: string; datetime: Date; rounds: Round[]; events: Event[] }[]> {
     const result = await this.gameRepo.find({
       where: { id: In(gameIds) },
@@ -80,7 +94,7 @@ export class GameStatisticsService {
     return result;
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async getGameIdsSinceFirstFinal(): Promise<string[]> {
     const result = await this.dataSource.query(`
         SELECT id, datetime
@@ -98,7 +112,7 @@ export class GameStatisticsService {
     return result.map(({ id }) => id);
   }
 
-  @Cached()
+  @MemoizeWithCacheManager()
   async gamesWithPenalties(gameIds: string[], playerIds: string[]): Promise<{ id: string; datetime: Date; gamePenalties: PenaltyDto[]; roundPenalties: PenaltyDto[]; combinedPenalties: PenaltyDto[]; roundAverage: number; }[]> {
     const games = await this.gamesWithRoundsAndEvents(gameIds, playerIds);
     return games
