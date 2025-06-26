@@ -29,8 +29,8 @@
     "migration:run": "npx typeorm-ts-node-commonjs migration:run -d  ./src/database/data-source.ts",
     "migration:revert": "npx typeorm-ts-node-commonjs migration:revert -d ./src/database/data-source.ts",
     "docker:build": "docker build -t schocken-backend .",
-    "docker:retag": "docker tag schocken-backend:latest philippeschild/hoptimisten-backend:latest",
-    "docker:push": "docker push philippeschild/hoptimisten-backend:latest",
+    "docker:retag": "docker tag schocken-backend:latest philippeschild/hoptimisten-backend:pwa",
+    "docker:push": "docker push philippeschild/hoptimisten-backend:pwa",
     "docker:release": "npm run docker:build && npm run docker:retag && npm run docker:push",
     "docker:run": "docker run -p3001:3000 schocken-backend"
   },
@@ -43,6 +43,7 @@
     "@nestjs/platform-express": "^11.0.11",
     "@nestjs/swagger": "^11.0.6",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/web-push": "^3.6.4",
     "auth0": "^4.18.0",
     "cache-manager": "^6.4.2",
     "class-transformer": "^0.5.1",
@@ -60,6 +61,7 @@
     "typeorm": "^0.3.21",
     "utils-decorators": "^2.10.0",
     "uuid": "^11.1.0",
+    "web-push": "^3.6.7",
     "winston": "^3.17.0"
   },
   "devDependencies": {

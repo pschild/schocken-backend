@@ -9,6 +9,7 @@ import { PermissionGuard } from './auth/guard/permission.guard';
 import { RoleGuard } from './auth/guard/role.guard';
 import { PlayerModule } from './player/player.module';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
+import { PushNotificationModule } from './push-notification/push-notification.module';
 import { RoundModule } from './round/round.module';
 import { GameModule } from './game/game.module';
 import { EventModule } from './event/event.module';
@@ -67,6 +68,7 @@ import { UserModule } from './user/user.module';
     EventTypeModule,
     StatisticsModule,
     UserModule,
+    PushNotificationModule,
   ],
   providers: [
     {
