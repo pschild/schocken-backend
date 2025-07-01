@@ -1,9 +1,12 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'push_subscription' })
 export class PushSubscription {
 
-  @PrimaryColumn({ length: 64 })
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ length: 64 })
   auth0UserId: string;
 
   @Column({ nullable: false })
