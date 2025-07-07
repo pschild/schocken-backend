@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from '@nestjs/common';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Observable } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Logger } from 'winston';
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
@@ -12,12 +12,14 @@ import { CreateGameDto } from './dto/create-game.dto';
 import { GameDetailDto } from './dto/game-detail.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { GameDetailService } from './game-detail.service';
+import { GameNotificationService } from './game-notification.service';
 
 @ApiTags('game-details')
 @Controller('game-details')
 export class GameDetailController {
   constructor(
     private readonly service: GameDetailService,
+    private readonly gameNotificationService: GameNotificationService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
@@ -46,6 +48,18 @@ export class GameDetailController {
   @ApiOkResponse({ type: GameDetailDto })
   update(@Param('id') id: string, @Body() dto: UpdateGameDto): Observable<GameDetailDto> {
     return this.service.update(id, dto).pipe(
+      map(GameDetailDto.fromEntity)
+    );
+  }
+
+  @Patch(':id/complete')
+  @Permissions([Permission.UPDATE_GAMES])
+  @ApiOkResponse({ type: GameDetailDto })
+  completeGame(@Param('id') id: string): Observable<GameDetailDto> {
+    return this.service.update(id, { completed: true }).pipe(
+      switchMap(game => this.gameNotificationService.sendCompleteNotification(id).pipe(
+        map(() => game),
+      )),
       map(GameDetailDto.fromEntity)
     );
   }

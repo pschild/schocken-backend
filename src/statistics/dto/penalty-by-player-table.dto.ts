@@ -25,4 +25,7 @@ export class PenaltyByPlayerTableDto {
 
   @ApiProperty({ type: Number })
   euroPerRound: number;
+
+  @ApiProperty({ type: Boolean })
+  attended: boolean;
 }

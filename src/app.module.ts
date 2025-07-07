@@ -16,6 +16,7 @@ import { EventTypeModule } from './event-type/event-type.module';
 import { StatisticsModule } from './statistics/statistics.module';
 import * as winston from 'winston';
 import { UserModule } from './user/user.module';
+import { WhatsAppModule } from './whats-app/whats-app.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { UserModule } from './user/user.module';
     EventTypeModule,
     StatisticsModule,
     UserModule,
+    WhatsAppModule,
   ],
   providers: [
     {

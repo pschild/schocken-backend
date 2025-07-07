@@ -29,6 +29,7 @@ import { StreakStatisticsService } from './streak/streak-statistics.service';
     PenaltyStatisticsService,
     StreakStatisticsService,
     PointsStatisticsService
-  ]
+  ],
+  exports: [PenaltyStatisticsService, PointsStatisticsService]
 })
 export class StatisticsModule {}

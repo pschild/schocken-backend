@@ -138,6 +138,7 @@ export class PenaltyStatisticsService {
           euroSum,
           quote: euroSum / penaltySumEuro,
           euroPerRound: roundCountByPlayer ? roundEventEuroSum / roundCountByPlayer : 0,
+          attended: roundCountByPlayer > 0,
         };
       }),
       ['euroSum', 'euroPerRound'],
