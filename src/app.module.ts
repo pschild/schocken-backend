@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
 import { PermissionGuard } from './auth/guard/permission.guard';
 import { RoleGuard } from './auth/guard/role.guard';
+import { PaymentModule } from './payment/payment.module';
 import { PlayerModule } from './player/player.module';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
 import { RoundModule } from './round/round.module';
@@ -69,6 +70,7 @@ import { WhatsAppModule } from './whats-app/whats-app.module';
     StatisticsModule,
     UserModule,
     WhatsAppModule,
+    PaymentModule,
   ],
   providers: [
     {

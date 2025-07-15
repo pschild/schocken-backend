@@ -6,8 +6,12 @@ import { map, switchMap, tap } from 'rxjs/operators';
 import { Logger } from 'winston';
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { Permissions } from '../auth/decorator/permission.decorator';
+import { Roles } from '../auth/decorator/role.decorator';
 import { Permission } from '../auth/model/permission.enum';
+import { Role } from '../auth/model/role.enum';
 import { User } from '../auth/model/user.model';
+import { PaymentService } from '../payment/payment.service';
+import { WhatsAppSentMessageDto } from '../whats-app/dto/whats-app-sent-message.dto';
 import { CreateGameDto } from './dto/create-game.dto';
 import { GameDetailDto } from './dto/game-detail.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
@@ -20,6 +24,7 @@ export class GameDetailController {
   constructor(
     private readonly service: GameDetailService,
     private readonly gameNotificationService: GameNotificationService,
+    private readonly paymentService: PaymentService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
@@ -56,10 +61,8 @@ export class GameDetailController {
   @Permissions([Permission.UPDATE_GAMES])
   @ApiOkResponse({ type: GameDetailDto })
   completeGame(@Param('id') id: string): Observable<GameDetailDto> {
-    return this.service.update(id, { completed: true }).pipe(
-      switchMap(game => this.gameNotificationService.sendCompleteNotification(id).pipe(
-        map(() => game),
-      )),
+    return this.paymentService.apply(id).pipe(
+      switchMap(() => this.service.update(id, { completed: true })),
       map(GameDetailDto.fromEntity)
     );
   }

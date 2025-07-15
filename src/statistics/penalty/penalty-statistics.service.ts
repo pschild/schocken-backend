@@ -15,6 +15,7 @@ import {
   MostExpensiveGameDto,
   MostExpensiveRoundAveragePerGameDto,
   MostExpensiveRoundDto,
+  PenaltyByPlayerDto,
   PenaltyByPlayerTableDto
 } from '../dto';
 import { GameStatisticsService } from '../game/game-statistics.service';
@@ -36,7 +37,7 @@ export class PenaltyStatisticsService {
   }
 
   @MemoizeWithCacheManager()
-  async euroPenaltiesByPlayer(gameIds: string[], playerIds: string[]): Promise<{ playerId: string; context: EventTypeContext; penalty: string; }[]> {
+  async penaltiesByPlayer(gameIds: string[], playerIds: string[], groupByContext = false, penaltyUnit?: PenaltyUnit): Promise<{ playerId: string; context?: EventTypeContext; penalty: string; penaltyUnit: PenaltyUnit; }[]> {
     const roundIds = await this.roundStatisticsService.roundIds(gameIds);
     if (gameIds.length === 0) {
       return Promise.resolve([]);
@@ -48,12 +49,12 @@ export class PenaltyStatisticsService {
     }
 
     return this.dataSource.query(`
-        SELECT "playerId", context, SUM("multiplicatorValue" * "penaltyValue") AS penalty
+        SELECT "playerId", ${groupByContext ? 'context,' : ''} SUM("multiplicatorValue" * "penaltyValue") AS penalty, "penaltyUnit"
         FROM event
-        WHERE "penaltyUnit" = 'EURO'
-        AND (${gamesAndRoundsCondition})
+        WHERE (${gamesAndRoundsCondition})
+        ${penaltyUnit ? `AND "penaltyUnit" = '${penaltyUnit}'` : 'AND "penaltyUnit" IS NOT NULL'}
         AND "playerId" IN (${playerIds.map(id => `'${id}'`).join(',')})
-        GROUP BY "playerId", context
+        GROUP BY "playerId", ${groupByContext ? 'context,' : ''} "penaltyUnit"
     `);
   }
 
@@ -114,7 +115,7 @@ export class PenaltyStatisticsService {
     return { count: (sum / roundIds.length) || undefined };
   }
 
-  async penaltyByPlayerTable(gameIds: string[], onlyActivePlayers: boolean): Promise<PenaltyByPlayerTableDto[]> {
+  async euroPenaltyByPlayerTable(gameIds: string[], onlyActivePlayers: boolean): Promise<PenaltyByPlayerTableDto[]> {
     const playerIds = await this.playerStatisticsService.playerIds(onlyActivePlayers);
     const players = await this.playerStatisticsService.players(onlyActivePlayers);
 
@@ -123,7 +124,7 @@ export class PenaltyStatisticsService {
     const allPenalties = await this.penaltySum(gameIds, onlyActivePlayers);
     const penaltySumEuro = penaltySumByUnit(allPenalties, PenaltyUnit.EURO);
 
-    const playerPenalties = await this.euroPenaltiesByPlayer(gameIds, playerIds);
+    const playerPenalties = await this.penaltiesByPlayer(gameIds, playerIds, true, PenaltyUnit.EURO);
     return addRanking(
       playerIds.map(playerId => {
         const gameEventEuroSum = +playerPenalties.find(p => p.playerId === playerId && p.context === EventTypeContext.GAME)?.penalty || 0;
@@ -146,4 +147,9 @@ export class PenaltyStatisticsService {
     );
   }
 
+  async allPenaltiesByPlayer(gameIds: string[], onlyActivePlayers: boolean): Promise<PenaltyByPlayerDto[]> {
+    const playerIds = await this.playerStatisticsService.playerIds(onlyActivePlayers);
+    const penalties = await this.penaltiesByPlayer(gameIds, playerIds);
+    return penalties.map(item => ({ ...item, penalty: +item.penalty }));
+  }
 }

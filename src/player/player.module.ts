@@ -9,5 +9,6 @@ import { PlayerSubscriber } from './player.subscriber';
   imports: [TypeOrmModule.forFeature([Player])],
   providers: [PlayerService, PlayerSubscriber],
   controllers: [PlayerController],
+  exports: [PlayerService]
 })
 export class PlayerModule {}
