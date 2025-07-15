@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { AlignmentEnum, AsciiTable3 } from 'ascii-table3';
 import { format } from 'date-fns';
-import { combineLatest, from, Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { combineLatest, from, Observable, switchMap } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { PenaltyStatisticsService } from '../statistics/penalty/penalty-statistics.service';
 import { PointsStatisticsService } from '../statistics/points/points-statistics.service';
+import { WhatsAppSentMessageDto } from '../whats-app/dto/whats-app-sent-message.dto';
 import { WhatsAppService } from '../whats-app/whats-app.service';
+import { PublishPenaltiesException } from './exception/publish-penalties.exception';
 import { GameDetailService } from './game-detail.service';
 
 @Injectable()
@@ -20,14 +22,18 @@ export class GameNotificationService {
   ) {
   }
 
-  public sendCompleteNotification(gameId: string): Observable<string> {
+  public publishPenalties(gameId: string): Observable<WhatsAppSentMessageDto> {
     return combineLatest({
-      datetime: this.gameDetailService.getDatetime(gameId),
+      game: this.gameDetailService.findOne(gameId),
       penaltySum: from(this.penaltyStatisticsService.penaltySum([gameId], true)),
-      penaltiesByPlayer: from(this.penaltyStatisticsService.penaltyByPlayerTable([gameId], true)),
+      penaltiesByPlayer: from(this.penaltyStatisticsService.euroPenaltyByPlayerTable([gameId], true)),
       points: from(this.pointsStatisticsService.pointsPerGame([gameId], true)),
     }).pipe(
-      map(({ datetime, penaltySum, penaltiesByPlayer, points }) => {
+      map(({ game, penaltySum, penaltiesByPlayer, points }) => {
+        if (!game.completed) {
+          throw new PublishPenaltiesException(`Strafen konnten nicht veröffentlicht werden, da das Spiel nicht abgeschlossen ist.`);
+        }
+
         const winnerNames = points[0].points
           .filter(item => item.rank === 1)
           .map(item => `🥇 *${item.name}* `);
@@ -56,7 +62,7 @@ export class GameNotificationService {
               ['', '', '', this.formatCurrency(penaltySum.find(p => p.unit === PenaltyUnit.EURO).sum)]
             ]);
 
-        return `*Strafen vom ${format(datetime, 'dd.MM.yyyy')}*
+        return `*Strafen vom ${format(game.datetime, 'dd.MM.yyyy')}*
 
 Sieger des Abends: ${winnerNames.join(', ')}
 
@@ -68,7 +74,9 @@ Bitte überweise deine Strafe innerhalb der nächsten 14 Tage auf das bekannte K
 Details zum Spiel findest du in der App unter https://hopti.pschild.de/game/${gameId}
         `;
       }),
-      tap(message => this.whatsappService.send(message))
+      switchMap(message => from(this.whatsappService.send(message)).pipe(
+        map(messageId => ({ messageId: messageId._serialized }))
+      ))
     );
   }
 

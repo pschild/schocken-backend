@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from '@nestjs/common';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Observable, switchMap } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { Logger } from 'winston';
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { Permissions } from '../auth/decorator/permission.decorator';
@@ -62,6 +62,13 @@ export class GameDetailController {
       )),
       map(GameDetailDto.fromEntity)
     );
+  }
+
+  @Patch(':id/publish-penalties')
+  @Roles([Role.MANAGER])
+  @ApiOkResponse({ type: WhatsAppSentMessageDto })
+  publishPenalties(@Param('id') id: string): Observable<WhatsAppSentMessageDto> {
+    return this.gameNotificationService.publishPenalties(id);
   }
 
   @Delete(':id')
