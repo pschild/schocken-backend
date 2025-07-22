@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { format } from 'date-fns';
+import * as QRCode from 'qrcode';
 import { combineLatest, from, Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { filter, map, switchMap } from 'rxjs/operators';
 import { DataSource, Repository } from 'typeorm';
 import { ensureExistence } from '../ensure-existence.operator';
 import { Payment } from '../model/payment.entity';
@@ -10,9 +13,12 @@ import { PlayerService } from '../player/player.service';
 import { PenaltyByPlayerDto } from '../statistics/dto';
 import { PenaltyStatisticsService } from '../statistics/penalty/penalty-statistics.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-import { PaymentSummaryByPlayerDto } from './dto/payment-summary-by-player.dto';
-import { PaymentSummaryDto } from './dto/payment-summary.dto';
+import { GameWithPaymentInfoDto } from './dto/game-with-payment-info.dto';
+import { UserPaymentDto } from './dto/user-payment.dto';
+import { PaymentBalanceDto } from './dto/payment-balance.dto';
+import { OutstandingPenaltyDto } from './dto/outstanding-penalty.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { calculateDueDate } from './payment.utils';
 
 @Injectable()
 export class PaymentService {
@@ -22,6 +28,7 @@ export class PaymentService {
     @InjectRepository(Payment) private readonly repo: Repository<Payment>,
     private readonly playerService: PlayerService,
     private readonly penaltyStatisticsService: PenaltyStatisticsService,
+    private readonly configService: ConfigService,
   ) {
   }
 
@@ -119,10 +126,23 @@ export class PaymentService {
     return dto;
   }
 
+  getGameList(): Observable<GameWithPaymentInfoDto[]> {
+    return from(this.dataSource.query(`
+      SELECT game.id, game.datetime, COALESCE(bool_and(payment.confirmed), FALSE) AS "allConfirmed" FROM payment
+      RIGHT JOIN game game ON payment."gameId" = game.id
+      GROUP BY game.id, payment."gameId", game.datetime
+      ORDER BY game.datetime
+    `));
+  }
+
   findOne(id: string): Observable<Payment> {
     return from(this.repo.findOne({ where: { id }, relations: ['game', 'player'] })).pipe(
       ensureExistence(),
     );
+  }
+
+  countAll(): Observable<number> {
+    return from(this.repo.count());
   }
 
   findByGameId(gameId: string): Observable<Payment[]> {
@@ -132,9 +152,10 @@ export class PaymentService {
     }));
   }
 
-  getPaymentSummary(): Observable<PaymentSummaryDto[]> {
+  getBalances(): Observable<PaymentBalanceDto[]> {
     return from(this.dataSource.query(`
-        SELECT payment."playerId", player.name, SUM(payment."penaltyValue") as "penaltyValue", SUM(payment."outstandingValue") as "outstandingValue", payment."penaltyUnit" FROM payment
+        SELECT payment."playerId", player.name, SUM(payment."penaltyValue") as "penaltyValue", SUM(payment."outstandingValue") as "outstandingValue", payment."penaltyUnit"
+        FROM payment
         LEFT JOIN player on player.id = payment."playerId"
         GROUP BY payment."playerId", player.name, payment."penaltyUnit"
         ORDER BY player.name
@@ -143,15 +164,45 @@ export class PaymentService {
     );
   }
 
-  getPaymentPlayerSummary(userId: string): Observable<PaymentSummaryByPlayerDto[]> {
+  getByUserId(userId: string): Observable<UserPaymentDto[]> {
     return from(this.dataSource.query(`
-        SELECT game.id, game.datetime, payment."playerId", payment."penaltyValue", payment."outstandingValue", payment."penaltyUnit", payment."lastChangedDateTime", payment.confirmed, player.name as "confirmedBy" FROM payment
+        SELECT game.id, game.datetime, payment."playerId", payment."penaltyValue", payment."outstandingValue", payment."penaltyUnit", payment."lastChangedDateTime", payment.confirmed, payment."confirmedAt", player.name as "confirmedBy"
+        FROM payment
         LEFT JOIN game game on game.id = payment."gameId"
         LEFT JOIN player player on payment."confirmedBy" = player."auth0UserId"
         WHERE payment."playerId" = (SELECT id FROM player WHERE "auth0UserId" = '${userId}')
         ORDER BY game.datetime
     `)).pipe(
-      map(rows => rows.map(row => ({ ...row, penaltyValue: +row.penaltyValue, outstandingValue: +row.outstandingValue }))),
+      map(rows => rows.map(row => ({
+        ...row,
+        penaltyValue: +row.penaltyValue,
+        outstandingValue: +row.outstandingValue,
+        dueDate: calculateDueDate(row.confirmed, +row.outstandingValue, row.confirmedAt),
+      }))),
+    );
+  }
+
+  getOutstandingPenaltiesByUserId(userId: string): Observable<OutstandingPenaltyDto[]> {
+    return from(this.dataSource.query(`
+        SELECT
+            player.name,
+            SUM(payment."outstandingValue") AS "outstandingValueSum",
+            payment."penaltyUnit",
+            COUNT(*),
+            CASE WHEN COUNT(payment."penaltyUnit") = 1 THEN MIN(game.datetime) END AS datetime
+        FROM payment
+            LEFT JOIN game game ON game.id = payment."gameId"
+            LEFT JOIN player player ON payment."playerId" = player."id"
+        WHERE payment."playerId" = (SELECT id FROM player WHERE "auth0UserId" = '${userId}')
+          AND payment."outstandingValue" > 0
+        GROUP BY player.name, payment."penaltyUnit"
+    `)).pipe(
+      map(rows => rows.map(row => ({
+        ...row,
+        outstandingValueSum: +row.outstandingValueSum,
+        count: +row.count,
+        datetime: row.datetime ? new Date(row.datetime) : null,
+      }))),
     );
   }
 
@@ -161,6 +212,40 @@ export class PaymentService {
       switchMap(entity => from(this.repo.save(entity))),
       switchMap(() => this.findOne(id)),
     );
+  }
+
+  generateQrCode(userId: string): Observable<string> {
+    return this.getOutstandingPenaltiesByUserId(userId).pipe(
+      filter(penalties => !!penalties && penalties.length > 0),
+      map(penalties => penalties.find(p => p.penaltyUnit === PenaltyUnit.EURO)),
+      filter(Boolean),
+      map(({ outstandingValueSum, count, datetime }) => this.generateBcdCode(outstandingValueSum, count, datetime)),
+      switchMap(content => from(QRCode.toDataURL(content, { margin: 0, color: { dark: '#000000', light: '#ffffff00' } }))),
+    );
+  }
+
+  private generateBcdCode(euroPenalty: number, penaltyCount: number, datetime: Date | null): string {
+    // https://en.wikipedia.org/wiki/EPC_QR_code
+    const iban = this.configService.get<string>('EPC_QR_CODE_IBAN');
+    const receiverName = this.configService.get<string>('EPC_QR_CODE_RECEIVER');
+    const subject = penaltyCount === 1 && !!datetime
+      ? `Strafe vom ${format(datetime, 'dd.MM.yyyy')}`
+      : `Strafe`;
+    const description = `QR code zur Ueberweisung einer Strafe fuer die Hoptimisten`;
+
+    return `BCD
+002
+1
+SCT
+
+${receiverName}
+${iban}
+EUR${euroPenalty.toFixed(2)}
+CHAR
+
+${subject}
+${description}
+`;
   }
 
 }

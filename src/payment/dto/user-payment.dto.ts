@@ -1,7 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
 
-export class PaymentSummaryByPlayerDto {
+export class UserPaymentDto {
   @ApiProperty({ type: String, format: 'uuid' })
   gameId: string;
 
@@ -23,7 +23,13 @@ export class PaymentSummaryByPlayerDto {
   @ApiProperty({ type: Boolean })
   confirmed: boolean;
 
+  @ApiProperty({ type: Date, nullable: true })
+  confirmedAt: string;
+
   @ApiProperty({ type: String, nullable: true })
   confirmedBy: string;
+
+  @ApiPropertyOptional({ type: Date })
+  dueDate?: string;
 
 }

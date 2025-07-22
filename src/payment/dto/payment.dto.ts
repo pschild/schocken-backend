@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { addDays } from 'date-fns';
 import { GameDto } from '../../game/dto/game.dto';
 import { Payment } from '../../model/payment.entity';
 import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
 import { PlayerDetailDto } from '../../player/dto/player-detail.dto';
+import { calculateDueDate } from '../payment.utils';
 
 export class PaymentDto {
   @ApiProperty({ type: String, format: 'uuid' })
@@ -59,18 +59,11 @@ export class PaymentDto {
       gameId: GameDto.fromEntity(entity.game).id,
       playerId: PlayerDetailDto.fromEntity(entity.player).id,
       name: PlayerDetailDto.fromEntity(entity.player).name,
-      dueDate: PaymentDto.calculateDueDate(entity),
+      dueDate: calculateDueDate(entity.confirmed, entity.outstandingValue, entity.confirmedAt),
     } : null;
   }
 
   static fromEntities(entities: Payment[]): PaymentDto[] {
     return entities.map(e => PaymentDto.fromEntity(e));
-  }
-
-  private static calculateDueDate(entity: Payment): string {
-    if (!entity.confirmed || entity.outstandingValue <= 0) {
-      return null;
-    }
-    return addDays(entity.confirmedAt, 14).toISOString();
   }
 }

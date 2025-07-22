@@ -34,10 +34,9 @@ export class PlayerService {
     return from(this.repo.findBy({ active: true }));
   }
 
-  public getPlayerIdByUserId(userId: string): Observable<string> {
+  public getPlayerByUserId(userId: string): Observable<Player> {
     return from(this.repo.findOneBy({auth0UserId: userId})).pipe(
       filter(entity => !!entity),
-      map(entity => entity.id),
       defaultIfEmpty(null),
     );
   }

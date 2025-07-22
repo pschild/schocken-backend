@@ -7,8 +7,8 @@ import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { Permissions } from '../auth/decorator/permission.decorator';
 import { Permission } from '../auth/model/permission.enum';
 import { User } from '../auth/model/user.model';
-import { PaymentSummaryByPlayerDto } from './dto/payment-summary-by-player.dto';
-import { PaymentSummaryDto } from './dto/payment-summary.dto';
+import { GameWithPaymentInfoDto } from './dto/game-with-payment-info.dto';
+import { PaymentBalanceDto } from './dto/payment-balance.dto';
 import { PaymentDto } from './dto/payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { PaymentService } from './payment.service';
@@ -18,7 +18,7 @@ import { PaymentService } from './payment.service';
 export class PaymentController {
   constructor(private readonly service: PaymentService) {}
 
-  @Get(':gameId')
+  @Get('by-game/:gameId')
   @Permissions([Permission.READ_PAYMENTS])
   @ApiOkResponse({ type: [PaymentDto] })
   getByGameId(@Param('gameId') gameId: string): Observable<PaymentDto[]> {
@@ -38,16 +38,17 @@ export class PaymentController {
     );
   }
 
-  @Get('summary/all')
+  @Get('games-list')
   @Permissions([Permission.READ_PAYMENTS])
-  @ApiOkResponse({ type: [PaymentSummaryDto] })
-  getPaymentSummary(): Observable<PaymentSummaryDto[]> {
-    return this.service.getPaymentSummary();
+  @ApiOkResponse({ type: [GameWithPaymentInfoDto] })
+  getGameList(): Observable<GameWithPaymentInfoDto[]> {
+    return this.service.getGameList();
   }
 
-  @Get('summary/player')
-  @ApiOkResponse({ type: [PaymentSummaryByPlayerDto] })
-  getPaymentSummaryByPlayer(@CurrentUser() user: User): Observable<PaymentSummaryByPlayerDto[]> {
-    return this.service.getPaymentPlayerSummary(user.userId);
+  @Get('balances')
+  @Permissions([Permission.READ_PAYMENTS])
+  @ApiOkResponse({ type: [PaymentBalanceDto] })
+  getBalances(): Observable<PaymentBalanceDto[]> {
+    return this.service.getBalances();
   }
 }

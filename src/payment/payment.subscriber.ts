@@ -19,13 +19,17 @@ export class PaymentSubscriber implements EntitySubscriberInterface {
   }
 
   async beforeUpdate(event: UpdateEvent<Payment>): Promise<unknown> {
+    const oldValue = event.databaseEntity;
+    const newValue = event.entity;
+
     // handle confirmation (false -> true)
-    if (!event.databaseEntity.confirmed && event.entity.confirmed) {
-      event.entity.confirmedAt = new Date();
+    if (!oldValue.confirmed && newValue.confirmed) {
+      newValue.confirmedAt = new Date();
+
     // handle unconfirmation (true -> false)
-    } else if (event.databaseEntity.confirmed && !event.entity.confirmed) {
-      event.entity.confirmedAt = null;
-      event.entity.confirmedBy = null;
+    } else if (oldValue.confirmed && !newValue.confirmed) {
+      newValue.confirmedAt = null;
+      newValue.confirmedBy = null;
     }
     return;
   }

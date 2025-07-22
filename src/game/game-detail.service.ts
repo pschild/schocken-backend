@@ -28,6 +28,10 @@ export class GameDetailService {
     );
   }
 
+  findAll(): Observable<Game[]> {
+    return from(this.repo.find());
+  }
+
   getDatetime(id: string): Observable<Date> {
     return from(this.repo.findOne({ select: ['datetime'], where: { id }})).pipe(
       ensureExistence(),

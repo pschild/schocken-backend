@@ -6,10 +6,11 @@ import { StatisticsModule } from '../statistics/statistics.module';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { PaymentSubscriber } from './payment.subscriber';
+import { UserPaymentController } from './user-payment.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Payment]), StatisticsModule, PlayerModule],
-  controllers: [PaymentController],
+  controllers: [PaymentController, UserPaymentController],
   providers: [PaymentService, PaymentSubscriber],
   exports: [PaymentService],
 })

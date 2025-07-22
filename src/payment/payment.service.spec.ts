@@ -1,7 +1,8 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { firstValueFrom, of } from 'rxjs';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Payment } from '../model/payment.entity';
 import { PenaltyUnit } from '../penalty/enum/penalty-unit.enum';
 import { PlayerService } from '../player/player.service';
@@ -15,12 +16,20 @@ describe('PaymentService', () => {
   let penaltyStatisticsServiceMock: MockType<PenaltyStatisticsService>;
   let repositoryMock: MockType<Repository<Payment>>;
 
+  const dataSourceMockFactory: () => MockType<DataSource> = jest.fn(() => ({
+    query: jest.fn()
+  }));
+
   const playerServiceMockFactory: () => MockType<PlayerService> = jest.fn(() => ({
     findAllActive: jest.fn(),
   }));
 
   const penaltyStatisticsServiceMockFactory: () => MockType<PenaltyStatisticsService> = jest.fn(() => ({
     allPenaltiesByPlayer: jest.fn(),
+  }));
+
+  const configServiceMockFactory: () => MockType<ConfigService> = jest.fn(() => ({
+    get: jest.fn(),
   }));
 
   const repositoryMockFactory: () => MockType<Repository<Payment>> = jest.fn(() => ({
@@ -33,8 +42,10 @@ describe('PaymentService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentService,
+        { provide: DataSource, useFactory: dataSourceMockFactory },
         { provide: PlayerService, useFactory: playerServiceMockFactory },
         { provide: PenaltyStatisticsService, useFactory: penaltyStatisticsServiceMockFactory },
+        { provide: ConfigService, useFactory: configServiceMockFactory },
         { provide: getRepositoryToken(Payment), useFactory: repositoryMockFactory }
       ],
     }).compile();
@@ -148,22 +159,4 @@ describe('PaymentService', () => {
       }
     });
   });
-
-  /**
-   *
-   * 60 Strafe
-   * 60 bezahlt
-   * 60 -> 50 -> Guthaben von 10 (outstanding = -10)
-   * 50 -> 0  -> Guthaben von -60
-   *
-   * 50/0   true    null  => 0/-50  false
-   * 50/10  true    null  => 0/-40  false
-   * 50/-10 true    null  => 0/-60  false
-   *
-   * 50/0   false   null  => 0/-50  false
-   * 50/50  false   null  => remove
-   * 50/10  false   null  => 0/-40 false
-   * 50/-10 false   null  => 0/-60 false
-   *
-   */
 });

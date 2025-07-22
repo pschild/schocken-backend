@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PenaltyUnit } from '../../penalty/enum/penalty-unit.enum';
 
-export class PaymentSummaryDto {
+export class PaymentBalanceDto {
   @ApiProperty({ type: String, format: 'uuid' })
   playerId: string;
 

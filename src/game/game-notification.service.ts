@@ -62,16 +62,17 @@ export class GameNotificationService {
               ['', '', '', this.formatCurrency(penaltySum.find(p => p.unit === PenaltyUnit.EURO).sum)]
             ]);
 
-        return `*Strafen vom ${format(game.datetime, 'dd.MM.yyyy')}*
+        return `*Zusammenfassung des Spiels vom ${format(game.datetime, 'dd.MM.yyyy')}*
 
-Sieger des Abends: ${winnerNames.join(', ')}
+Sieger des Abends (nach Punkten): ${winnerNames.join(', ')}
 
 \`\`\`
 ${asciiTable.toString()}
 \`\`\`
 Bitte überweise deine Strafe innerhalb der nächsten 14 Tage auf das bekannte Konto. 💸
 
-Details zum Spiel findest du in der App unter https://hopti.pschild.de/game/${gameId}
+📊 Dein Dashboard: https://hopti.pschild.de/dashboard
+🎲 Zum Spiel: https://hopti.pschild.de/game/${gameId}
         `;
       }),
       switchMap(message => from(this.whatsappService.send(message)).pipe(
