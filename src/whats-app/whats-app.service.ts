@@ -4,6 +4,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Chat, Client, LocalAuth, MessageId, WAState } from 'whatsapp-web.js';
 import { Logger } from 'winston';
 import { resolve } from 'path';
+import { rm } from 'fs/promises';
 import { WhatsAppClientInitializationException } from './exception/whats-app-client-initialization.exception';
 import { WhatsAppClientNotReadyException } from './exception/whats-app-client-not-ready.exception';
 import { WhatsAppMessageNotSentException } from './exception/whats-app-message-not-sent.exception';
@@ -16,6 +17,7 @@ export class WhatsAppService {
   isInitialized: boolean =  false;
   isAuthenticated: boolean = false;
   isReady: boolean = false;
+  isDestroyed: boolean = false;
 
   latestQrCode: { datetime: Date, qr: string } = null;
 
@@ -24,36 +26,55 @@ export class WhatsAppService {
     private configService: ConfigService
   ) {
     this.logger.defaultMeta = { context: WhatsAppService.name };
-    this.initialize();
+
+    this.initialize().catch((error: unknown) => {
+      this.logger.error(error);
+    });
   }
 
   public async initialize(): Promise<void> {
-    if (!!this.client) {
-      this.reset();
-      await this.client.destroy();
-      this.logger.info(`EXISTING CLIENT DESTROYED`);
-    }
+    await this.destroy();
 
-    this.client = new Client({
-      puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      },
-      authStrategy: new LocalAuth({
-        clientId: this.configService.get<string>('WHATSAPP_CLIENT_ID'),
-        dataPath: resolve(__dirname, '..', '..', 'whatsapp-auth-data'),
-      }),
-    });
+    try {
+      this.client = new Client({
+        puppeteer: {
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        },
+        authStrategy: new LocalAuth({
+          clientId: this.configService.get<string>('WHATSAPP_CLIENT_ID'),
+          dataPath: resolve(__dirname, '..', '..', 'whatsapp-auth-data'),
+        }),
+      });
+    } catch (error) {
+      this.logger.error(`Error during client creation`, { error });
+      throw new WhatsAppClientInitializationException(error);
+    }
 
     this.setupListeners();
     return this.client.initialize()
       .then(() => {
         this.logger.info(`CLIENT INITIALIZED`);
         this.isInitialized = true;
+        this.isDestroyed = false;
       })
       .catch(error => {
         this.logger.error(`Error during client initialization`, { error });
         throw new WhatsAppClientInitializationException(error);
       });
+  }
+
+  public async purge(): Promise<void> {
+    await this.destroy();
+    await rm(resolve(__dirname, '..', '..', 'whatsapp-auth-data'), { recursive: true, force: true });
+  }
+
+  private async destroy(): Promise<void> {
+    if (!!this.client) {
+      this.reset();
+      await this.client.destroy();
+      this.isDestroyed = true;
+      this.logger.info(`EXISTING CLIENT DESTROYED`);
+    }
   }
   
   private setupListeners(): void {
@@ -88,6 +109,7 @@ export class WhatsAppService {
     this.isInitialized = false;
     this.isAuthenticated = false;
     this.isReady = false;
+    this.isDestroyed = false;
     this.latestQrCode = null;
   }
 

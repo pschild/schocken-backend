@@ -11,6 +11,9 @@ export class WhatsAppClientStatusDto {
   @ApiProperty({ type: Boolean })
   isReady: boolean;
 
+  @ApiProperty({ type: Boolean })
+  isDestroyed: boolean;
+
   @ApiProperty({ type: String })
   waState: string;
 

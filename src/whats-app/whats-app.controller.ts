@@ -1,8 +1,10 @@
-import { Controller, Get, GoneException, Post } from '@nestjs/common';
+import { Controller, Get, Inject, Post } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import * as QRCode from 'qrcode';
-import { catchError, from, Observable, throwError } from 'rxjs';
+import { catchError, from, Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Logger } from 'winston';
 import { Roles } from '../auth/decorator/role.decorator';
 import { Role } from '../auth/model/role.enum';
 import { QrCodeDto } from './dto/qr-code.dto';
@@ -16,18 +18,26 @@ import { WhatsAppService } from './whats-app.service';
 @Controller('whatsapp')
 export class WhatsAppController {
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly service: WhatsAppService,
-  ) {}
+  ) {
+    this.logger.defaultMeta = { context: WhatsAppController.name };
+  }
 
   @Get('client-status')
   @Roles([Role.ADMIN])
   @ApiCreatedResponse({ type: WhatsAppClientStatusDto })
   getClientStatus(): Observable<WhatsAppClientStatusDto> {
     return from(this.service.getState()).pipe(
+      catchError(err => {
+        this.logger.error(`Fehler beim Abfragen des WhatsApp-Client-Status`, { err });
+        return of(null);
+      }),
       map(waState => ({
         isInitialized: this.service.isInitialized,
         isAuthenticated: this.service.isAuthenticated,
         isReady: this.service.isReady,
+        isDestroyed: this.service.isDestroyed,
         waState: waState ? waState.toString() : 'N/A',
       }))
     );
@@ -37,6 +47,12 @@ export class WhatsAppController {
   @Roles([Role.ADMIN])
   initialize(): Observable<void> {
     return from(this.service.initialize());
+  }
+
+  @Post('purge')
+  @Roles([Role.ADMIN])
+  purge(): Observable<void> {
+    return from(this.service.purge());
   }
 
   @Get('chats')
@@ -78,6 +94,6 @@ export class WhatsAppController {
         }),
       );
     }
-    throw new GoneException();
+    return of(null);
   }
 }
