@@ -72,16 +72,24 @@ export class StreakStatisticsService {
     });
 
     const groupedByEventTypeId = groupBy(streaks, 'eventTypeId');
-    return Object.entries(groupedByEventTypeId).map(([eventTypeId, streaks]) => ({
-      eventTypeId,
-      description: findPropertyById(eventTypes, eventTypeId, 'description'),
-      mode,
-      streaks: addRanking(
-        streaks,
-        ['maxStreak', 'datetime'],
-        ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']
-      ).map(({ rank, playerId, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }) => ({ rank, playerId, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }))
-    }));
+    return Object.entries(groupedByEventTypeId)
+      .map(([eventTypeId, streaks]) => ({
+        eventTypeId,
+        description: findPropertyById(eventTypes, eventTypeId, 'description'),
+        mode,
+        streaks: addRanking(
+          streaks,
+          ['maxStreak', 'datetime'],
+          ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']
+        ).map(({ rank, playerId, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }) => ({ rank, playerId, name, maxStreak, currentStreak, isCurrent, lastRoundIdOfStreak, datetime, gameId }))
+      }))
+      .map(result => {
+        const overallHighscore = result.streaks.find(s => s.rank === 1);
+        return {
+          ...result,
+          streaks: result.streaks.map(streak => ({ ...streak, overallHighscore }))
+        };
+      });
   }
 
   async penaltyStreak(gameIds: string[], onlyActivePlayers: boolean, mode: PenaltyStreakModeEnum): Promise<StreakDto[]> {
@@ -118,7 +126,12 @@ export class StreakStatisticsService {
       };
     });
 
-    return addRanking(streaks, ['maxStreak', 'datetime'], ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']);
+    const ranked = addRanking(streaks, ['maxStreak', 'datetime'], ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']);
+    const overallHighscore = ranked.find(s => s.rank === 1);
+    return ranked.map(item => ({
+      ...item,
+      overallHighscore,
+    }));
   }
 
   async getSchockAusStreak(gameIds: string[]): Promise<SchockAusStreakDto> {
@@ -168,7 +181,12 @@ export class StreakStatisticsService {
       };
     });
 
-    return addRanking(streaks, ['maxStreak', 'datetime'], ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']);
+    const ranked = addRanking(streaks, ['maxStreak', 'datetime'], ['desc', this.LATEST_RECORDS_FIRST ? 'desc' : 'asc']);
+    const overallHighscore = ranked.find(item => item.rank === 1);
+    return ranked.map(item => ({
+      ...item,
+      overallHighscore,
+    }));
   }
 
 }

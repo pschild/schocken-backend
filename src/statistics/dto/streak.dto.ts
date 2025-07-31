@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class StreakDto {
 
@@ -28,4 +28,7 @@ export class StreakDto {
 
   @ApiProperty({ type: Date })
   datetime: string;
+
+  @ApiPropertyOptional({ type: StreakDto })
+  overallHighscore?: StreakDto;
 }

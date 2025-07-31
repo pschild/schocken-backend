@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
 import { PermissionGuard } from './auth/guard/permission.guard';
 import { RoleGuard } from './auth/guard/role.guard';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { EventTypeModule } from './event-type/event-type.module';
 import { EventModule } from './event/event.module';
 import { GameDetailService } from './game/game-detail.service';
@@ -76,6 +77,7 @@ import { WhatsAppModule } from './whats-app/whats-app.module';
     UserModule,
     WhatsAppModule,
     PaymentModule,
+    DashboardModule,
   ],
   providers: [
     {

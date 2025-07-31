@@ -30,6 +30,6 @@ import { StreakStatisticsService } from './streak/streak-statistics.service';
     StreakStatisticsService,
     PointsStatisticsService
   ],
-  exports: [PenaltyStatisticsService, PointsStatisticsService]
+  exports: [PenaltyStatisticsService, PointsStatisticsService, StreakStatisticsService]
 })
 export class StatisticsModule {}
