@@ -9,6 +9,7 @@ import { Roles } from '../auth/decorator/role.decorator';
 import { Role } from '../auth/model/role.enum';
 import { QrCodeDto } from './dto/qr-code.dto';
 import { WhatsAppChatInfoDto } from './dto/whats-app-chat-info.dto';
+import { WhatsAppClientLogHistoryDto } from './dto/whats-app-client-log-history.dto';
 import { WhatsAppClientStatusDto } from './dto/whats-app-client-status.dto';
 import { WhatsAppSentMessageDto } from './dto/whats-app-sent-message.dto';
 import { QrCodeEncodingException } from './exception/qr-code-encoding.exception';
@@ -41,6 +42,13 @@ export class WhatsAppController {
         waState: waState ? waState.toString() : 'N/A',
       }))
     );
+  }
+
+  @Get('log-history')
+  @Roles([Role.ADMIN])
+  @ApiCreatedResponse({ type: [WhatsAppClientLogHistoryDto] })
+  getLogHistory(): WhatsAppClientLogHistoryDto[] {
+    return this.service.getLogHistory();
   }
 
   @Post('initialize')
