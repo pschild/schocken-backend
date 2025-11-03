@@ -1,23 +1,31 @@
 import { CacheModule } from '@nestjs/cache-manager';
-import { Module } from '@nestjs/common';
+import { Inject, Module, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { utilities as nestWinstonModuleUtilities, WINSTON_MODULE_PROVIDER, WinstonModule } from 'nest-winston';
+import { defaultIfEmpty, forkJoin, switchMap } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
+import * as winston from 'winston';
+import { Logger } from 'winston';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
 import { PermissionGuard } from './auth/guard/permission.guard';
 import { RoleGuard } from './auth/guard/role.guard';
-import { PlayerModule } from './player/player.module';
-import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
-import { PushNotificationModule } from './push-notification/push-notification.module';
-import { RoundModule } from './round/round.module';
-import { GameModule } from './game/game.module';
-import { EventModule } from './event/event.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { EventTypeModule } from './event-type/event-type.module';
+import { EventModule } from './event/event.module';
+import { GameDetailService } from './game/game-detail.service';
+import { GameModule } from './game/game.module';
+import { PaymentModule } from './payment/payment.module';
+import { PaymentService } from './payment/payment.service';
+import { PlayerModule } from './player/player.module';
+import { RoundModule } from './round/round.module';
 import { StatisticsModule } from './statistics/statistics.module';
-import * as winston from 'winston';
 import { UserSettingsModule } from './user-settings/user-settings.module';
 import { UserModule } from './user/user.module';
+import { WhatsAppModule } from './whats-app/whats-app.module';
+import { PushNotificationModule } from './push-notification/push-notification.module';
 
 @Module({
   imports: [
@@ -71,6 +79,9 @@ import { UserModule } from './user/user.module';
     UserModule,
     UserSettingsModule,
     PushNotificationModule,
+    WhatsAppModule,
+    PaymentModule,
+    DashboardModule,
   ],
   providers: [
     {
@@ -87,4 +98,29 @@ import { UserModule } from './user/user.module';
     }
   ]
 })
-export class AppModule {}
+export class AppModule implements OnApplicationBootstrap {
+
+  constructor(
+    private readonly gameDetailService: GameDetailService,
+    private readonly paymentService: PaymentService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {
+  }
+
+  onApplicationBootstrap() {
+    /**
+     * The following code creates new payments for all games, if payments not already exist.
+     * TODO: remove this code as soon as payments are created in prod. This is a one-time-only migration!
+     */
+    forkJoin([this.gameDetailService.findAll(), this.paymentService.countAll()]).pipe(
+      filter(([games, paymentCount]) => games.length > 0 && paymentCount === 0),
+      map(([games, _]) => games.map(game => game.id)),
+      switchMap(gameIds => forkJoin(gameIds.map(gameId => this.paymentService.apply(gameId)))),
+      map(insertResults => insertResults.flat()),
+      switchMap(payments => forkJoin(payments.map(payment =>
+        this.paymentService.update(payment.id, { outstandingValue: 0, confirmed: true })))
+      ),
+      defaultIfEmpty([]),
+    ).subscribe(affected => this.logger.info(`Inserted ${affected.length} payments`));
+  }
+}

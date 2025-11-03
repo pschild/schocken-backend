@@ -43,10 +43,11 @@ export class PlayerController {
 
   @Get('/by-user-id/:id')
   @Permissions([Permission.READ_PLAYERS])
-  @ApiOkResponse({ type: String })
-  @ApiProduces('text/plain')
-  public getPlayerIdByUserId(@Param('id') id: string): Observable<string> {
-    return this.service.getPlayerIdByUserId(id);
+  @ApiOkResponse({ type: PlayerDto })
+  public getPlayerByUserId(@Param('id') id: string): Observable<PlayerDto> {
+    return this.service.getPlayerByUserId(id).pipe(
+      map(PlayerDto.fromEntity)
+    )
   }
 
   @Get()

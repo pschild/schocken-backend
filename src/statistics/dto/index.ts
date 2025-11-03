@@ -11,6 +11,7 @@ export * from './event-type-streak.dto';
 export * from './event-type-counts.dto';
 export * from './streak.dto';
 export * from './schock-aus-streak.dto';
+export * from './penalty-by-player.dto';
 export * from './penalty-by-player-table.dto';
 export * from './count-by-name.dto';
 export * from './schock-aus-effectivity-table.dto';

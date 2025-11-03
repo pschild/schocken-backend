@@ -272,7 +272,7 @@ export class StatisticsController {
       this.penaltyStatisticsService.mostExpensiveRound(selectedGameIds, onlyActivePlayers),
       this.penaltyStatisticsService.mostExpensiveGame(selectedGameIds, onlyActivePlayers),
       this.penaltyStatisticsService.mostExpensiveRoundAveragePerGame(selectedGameIds, onlyActivePlayers),
-      this.penaltyStatisticsService.penaltyByPlayerTable(selectedGameIds, onlyActivePlayers),
+      this.penaltyStatisticsService.euroPenaltyByPlayerTable(selectedGameIds, onlyActivePlayers),
     ]);
     return { penaltySum, euroPerGame, euroPerRound, mostExpensiveRound, mostExpensiveGame, mostExpensiveRoundAveragePerGame, penaltyByPlayerTable };
   }
@@ -352,7 +352,7 @@ export class StatisticsController {
     const [penaltySum, euroPerRound, penaltyByPlayerTable, schockAusStreak, recordsPerGame] = await Promise.all([
       this.penaltyStatisticsService.penaltySum(selectedGameIds, true),
       this.penaltyStatisticsService.euroPerRound(selectedGameIds, true),
-      this.penaltyStatisticsService.penaltyByPlayerTable(selectedGameIds, true),
+      this.penaltyStatisticsService.euroPenaltyByPlayerTable(selectedGameIds, true),
       this.streakStatisticsService.getSchockAusStreak(selectedGameIds),
       this.eventTypesStatisticsService.recordsPerGame(selectedGameIds, true),
     ]);

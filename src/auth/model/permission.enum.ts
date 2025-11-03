@@ -20,5 +20,7 @@ export enum Permission {
   UPDATE_PLAYERS = 'update:players',
   DELETE_PLAYERS = 'delete:players',
   READ_STATISTICS = 'read:statistics',
+  READ_PAYMENTS = 'read:payments',
+  UPDATE_PAYMENTS = 'update:payments',
   READ_DEBUGGING_INFO = 'read:debugging-info'
 }

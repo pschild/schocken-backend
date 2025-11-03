@@ -51,7 +51,10 @@ USER node
 # PRODUCTION
 ###################
 
-FROM node:22-alpine AS production
+FROM node:22 AS production
+
+# install chromium to make puppeteer/whatsapp.js work properly
+RUN apt-get update && apt-get install -y chromium
 
 # Copy the bundled code from the build stage to the production image
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
