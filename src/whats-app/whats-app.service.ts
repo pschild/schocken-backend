@@ -51,6 +51,8 @@ export class WhatsAppService {
 
     this.client = new Client({
       puppeteer: {
+        // use the system-installed Chromium
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       },
       authStrategy: new LocalAuth({

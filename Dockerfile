@@ -12,6 +12,10 @@ WORKDIR /usr/src/app
 # Copying this first prevents re-running npm install on every code change.
 COPY --chown=node:node package*.json ./
 
+# Tell Puppeteer to skip downloading Chrome and use the system-installed Chromium instead
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 # Install app dependencies using the `npm ci` command instead of `npm install`
 RUN npm ci --force
 
@@ -41,6 +45,10 @@ RUN npm run build
 
 # Set NODE_ENV environment variable
 ENV NODE_ENV=production
+
+# Tell Puppeteer to skip downloading Chrome and use the system-installed Chromium instead
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Running `npm ci` removes the existing node_modules directory and passing in --only=production ensures that only the production dependencies are installed. This ensures that the node_modules directory is as optimized as possible
 RUN npm ci --only=production --force && npm cache clean --force
